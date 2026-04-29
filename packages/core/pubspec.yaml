@@ -1,0 +1,39 @@
+name: core
+description: "A new Flutter package project."
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: '>=3.8.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  commons:
+    path: ../commons
+  auth:
+    path: ../features/auth
+  login:
+    path: ../features/login
+  bottom_navigation_bar:
+    path: ../features/bottom_navigation_bar
+  token_repository:
+    path: ../features/repositories/token_repository
+  beamer: ^1.7.0
+  dio: ^5.9.2
+  flutter_bloc: ^9.1.1
+  freezed_annotation: ^3.1.0
+  get_it: ^8.0.2
+  dartz: ^0.10.1
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.13
+  freezed: ^3.2.5
+  json_serializable: ^6.9.0
+  json_annotation: ^4.11.0
+
+

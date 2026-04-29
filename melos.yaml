@@ -1,0 +1,17 @@
+name: smart_warehouse
+
+packages:
+  - '*'
+  - packages/**
+
+command:
+  bootstrap:
+    runPubGetInParallel: false
+
+scripts:
+  pub_upgrade:
+    exec: flutter pub upgrade
+  get:
+    exec: flutter pub get
+  generate:
+    exec: dart run build_runner build --delete-conflicting-outputs
