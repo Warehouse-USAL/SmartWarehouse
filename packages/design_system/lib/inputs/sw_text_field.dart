@@ -13,6 +13,7 @@ class SwTextField extends StatefulWidget {
     this.error,
     this.keyboardType,
     this.obscure = false,
+    this.prefix,
     this.suffix,
     this.trailingAction,
     super.key,
@@ -24,6 +25,7 @@ class SwTextField extends StatefulWidget {
   final String? error;
   final TextInputType? keyboardType;
   final bool obscure;
+  final Widget? prefix;
   final Widget? suffix;
   final Widget? trailingAction;
 
@@ -91,8 +93,20 @@ class _SwTextFieldState extends State<SwTextField> {
             decoration: InputDecoration(
               hintText: widget.placeholder,
               hintStyle: GoogleFonts.inter(fontSize: 15, color: SwColors.text3),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              contentPadding: EdgeInsets.fromLTRB(
+                widget.prefix == null ? 14 : 4,
+                13,
+                14,
+                13,
+              ),
               border: InputBorder.none,
+              prefixIcon: widget.prefix == null
+                  ? null
+                  : Padding(
+                      padding: const EdgeInsets.only(left: 12, right: 8),
+                      child: widget.prefix,
+                    ),
+              prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
               suffixIcon: widget.suffix,
             ),
           ),

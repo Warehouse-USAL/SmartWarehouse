@@ -1,6 +1,7 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:login/src/domain/entities/auth_tokens.dart';
 import 'package:login/src/presentation/bloc/login/login_cubit.dart';
 import 'package:login/src/presentation/bloc/login_form/login_form_cubit.dart';
@@ -45,9 +46,18 @@ class _LoginPageState extends State<LoginPage> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 28),
-                      const Center(child: SwLogo(size: 56)),
-                      const SizedBox(height: 22),
+                      const SizedBox(height: 12),
+                      const Center(child: SwLogo(size: 40)),
+                      const SizedBox(height: 16),
+                      Center(
+                        child: Image.asset(
+                          'assets/images/login_hero.png',
+                          height: 200,
+                          fit: BoxFit.contain,
+                          filterQuality: FilterQuality.high,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
                       Center(child: Text('Sign in', style: SwText.display(size: 30))),
                       const SizedBox(height: 6),
                       Center(
@@ -63,6 +73,7 @@ class _LoginPageState extends State<LoginPage> {
                         placeholder: 'you@company.com',
                         keyboardType: TextInputType.emailAddress,
                         error: formState.showErrors ? formState.emailError : null,
+                        prefix: _InputLeadingIcon(asset: 'assets/icons/mail.svg'),
                       ),
                       const SizedBox(height: 14),
                       SwTextField(
@@ -71,18 +82,14 @@ class _LoginPageState extends State<LoginPage> {
                         placeholder: '••••••••',
                         obscure: _obscurePassword,
                         error: formState.showErrors ? formState.passwordError : null,
+                        prefix: _InputLeadingIcon(asset: 'assets/icons/lock.svg'),
                         trailingAction: GestureDetector(
                           onTap: () {},
                           child: Text('Forgot?', style: SwText.body(size: 14, color: SwColors.link)),
                         ),
-                        suffix: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: SwColors.text3,
-                          ),
-                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        suffix: _PasswordVisibilityToggle(
+                          obscured: _obscurePassword,
+                          onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
                       ),
                       if (failureMessage != null) ...[
@@ -190,6 +197,44 @@ class _NewToContextBlock extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _InputLeadingIcon extends StatelessWidget {
+  const _InputLeadingIcon({required this.asset});
+
+  final String asset;
+
+  @override
+  Widget build(BuildContext context) {
+    return SvgPicture.asset(
+      asset,
+      width: 20,
+      height: 20,
+      colorFilter: const ColorFilter.mode(SwColors.text3, BlendMode.srcIn),
+    );
+  }
+}
+
+class _PasswordVisibilityToggle extends StatelessWidget {
+  const _PasswordVisibilityToggle({required this.obscured, required this.onToggle});
+
+  final bool obscured;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onToggle,
+      splashRadius: 20,
+      tooltip: obscured ? 'Show password' : 'Hide password',
+      icon: SvgPicture.asset(
+        obscured ? 'assets/icons/eye_closed.svg' : 'assets/icons/eye_open.svg',
+        width: 20,
+        height: 20,
+        colorFilter: const ColorFilter.mode(SwColors.text3, BlendMode.srcIn),
       ),
     );
   }
