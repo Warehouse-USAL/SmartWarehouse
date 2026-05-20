@@ -1,8 +1,6 @@
 import 'dart:async';
 
-import 'package:catalog/src/domain/entities/category.dart';
-import 'package:catalog/src/domain/entities/product.dart';
-import 'package:catalog/src/domain/entities/products_page.dart';
+import 'package:catalog/catalog.dart';
 import 'package:catalog/src/domain/repositories/catalog_repository.dart';
 import 'package:catalog/src/presentation/bloc/catalog_cubit.dart';
 import 'package:dartz/dartz.dart';
@@ -42,6 +40,9 @@ Product _p(String id, {String category = 'home'}) => Product(
       sku: 'SKU-$id',
       name: 'Name $id',
       category: Category(id: category, name: category),
+      price: const Money(amount: 1000, currency: 'ARS'),
+      stock: const Stock(available: 10),
+      orderConstraints: const OrderConstraints(maxQuantityPerOrder: 5),
     );
 
 ProductsPage _page(int page, List<Product> items, {required int total, required bool hasNext}) =>

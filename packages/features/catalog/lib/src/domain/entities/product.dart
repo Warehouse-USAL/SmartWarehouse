@@ -1,30 +1,62 @@
 import 'package:catalog/src/domain/entities/category.dart';
+import 'package:catalog/src/domain/entities/money.dart';
+import 'package:catalog/src/domain/entities/order_constraints.dart';
+import 'package:catalog/src/domain/entities/product_image.dart';
+import 'package:catalog/src/domain/entities/product_location.dart';
+import 'package:catalog/src/domain/entities/shipping.dart';
+import 'package:catalog/src/domain/entities/spec.dart';
+import 'package:catalog/src/domain/entities/stock.dart';
 
+/// Producto del catálogo. Estructura alineada al contrato
+/// `docs/superpowers/specs/2026-05-19-api-contracts-design.md`.
+///
+/// Campos siempre presentes: id, sku, name, category, price, stock, orderConstraints.
+/// Campos de la pantalla de detalle (nullables si solo se obtuvo el item desde
+/// el listado): description, images, shipping, specs.
 class Product {
   const Product({
     required this.id,
     required this.sku,
     required this.name,
     required this.category,
-    this.price,
+    required this.price,
+    required this.stock,
+    required this.orderConstraints,
     this.imageUrl,
+    this.location,
+    this.createdAt,
     this.description,
-    this.stock,
+    this.images,
+    this.shipping,
+    this.specs,
   });
 
   final String id;
   final String sku;
   final String name;
   final Category category;
+  final Money price;
+  final Stock stock;
+  final OrderConstraints orderConstraints;
 
-  /// Nullable: the warehouse backend doesn't carry monetary fields. When the
-  /// app is wired against mocks this is populated; against the real API it's
-  /// null and price-related UI hides itself.
-  final double? price;
-
+  /// Thumb del listado.
   final String? imageUrl;
+  final ProductLocation? location;
+  final DateTime? createdAt;
+
+  // Solo presentes en detalle:
   final String? description;
-  final int? stock;
+  final List<ProductImage>? images;
+  final Shipping? shipping;
+  final List<Spec>? specs;
+
+  /// Máximo permitido por orden: el mínimo entre el stock disponible y el
+  /// `maxQuantityPerOrder` definido en `order_constrains`.
+  int get maxOrderableQuantity {
+    final byStock = stock.available;
+    final byPolicy = orderConstraints.maxQuantityPerOrder;
+    return byStock < byPolicy ? byStock : byPolicy;
+  }
 
   bool matchesQuery(String query) {
     if (query.isEmpty) return true;

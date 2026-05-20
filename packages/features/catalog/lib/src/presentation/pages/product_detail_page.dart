@@ -1,4 +1,4 @@
-import 'package:catalog/src/domain/entities/product.dart';
+import 'package:catalog/catalog.dart';
 import 'package:catalog/src/domain/repositories/catalog_repository.dart';
 import 'package:catalog/src/presentation/widgets/qty_stepper.dart';
 import 'package:catalog/src/presentation/widgets/stock_badge.dart';
@@ -79,12 +79,26 @@ class _DetailViewState extends State<_DetailView> {
   int _qty = 1;
   int _activeTab = 0;
   int _activeImage = 0;
-  static const _tabs = ['Description', 'Specs', 'Docs'];
+  static const _tabs = ['Description', 'Specs'];
+
+  List<ProductImage> get _gallery {
+    final imgs = widget.product.images;
+    if (imgs != null && imgs.isNotEmpty) return imgs;
+    final fallback = widget.product.imageUrl;
+    if (fallback != null && fallback.isNotEmpty) {
+      return [ProductImage(url: fallback, isPrimary: true)];
+    }
+    return const [];
+  }
 
   @override
   Widget build(BuildContext context) {
     final p = widget.product;
-    final outOfStock = (p.stock ?? 0) <= 0;
+    final outOfStock = p.stock.isOutOfStock;
+    final maxQty = p.maxOrderableQuantity;
+    final gallery = _gallery;
+    final activeImage =
+        gallery.isEmpty ? null : gallery[_activeImage.clamp(0, gallery.length - 1)];
     return SafeArea(
       child: Column(
         children: [
@@ -99,41 +113,48 @@ class _DetailViewState extends State<_DetailView> {
                     child: AspectRatio(
                       aspectRatio: 1,
                       child: SwImgPlaceholder(
-                        label: 'PRODUCT ${_activeImage + 1} / 4',
+                        label: activeImage?.alt ??
+                            'PRODUCT ${_activeImage + 1}${gallery.isEmpty ? '' : ' / ${gallery.length}'}',
                         tinted: _activeImage == 0,
-                        imageUrl: p.imageUrl,
+                        imageUrl: activeImage?.url,
                         borderRadius: 18,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: List.generate(4, (i) {
-                        final selected = i == _activeImage;
-                        return Expanded(
-                          child: GestureDetector(
-                            onTap: () => setState(() => _activeImage = i),
-                            child: Container(
-                              margin: EdgeInsets.only(right: i < 3 ? 8 : 0),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: selected ? SwColors.text : SwColors.border,
-                                  width: selected ? 2 : 1,
+                  if (gallery.length > 1) ...[
+                    const SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        children: List.generate(gallery.length, (i) {
+                          final selected = i == _activeImage;
+                          return Expanded(
+                            child: GestureDetector(
+                              onTap: () => setState(() => _activeImage = i),
+                              child: Container(
+                                margin: EdgeInsets.only(right: i < gallery.length - 1 ? 8 : 0),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: selected ? SwColors.text : SwColors.border,
+                                    width: selected ? 2 : 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: AspectRatio(
-                                aspectRatio: 1,
-                                child: SwImgPlaceholder(borderRadius: 8, tinted: i == 0),
+                                child: AspectRatio(
+                                  aspectRatio: 1,
+                                  child: SwImgPlaceholder(
+                                    borderRadius: 8,
+                                    tinted: i == 0,
+                                    imageUrl: gallery[i].url,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      }),
+                          );
+                        }),
+                      ),
                     ),
-                  ),
+                  ],
                   const SizedBox(height: 16),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -148,46 +169,50 @@ class _DetailViewState extends State<_DetailView> {
                         Text(p.name, style: SwText.display(size: 22, height: 1.2)),
                         const SizedBox(height: 12),
                         Row(
-                          mainAxisAlignment: p.price == null
-                              ? MainAxisAlignment.start
-                              : MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            if (p.price != null)
-                              Flexible(
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  alignment: Alignment.centerLeft,
-                                  child: Text(_formatPrice(p.price!), style: SwText.display(size: 30)),
-                                ),
-                              ),
-                            if (p.price != null) const SizedBox(width: 8),
                             Flexible(
                               child: FittedBox(
                                 fit: BoxFit.scaleDown,
-                                alignment: p.price == null
-                                    ? Alignment.centerLeft
-                                    : Alignment.centerRight,
+                                alignment: Alignment.centerLeft,
+                                child: Text(p.price.formatted, style: SwText.display(size: 30)),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerRight,
                                 child: StockBadge(stock: p.stock),
                               ),
                             ),
                           ],
                         ),
-                        if (p.price != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            'per unit · ex. VAT',
-                            style: SwText.body(size: 12, color: SwColors.text3),
-                          ),
-                        ],
+                        const SizedBox(height: 4),
+                        Text(
+                          p.price.taxIncluded == true
+                              ? 'per unit · IVA incluido'
+                              : 'per unit · ex. IVA',
+                          style: SwText.body(size: 12, color: SwColors.text3),
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 14),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: _ShipsContextBlock(),
-                  ),
+                  if (p.shipping != null) ...[
+                    const SizedBox(height: 14),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _ShipsContextBlock(shipping: p.shipping!),
+                    ),
+                  ],
+                  if (p.location != null) ...[
+                    const SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _LocationBlock(location: p.location!),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   _Tabs(active: _activeTab, onChanged: (i) => setState(() => _activeTab = i)),
                   Padding(
@@ -198,8 +223,7 @@ class _DetailViewState extends State<_DetailView> {
                               'Sin descripción disponible. Producto del catálogo SmartWarehouse.',
                           style: SwText.body(size: 14, color: SwColors.text2, height: 1.55),
                         ),
-                      1 => _Specs(product: p),
-                      _ => _Docs(),
+                      _ => _Specs(product: p),
                     },
                   ),
                 ],
@@ -208,7 +232,7 @@ class _DetailViewState extends State<_DetailView> {
           ),
           _StickyFooter(
             qty: _qty,
-            stock: p.stock,
+            maxQty: maxQty,
             unitPrice: p.price,
             disabled: outOfStock,
             onQtyChanged: (v) => setState(() => _qty = v),
@@ -257,8 +281,13 @@ class _AppBar extends StatelessWidget {
 }
 
 class _ShipsContextBlock extends StatelessWidget {
+  const _ShipsContextBlock({required this.shipping});
+  final Shipping shipping;
+
   @override
   Widget build(BuildContext context) {
+    final cutoff = shipping.cutoffTime;
+    final pickup = shipping.pickupLocation;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -275,12 +304,55 @@ class _ShipsContextBlock extends StatelessWidget {
                 style: SwText.body(size: 13, color: SwColors.text2, height: 1.4),
                 children: [
                   TextSpan(
-                    text: 'Ships today ',
+                    text: shipping.shipsToday ? 'Sale hoy ' : 'Sale al próximo turno ',
                     style: SwText.body(size: 13, color: SwColors.text, weight: FontWeight.w600),
                   ),
-                  const TextSpan(text: 'if ordered before 4 PM · Bay 14 pickup.'),
+                  TextSpan(
+                    text: cutoff.isEmpty
+                        ? '· Retiro en $pickup.'
+                        : 'si la orden se confirma antes de $cutoff · Retiro en $pickup.',
+                  ),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LocationBlock extends StatelessWidget {
+  const _LocationBlock({required this.location});
+  final ProductLocation location;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: SwColors.white,
+        border: Border.all(color: SwColors.border),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.place_outlined, color: SwColors.text, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Ubicación en depósito',
+                  style: SwText.body(size: 12, color: SwColors.text3),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Zona ${location.idZone} · Línea ${location.idLine} · Posición ${location.idPosition} · Altura ${location.height}',
+                  style: SwText.body(size: 13, weight: FontWeight.w600),
+                ),
+              ],
             ),
           ),
         ],
@@ -305,7 +377,7 @@ class _Tabs extends StatelessWidget {
         children: List.generate(_DetailViewState._tabs.length, (i) {
           final isActive = i == active;
           return Padding(
-            padding: EdgeInsets.only(right: i < 2 ? 24 : 0),
+            padding: EdgeInsets.only(right: i < _DetailViewState._tabs.length - 1 ? 24 : 0),
             child: GestureDetector(
               onTap: () => onChanged(i),
               child: Container(
@@ -341,11 +413,15 @@ class _Specs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Combina specs propias del contrato + SKU + categoría como filas base.
     final entries = <(String, String)>[
       ('SKU', product.sku),
       ('Categoría', product.category.name),
-      ('Stock', '${product.stock ?? '—'}'),
-      if (product.price != null) ('Precio unitario', _formatPrice(product.price!)),
+      ('Stock disponible', '${product.stock.available}'),
+      ('Máx. por orden', '${product.orderConstraints.maxQuantityPerOrder}'),
+      ('Precio unitario', product.price.formatted),
+      if (product.specs != null)
+        for (final s in product.specs!) (s.label, s.value),
     ];
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -378,31 +454,10 @@ class _Specs extends StatelessWidget {
   }
 }
 
-class _Docs extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    Widget link(String label) => Row(
-          children: [
-            const Icon(Icons.receipt_long_outlined, color: SwColors.yellowDark, size: 16),
-            const SizedBox(width: 8),
-            Text(label, style: SwText.body(size: 14, weight: FontWeight.w600, color: SwColors.yellowDark)),
-          ],
-        );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        link('Spec sheet (PDF)'),
-        const SizedBox(height: 10),
-        link('Safety data sheet'),
-      ],
-    );
-  }
-}
-
 class _StickyFooter extends StatelessWidget {
   const _StickyFooter({
     required this.qty,
-    required this.stock,
+    required this.maxQty,
     required this.unitPrice,
     required this.disabled,
     required this.onQtyChanged,
@@ -410,18 +465,16 @@ class _StickyFooter extends StatelessWidget {
   });
 
   final int qty;
-  final int? stock;
-  final double? unitPrice;
+  final int maxQty;
+  final Money unitPrice;
   final bool disabled;
   final ValueChanged<int> onQtyChanged;
   final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
-    final price = unitPrice;
-    final label = price == null
-        ? 'Add to order'
-        : 'Add to order · ${_formatPrice(price * qty)}';
+    final total = unitPrice * qty;
+    final label = 'Add to order · ${total.formatted}';
     return Container(
       decoration: const BoxDecoration(
         color: SwColors.white,
@@ -432,7 +485,7 @@ class _StickyFooter extends StatelessWidget {
         top: false,
         child: Row(
           children: [
-            QtyStepper(value: qty, onChanged: onQtyChanged, min: 1, max: stock, large: true),
+            QtyStepper(value: qty, onChanged: onQtyChanged, min: 1, max: maxQty, large: true),
             const SizedBox(width: 12),
             Expanded(
               child: SwButton(
@@ -446,16 +499,4 @@ class _StickyFooter extends StatelessWidget {
       ),
     );
   }
-}
-
-String _formatPrice(double value) {
-  final whole = value.truncate();
-  final str = whole.toString();
-  final buf = StringBuffer();
-  for (var i = 0; i < str.length; i++) {
-    final fromRight = str.length - i;
-    buf.write(str[i]);
-    if (fromRight > 1 && fromRight % 3 == 1) buf.write('.');
-  }
-  return '\$${buf.toString()}';
 }

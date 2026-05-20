@@ -7,12 +7,11 @@ import 'package:dartz/dartz.dart';
 import 'package:login/src/domain/entities/auth_tokens.dart';
 import 'package:login/src/domain/entities/login_credentials.dart';
 import 'package:login/src/domain/entities/login_failure.dart';
+import 'package:login/src/domain/entities/user.dart';
 import 'package:login/src/domain/repositories/login_repository.dart';
 
-/// Talks to `POST /auth/login` on the SmartWarehouse backend.
-///
-/// Response: `{ token, user: { id, name, email, role } }`. No refresh token —
-/// [AuthTokens.refreshToken] stays `null`.
+/// Talks to `POST /auth/login`. Contrato:
+/// `{ token, user: { id, name, email, role } }`.
 class RemoteLoginRepository implements LoginRepository {
   RemoteLoginRepository({required this.httpHelper});
 
@@ -37,13 +36,26 @@ class RemoteLoginRepository implements LoginRepository {
           if (data is! Map<String, dynamic>) return const Left(UnknownLoginFailure());
           final token = data['token'] as String?;
           if (token == null || token.isEmpty) return const Left(UnknownLoginFailure());
-          return Right(AuthTokens(accessToken: token));
+          return Right(AuthTokens(
+            accessToken: token,
+            user: _parseUser(data['user']),
+          ));
         },
       );
     } catch (e, st) {
       log('login error', error: e, stackTrace: st);
       return const Left(UnknownLoginFailure());
     }
+  }
+
+  User? _parseUser(dynamic raw) {
+    if (raw is! Map<String, dynamic>) return null;
+    return User(
+      id: (raw['id'] as String?) ?? '',
+      name: (raw['name'] as String?) ?? '',
+      email: (raw['email'] as String?) ?? '',
+      role: (raw['role'] as String?) ?? '',
+    );
   }
 
   LoginFailure _mapError(HttpResponseError error) {

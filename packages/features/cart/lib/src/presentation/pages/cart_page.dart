@@ -54,8 +54,8 @@ class CartPage extends StatelessWidget {
 
   Future<void> _onCreateOrderPressed(BuildContext context, Cart cart) async {
     final invalid = cart.items.any((i) {
-      final s = i.product.stock;
-      return i.quantity <= 0 || (s != null && i.quantity > s);
+      final available = i.product.stock.available;
+      return i.quantity <= 0 || i.quantity > available;
     });
     if (invalid) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -63,17 +63,20 @@ class CartPage extends StatelessWidget {
       );
       return;
     }
+    final destination = _destinationFor(cart);
+    if (destination == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo determinar la ubicación de los productos')),
+      );
+      return;
+    }
     final confirmed = await CreateOrderConfirmationDialog.show(context, cart);
     if (!confirmed) return;
-    final items = cart.items
-        .map((i) => OrderItem(
-              productId: i.product.id,
-              productName: i.product.name,
-              unitPrice: i.product.price,
-              quantity: i.quantity,
-            ))
-        .toList();
-    await createOrderCubit.submit(items);
+    await createOrderCubit.submit(items: _toOrderItems(cart), destination: destination);
+  }
+
+  OrderDestination? _destinationFor(Cart cart) {
+    return OrderDestination.fromProductLocations(cart.items.map((i) => i.product));
   }
 
   void _onOrderStateChanged(BuildContext context, CreateOrderState state) {
@@ -93,15 +96,9 @@ class CartPage extends StatelessWidget {
             action: SnackBarAction(
               label: 'Reintentar',
               onPressed: () {
-                final items = cartCubit.state.items
-                    .map((i) => OrderItem(
-                          productId: i.product.id,
-                          productName: i.product.name,
-                          unitPrice: i.product.price,
-                          quantity: i.quantity,
-                        ))
-                    .toList();
-                createOrderCubit.submit(items);
+                final dest = _destinationFor(cartCubit.state);
+                if (dest == null) return;
+                createOrderCubit.submit(items: _toOrderItems(cartCubit.state), destination: dest);
               },
             ),
           ),
@@ -110,6 +107,17 @@ class CartPage extends StatelessWidget {
       case CreateOrderSubmitting():
         break;
     }
+  }
+
+  List<OrderItem> _toOrderItems(Cart cart) {
+    return cart.items
+        .map((i) => OrderItem(
+              productId: i.product.id,
+              productName: i.product.name,
+              unitPrice: i.product.price,
+              quantity: i.quantity,
+            ))
+        .toList();
   }
 
   void _goCatalog(BuildContext context) {
@@ -178,18 +186,14 @@ class _CartBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subtotal = cart.total;
-    final shipping = subtotal == null ? null : (subtotal > 50 ? 0.0 : 5.90);
-    final tax = subtotal == null ? null : subtotal * 0.07;
-    final total = (subtotal == null || shipping == null || tax == null)
-        ? null
-        : subtotal + shipping + tax;
+    final total = cart.total;
+    final destination =
+        OrderDestination.fromProductLocations(cart.items.map((i) => i.product));
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _InfoBanner(),
           _SectionHeading('Items · ${cart.items.length}'),
           _Card(
             child: Padding(
@@ -213,54 +217,27 @@ class _CartBody extends StatelessWidget {
               ),
             ),
           ),
-          _SectionHeading('Delivery'),
-          _Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.location_on_outlined, color: SwColors.yellowDark, size: 22),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Bay 14 · Loading dock B',
-                            style: SwText.body(size: 14, weight: FontWeight.w600)),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Industrial Park Rd 22, Building C',
-                          style: SwText.body(size: 13, color: SwColors.text3),
-                        ),
-                      ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {},
-                    child: Text('Change', style: SwText.body(size: 14, color: SwColors.link)),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (total != null) ...[
-            _SectionHeading('Summary'),
+          if (destination != null) ...[
+            _SectionHeading('Destino'),
             _Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: Column(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _SummaryRow('Subtotal', '\$${subtotal!.toStringAsFixed(2)}'),
-                    _SummaryRow('Shipping', shipping == 0 ? 'Free' : '\$${shipping!.toStringAsFixed(2)}'),
-                    _SummaryRow('Tax (7%)', '\$${tax!.toStringAsFixed(2)}'),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    const Icon(Icons.location_on_outlined, color: SwColors.yellowDark, size: 22),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Total', style: SwText.body(size: 15, weight: FontWeight.w700)),
-                          Text('\$${total.toStringAsFixed(2)}', style: SwText.display(size: 22)),
+                          Text('Zona ${destination.area}',
+                              style: SwText.body(size: 14, weight: FontWeight.w600)),
+                          const SizedBox(height: 2),
+                          Text(
+                            destination.addressLine,
+                            style: SwText.body(size: 13, color: SwColors.text3),
+                          ),
                         ],
                       ),
                     ),
@@ -269,48 +246,29 @@ class _CartBody extends StatelessWidget {
               ),
             ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoBanner extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(top: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: SwColors.infoBg,
-        border: Border.all(color: SwColors.infoBorder),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.local_shipping_outlined, size: 18, color: SwColors.infoText),
-          const SizedBox(width: 10),
-          Expanded(
-            child: RichText(
-              text: TextSpan(
-                style: SwText.body(size: 13, color: SwColors.infoText),
-                children: [
-                  const TextSpan(text: 'Estimated delivery '),
-                  TextSpan(
-                    text: 'Wed, May 8',
-                    style: SwText.body(size: 13, color: SwColors.infoText, weight: FontWeight.w700),
-                  ),
-                  const TextSpan(text: ' to '),
-                  TextSpan(
-                    text: 'Bay 14',
-                    style: SwText.body(size: 13, color: SwColors.infoText, weight: FontWeight.w700),
-                  ),
-                  const TextSpan(text: '. Free shipping over \$50.'),
-                ],
+          if (total != null) ...[
+            _SectionHeading('Resumen'),
+            _Card(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Column(
+                  children: [
+                    _SummaryRow('Items', '${cart.itemCount}'),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Total', style: SwText.body(size: 15, weight: FontWeight.w700)),
+                          Text(total.formatted, style: SwText.display(size: 22)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -378,15 +336,8 @@ class _Footer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subtotal = cart.total;
-    final shipping = subtotal == null ? null : (subtotal > 50 ? 0.0 : 5.90);
-    final tax = subtotal == null ? null : subtotal * 0.07;
-    final total = (subtotal == null || shipping == null || tax == null)
-        ? null
-        : subtotal + shipping + tax;
-    final label = total == null
-        ? 'Confirm order'
-        : 'Confirm order · \$${total.toStringAsFixed(2)}';
+    final total = cart.total;
+    final label = total == null ? 'Confirm order' : 'Confirm order · ${total.formatted}';
     return Container(
       decoration: const BoxDecoration(
         color: SwColors.white,
