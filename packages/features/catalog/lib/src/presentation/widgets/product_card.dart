@@ -1,6 +1,5 @@
 import 'package:catalog/catalog.dart';
 import 'package:catalog/src/presentation/widgets/stock_badge.dart';
-import 'package:catalog/src/presentation/widgets/sw_img_placeholder.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 

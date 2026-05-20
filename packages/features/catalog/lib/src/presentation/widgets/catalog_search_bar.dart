@@ -60,19 +60,10 @@ class CatalogSearchBar extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        SizedBox(
-          height: 44,
-          child: ElevatedButton(
-            onPressed: _submit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: SwColors.yellow,
-              foregroundColor: SwColors.text,
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(horizontal: 18),
-            ),
-            child: Text('Buscar', style: SwText.body(size: 14, weight: FontWeight.w700)),
-          ),
+        SwButton(
+          label: 'Buscar',
+          compact: true,
+          onPressed: _submit,
         ),
       ],
     );

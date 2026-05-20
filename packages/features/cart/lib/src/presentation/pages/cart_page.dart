@@ -193,7 +193,7 @@ class _CartBody extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SectionHeading('Productos · ${cart.items.length}'),
-          _Card(
+          SwCard(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14),
               child: Column(
@@ -220,7 +220,7 @@ class _CartBody extends StatelessWidget {
           // muestra en la UI.
           if (total != null) ...[
             _SectionHeading('Resumen'),
-            _Card(
+            SwCard(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Column(
@@ -278,24 +278,6 @@ class _SummaryRow extends StatelessWidget {
           Text(value, style: SwText.body(size: 14, weight: FontWeight.w600)),
         ],
       ),
-    );
-  }
-}
-
-class _Card extends StatelessWidget {
-  const _Card({required this.child});
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: SwColors.white,
-        border: Border.all(color: SwColors.border),
-        borderRadius: BorderRadius.circular(SwRadii.card),
-        boxShadow: SwShadows.card,
-      ),
-      child: child,
     );
   }
 }

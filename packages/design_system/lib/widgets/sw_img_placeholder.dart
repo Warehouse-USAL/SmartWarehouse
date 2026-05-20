@@ -1,9 +1,10 @@
-import 'package:design_system/design_system.dart';
+import 'package:design_system/theme/sw_tokens.dart';
 import 'package:flutter/material.dart';
 
-/// Diagonal-striped placeholder used in the design instead of real photos.
-/// Optionally renders a small monospace label in the bottom-left corner and a
-/// "tinted" yellow variant.
+/// Placeholder rayado en diagonal usado en el design system en lugar de fotos
+/// reales. Acepta opcionalmente una `imageUrl` (carga la red con fallback a
+/// rayas), un `label` que se muestra en la esquina inferior izquierda, y una
+/// variante `tinted` con fondo amarillo soft.
 class SwImgPlaceholder extends StatelessWidget {
   const SwImgPlaceholder({
     this.label,

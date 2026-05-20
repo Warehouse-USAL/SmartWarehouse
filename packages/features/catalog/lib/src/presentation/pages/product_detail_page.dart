@@ -2,8 +2,6 @@ import 'package:catalog/catalog.dart';
 import 'package:catalog/src/domain/repositories/catalog_repository.dart';
 import 'package:catalog/src/presentation/widgets/qty_stepper.dart';
 import 'package:catalog/src/presentation/widgets/stock_badge.dart';
-import 'package:catalog/src/presentation/widgets/sw_icon_button.dart';
-import 'package:catalog/src/presentation/widgets/sw_img_placeholder.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
@@ -319,14 +317,8 @@ class _Specs extends StatelessWidget {
       if (product.specs != null)
         for (final s in product.specs!) (s.label, s.value),
     ];
-    return Container(
+    return SwCard(
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: SwColors.white,
-        border: Border.all(color: SwColors.border),
-        borderRadius: BorderRadius.circular(SwRadii.card),
-        boxShadow: SwShadows.card,
-      ),
       child: Column(
         children: [
           for (final (i, e) in entries.indexed)

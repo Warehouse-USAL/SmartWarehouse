@@ -2,8 +2,6 @@ import 'package:catalog/src/presentation/bloc/catalog_cubit.dart';
 import 'package:catalog/src/presentation/widgets/catalog_search_bar.dart';
 import 'package:catalog/src/presentation/widgets/product_card.dart';
 import 'package:catalog/src/presentation/widgets/product_card_skeleton.dart';
-import 'package:catalog/src/presentation/widgets/sw_icon_button.dart';
-import 'package:catalog/src/presentation/widgets/sw_logo_mark.dart';
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';

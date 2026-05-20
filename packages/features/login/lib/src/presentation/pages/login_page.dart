@@ -5,7 +5,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:login/src/domain/entities/auth_tokens.dart';
 import 'package:login/src/presentation/bloc/login/login_cubit.dart';
 import 'package:login/src/presentation/bloc/login_form/login_form_cubit.dart';
-import 'package:login/src/presentation/widgets/sw_logo.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({

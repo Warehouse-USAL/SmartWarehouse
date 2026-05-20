@@ -1,9 +1,9 @@
-import 'package:design_system/design_system.dart';
+import 'package:design_system/theme/sw_tokens.dart';
 import 'package:flutter/material.dart';
 
-/// 40×40 square icon button on the surface color with a 12px radius. Optional
-/// yellow dot in the top-right corner (used for notification indicator + cart
-/// count badge).
+/// Botón cuadrado de 40×40 con borde redondeado, sobre `SwColors.surface`.
+/// Acepta un `badge` opcional (típicamente [SwBadge] o un punto de color)
+/// que se renderiza en la esquina superior derecha.
 class SwIconButton extends StatelessWidget {
   const SwIconButton({
     required this.icon,
@@ -45,6 +45,8 @@ class SwIconButton extends StatelessWidget {
   }
 }
 
+/// Contador en formato pill para superponer sobre [SwIconButton] (carrito,
+/// notificaciones). No renderiza nada si `count <= 0`.
 class SwBadge extends StatelessWidget {
   const SwBadge({required this.count, super.key});
   final int count;

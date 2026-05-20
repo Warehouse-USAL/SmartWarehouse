@@ -71,6 +71,20 @@ packages:
       relative: true
     source: path
     version: "0.0.1"
+  cart:
+    dependency: transitive
+    description:
+      path: "../features/cart"
+      relative: true
+    source: path
+    version: "0.0.1"
+  catalog:
+    dependency: transitive
+    description:
+      path: "../features/catalog"
+      relative: true
+    source: path
+    version: "0.0.1"
   characters:
     dependency: transitive
     description:
@@ -571,6 +585,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
+  orders:
+    dependency: transitive
+    description:
+      path: "../features/orders"
+      relative: true
+    source: path
+    version: "0.0.1"
   package_config:
     dependency: transitive
     description:
