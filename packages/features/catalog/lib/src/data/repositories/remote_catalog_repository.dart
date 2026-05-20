@@ -70,7 +70,8 @@ class RemoteCatalogRepository implements CatalogRepository {
 
   @override
   Future<Either<CatalogFailure, List<Category>>> getCategories() async {
-    // Interim: derive uniques from a single large page until /categories ships.
+    // TODO(catalog): replace with GET /categories when the endpoint ships.
+    // Until then we cap at 200 products and may miss categories beyond that.
     final productsResult = await getProducts(page: 1, pageSize: 200);
     return productsResult.map((productsPage) {
       final seen = <String>{};

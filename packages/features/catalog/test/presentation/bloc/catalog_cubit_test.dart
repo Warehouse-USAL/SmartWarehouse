@@ -71,6 +71,28 @@ void main() {
       expect(ready.isLoadingMore, isFalse);
     });
 
+    test('stale first-page response is dropped when a newer load fires', () async {
+      final firstCompleter = Completer<Either<CatalogFailure, ProductsPage>>();
+      var callCount = 0;
+      final repo = _FakeRepo()
+        ..handler = (page, search, _) async {
+          callCount++;
+          if (callCount == 1) return firstCompleter.future;
+          return Right(_page(1, [_p('new')], total: 1, hasNext: false));
+        };
+      final cubit = CatalogCubit(repo);
+
+      final first = cubit.load();
+      final second = cubit.load();
+      firstCompleter.complete(
+        Right(_page(1, [_p('old')], total: 1, hasNext: false)),
+      );
+      await Future.wait([first, second]);
+
+      final ready = cubit.state as CatalogReady;
+      expect(ready.products.single.id, 'new');
+    });
+
     test('emits CatalogError when first-page load fails', () async {
       final repo = _FakeRepo()
         ..handler = (_, __, ___) async => const Left(CatalogFailure('boom'));
