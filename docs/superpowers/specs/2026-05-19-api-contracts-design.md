@@ -132,11 +132,6 @@ Authorization: Bearer <token>
       "low_stock_threshold": 5,
       
     },
-    "shipping": {
-      "ships_today": true,
-      "cutoff_time": "16:00",
-      "pickup_location": "miami"
-    },
     "specs": [
       { "label": "Marca", "value": "Acme Audio" },
       { "label": "Modelo", "value": "AC-700" },
