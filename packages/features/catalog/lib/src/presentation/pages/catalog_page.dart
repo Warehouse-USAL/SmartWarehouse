@@ -1,6 +1,5 @@
 import 'package:catalog/src/presentation/bloc/catalog_cubit.dart';
 import 'package:catalog/src/presentation/widgets/catalog_search_bar.dart';
-import 'package:catalog/src/presentation/widgets/category_filter_bar.dart';
 import 'package:catalog/src/presentation/widgets/product_card.dart';
 import 'package:catalog/src/presentation/widgets/product_card_skeleton.dart';
 import 'package:catalog/src/presentation/widgets/sw_icon_button.dart';
@@ -44,28 +43,24 @@ class _CatalogPageState extends State<CatalogPage> {
           BottomNavigationBarFeatureBuilder.build(context, const NavigationBarOption.products()),
       body: SafeArea(
         bottom: false,
-        child: Column(
-          children: [
-            _CatalogAppBar(cubit: widget.cubit),
-            Expanded(
-              child: BlocBuilder<CatalogCubit, CatalogState>(
-                bloc: widget.cubit,
-                builder: (context, state) {
-                  return switch (state) {
-                    CatalogLoading() => const Center(child: CircularProgressIndicator()),
-                    CatalogError(:final message) =>
-                        _ErrorView(message: message, onRetry: widget.cubit.load),
-                    CatalogReady() => _ReadyView(
-                        cubit: widget.cubit,
-                        state: state,
-                        searchController: _searchController,
-                        onProductTap: (id) => _onProductTap(context, id),
-                      ),
-                  };
-                },
-              ),
-            ),
-          ],
+        child: BlocBuilder<CatalogCubit, CatalogState>(
+          bloc: widget.cubit,
+          builder: (context, state) {
+            return Column(
+              children: [
+                _CatalogAppBar(state: state),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                  child: CatalogSearchBar(
+                    controller: _searchController,
+                    onChanged: widget.cubit.setQuery,
+                    onSubmit: widget.cubit.submitSearch,
+                  ),
+                ),
+                Expanded(child: _Results(cubit: widget.cubit, state: state, onProductTap: _onProductTap)),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -80,13 +75,13 @@ class _CatalogPageState extends State<CatalogPage> {
 }
 
 class _CatalogAppBar extends StatelessWidget {
-  const _CatalogAppBar({required this.cubit});
-  final CatalogCubit cubit;
+  const _CatalogAppBar({required this.state});
+  final CatalogState state;
 
   @override
   Widget build(BuildContext context) {
-    final state = cubit.state;
-    final count = state is CatalogReady ? state.total : 0;
+    final count = state is CatalogReady ? (state as CatalogReady).total : null;
+    final subtitle = count == null ? 'Cargando…' : '$count items';
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
       child: Row(
@@ -114,27 +109,13 @@ class _CatalogAppBar extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(left: 46),
                   child: Text(
-                    '$count items',
+                    subtitle,
                     style: SwText.body(size: 13, color: SwColors.text3),
                   ),
                 ),
               ],
             ),
           ),
-          SwIconButton(
-            icon: Icons.notifications_outlined,
-            onPressed: () {},
-            badge: Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: SwColors.yellowDark,
-                shape: BoxShape.circle,
-                border: Border.all(color: SwColors.surface, width: 2),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
           SwIconButton(
             icon: Icons.logout,
             tooltip: 'Cerrar sesión',
@@ -146,61 +127,51 @@ class _CatalogAppBar extends StatelessWidget {
   }
 }
 
-class _ReadyView extends StatelessWidget {
-  const _ReadyView({
+class _Results extends StatelessWidget {
+  const _Results({
     required this.cubit,
     required this.state,
-    required this.searchController,
     required this.onProductTap,
   });
 
   final CatalogCubit cubit;
-  final CatalogReady state;
-  final TextEditingController searchController;
-  final void Function(String productId) onProductTap;
+  final CatalogState state;
+  final void Function(BuildContext context, String productId) onProductTap;
 
   static const _footerSlotCount = 2;
 
   @override
   Widget build(BuildContext context) {
-    final products = state.products;
-    final showSkeletons = state.isLoadingMore;
-    final showErrorFooter = state.loadMoreError != null && !state.isLoadingMore;
+    final s = state;
+    if (s is CatalogLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (s is CatalogError) {
+      return _ErrorView(message: s.message, onRetry: cubit.load);
+    }
+    final ready = s as CatalogReady;
+    final products = ready.products;
+    final showSkeletons = ready.isLoadingMore;
+    final showErrorFooter = ready.loadMoreError != null && !ready.isLoadingMore;
     final footerSlots = (showSkeletons || showErrorFooter) ? _footerSlotCount : 0;
     final itemCount = products.length + footerSlots;
 
-    final resultText = state.hasNext
-        ? '${products.length} de ${state.total}'
-        : '${state.total} resultado${state.total == 1 ? '' : 's'}';
+    final resultText = ready.hasNext
+        ? '${products.length} de ${ready.total}'
+        : '${ready.total} resultado${ready.total == 1 ? '' : 's'}';
 
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: CatalogSearchBar(controller: searchController, onChanged: cubit.setQuery),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-          child: CategoryFilterBar(
-            categories: state.categories,
-            selectedCategoryId: state.selectedCategoryId,
-            onSelected: cubit.selectCategory,
-          ),
-        ),
-        Padding(
           padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                resultText,
-                style: SwText.body(size: 12, color: SwColors.text3),
-              ),
+              Text(resultText, style: SwText.body(size: 12, color: SwColors.text3)),
             ],
           ),
         ),
         Expanded(
-          child: products.isEmpty && !state.isLoadingMore
+          child: products.isEmpty && !ready.isLoadingMore
               ? const _EmptyView()
               : GridView.builder(
                   controller: cubit.scrollController,
@@ -219,65 +190,23 @@ class _ReadyView extends StatelessWidget {
                       return ProductCard(
                         product: product,
                         tinted: tinted,
-                        onTap: () => onProductTap(product.id),
+                        onTap: () => onProductTap(context, product.id),
                       );
                     }
-                    if (showSkeletons) {
-                      return const ProductCardSkeleton();
+                    if (showErrorFooter) {
+                      return Center(
+                        child: TextButton(
+                          onPressed: cubit.retryLoadMore,
+                          child: Text('Reintentar',
+                              style: SwText.body(size: 13, color: SwColors.link, weight: FontWeight.w700)),
+                        ),
+                      );
                     }
-                    return _LoadMoreErrorCard(
-                      message: state.loadMoreError!,
-                      onRetry: cubit.retryLoadMore,
-                    );
+                    return const ProductCardSkeleton();
                   },
                 ),
         ),
       ],
-    );
-  }
-}
-
-class _LoadMoreErrorCard extends StatelessWidget {
-  const _LoadMoreErrorCard({required this.message, required this.onRetry});
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: SwColors.white,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onRetry,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: SwColors.border),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, color: SwColors.stockOut, size: 28),
-              const SizedBox(height: 8),
-              Text(
-                message,
-                style: SwText.body(size: 12, color: SwColors.text3),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Tocá para reintentar',
-                style: SwText.body(size: 11, weight: FontWeight.w600),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

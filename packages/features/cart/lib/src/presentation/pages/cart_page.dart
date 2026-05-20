@@ -137,7 +137,7 @@ class _CartAppBar extends StatelessWidget {
             onPressed: () => Navigator.of(context).maybePop(),
           ),
           Expanded(
-            child: Center(child: Text('Your order', style: SwText.display(size: 20))),
+            child: Center(child: Text('Tu pedido', style: SwText.display(size: 20))),
           ),
           const SizedBox(width: 40),
         ],
@@ -160,12 +160,12 @@ class _EmptyView extends StatelessWidget {
           children: [
             const Icon(Icons.shopping_cart_outlined, size: 48, color: SwColors.text3),
             const SizedBox(height: 12),
-            Text('Tu carrito está vacío', style: SwText.body(size: 14, color: SwColors.text3)),
+            Text('Tu pedido está vacío', style: SwText.body(size: 14, color: SwColors.text3)),
             const SizedBox(height: 16),
             SizedBox(
               width: 220,
               child: SwButton(
-                label: 'Browse catalog',
+                label: 'Ir al catálogo',
                 variant: SwButtonVariant.secondary,
                 onPressed: onContinue,
               ),
@@ -187,14 +187,12 @@ class _CartBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final total = cart.total;
-    final destination =
-        OrderDestination.fromProductLocations(cart.items.map((i) => i.product));
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionHeading('Items · ${cart.items.length}'),
+          _SectionHeading('Productos · ${cart.items.length}'),
           _Card(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -217,35 +215,9 @@ class _CartBody extends StatelessWidget {
               ),
             ),
           ),
-          if (destination != null) ...[
-            _SectionHeading('Destino'),
-            _Card(
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.location_on_outlined, color: SwColors.yellowDark, size: 22),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Zona ${destination.area}',
-                              style: SwText.body(size: 14, weight: FontWeight.w600)),
-                          const SizedBox(height: 2),
-                          Text(
-                            destination.addressLine,
-                            style: SwText.body(size: 13, color: SwColors.text3),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+          // Bloque "Destino" oculto por ahora — el destination se sigue
+          // derivando de las ubicaciones para mandarlo al backend, pero no se
+          // muestra en la UI.
           if (total != null) ...[
             _SectionHeading('Resumen'),
             _Card(
@@ -253,7 +225,7 @@ class _CartBody extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Column(
                   children: [
-                    _SummaryRow('Items', '${cart.itemCount}'),
+                    _SummaryRow('Unidades', '${cart.itemCount}'),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       child: Row(
@@ -337,7 +309,7 @@ class _Footer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final total = cart.total;
-    final label = total == null ? 'Confirm order' : 'Confirm order · ${total.formatted}';
+    final label = total == null ? 'Confirmar pedido' : 'Confirmar pedido · ${total.formatted}';
     return Container(
       decoration: const BoxDecoration(
         color: SwColors.white,
@@ -353,7 +325,7 @@ class _Footer extends StatelessWidget {
           const SizedBox(height: 8),
           GestureDetector(
             onTap: onContinue,
-            child: Text('Continue shopping', style: SwText.body(size: 14, color: SwColors.link)),
+            child: Text('Seguir comprando', style: SwText.body(size: 14, color: SwColors.link)),
           ),
         ],
       ),

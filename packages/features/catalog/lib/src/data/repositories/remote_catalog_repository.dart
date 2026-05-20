@@ -153,7 +153,6 @@ class RemoteCatalogRepository implements CatalogRepository {
       orderConstraints: _parseOrderConstraints(json['order_constrains']),
       description: json['description'] as String?,
       images: _parseImages(json['images']),
-      shipping: _parseShipping(json['shipping']),
       specs: _parseSpecs(json['specs']),
     );
   }
@@ -235,15 +234,6 @@ class RemoteCatalogRepository implements CatalogRepository {
               isPrimary: (j['is_primary'] as bool?) ?? false,
             ))
         .toList(growable: false);
-  }
-
-  Shipping? _parseShipping(dynamic raw) {
-    if (raw is! Map<String, dynamic>) return null;
-    return Shipping(
-      shipsToday: (raw['ships_today'] as bool?) ?? false,
-      cutoffTime: (raw['cutoff_time'] as String?) ?? '',
-      pickupLocation: (raw['pickup_location'] as String?) ?? '',
-    );
   }
 
   List<Spec>? _parseSpecs(dynamic raw) {

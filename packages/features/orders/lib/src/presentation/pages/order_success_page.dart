@@ -29,11 +29,11 @@ class OrderSuccessPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              Center(child: Text('¡Orden creada!', style: SwText.display(size: 26))),
+              Center(child: Text('¡Pedido creado!', style: SwText.display(size: 26))),
               const SizedBox(height: 8),
               Center(
                 child: Text(
-                  'Tu orden fue registrada. Te avisamos cuando esté en camino.',
+                  'Tu pedido fue registrado. Te avisamos cuando esté en camino.',
                   textAlign: TextAlign.center,
                   style: SwText.body(size: 14, color: SwColors.text3),
                 ),
@@ -63,7 +63,7 @@ class OrderSuccessPage extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Order number', style: SwText.body(size: 12, color: SwColors.text3)),
+                          Text('N° de pedido', style: SwText.body(size: 12, color: SwColors.text3)),
                           const SizedBox(height: 2),
                           Text(orderId, style: SwText.mono(size: 16, color: SwColors.text, letterSpacing: 0.08)),
                         ],
@@ -83,7 +83,7 @@ class OrderSuccessPage extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               SwButton(
-                label: 'Ver mis órdenes',
+                label: 'Ver mis pedidos',
                 variant: SwButtonVariant.secondary,
                 onPressed: () {},
               ),

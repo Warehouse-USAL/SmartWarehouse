@@ -203,7 +203,7 @@ void main() {
       expect(repo.calls.last.categoryId, 'home');
     });
 
-    test('setQuery debounces and only fires once', () async {
+    test('setQuery alone does not trigger a fetch', () async {
       final repo = _FakeRepo()
         ..handler = (page, search, _) async =>
             Right(_page(page, const [], total: 0, hasNext: false));
@@ -214,10 +214,24 @@ void main() {
       cubit.setQuery('a');
       cubit.setQuery('ab');
       cubit.setQuery('abc');
-      await Future<void>.delayed(const Duration(milliseconds: 350));
+      await Future<void>.delayed(const Duration(milliseconds: 50));
 
-      final queryCalls = repo.calls.where((c) => c.search == 'abc');
-      expect(queryCalls, hasLength(1));
+      expect(repo.calls, isEmpty);
+    });
+
+    test('submitSearch fires fetch with the query', () async {
+      final repo = _FakeRepo()
+        ..handler = (page, search, _) async =>
+            Right(_page(page, const [], total: 0, hasNext: false));
+      final cubit = CatalogCubit(repo);
+      await cubit.load();
+      repo.calls.clear();
+
+      await cubit.submitSearch('abc');
+
+      expect(repo.calls, hasLength(1));
+      expect(repo.calls.single.search, 'abc');
+      expect(repo.calls.single.page, 1);
     });
   });
 }

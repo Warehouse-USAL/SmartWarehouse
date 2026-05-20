@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:catalog/src/domain/entities/category.dart';
 import 'package:catalog/src/domain/repositories/catalog_repository.dart';
 import 'package:catalog/src/presentation/bloc/catalog_state.dart';
@@ -15,11 +13,9 @@ class CatalogCubit extends Cubit<CatalogState> {
 
   static const _pageSize = 20;
   static const _triggerOffsetPx = 300.0;
-  static const _searchDebounce = Duration(milliseconds: 250);
 
   final CatalogRepository _repository;
   late final ScrollController scrollController;
-  Timer? _searchDebounceTimer;
   int _requestSeq = 0;
 
   String _query = '';
@@ -93,15 +89,19 @@ class CatalogCubit extends Cubit<CatalogState> {
     );
   }
 
+  /// El input mantiene la query localmente pero NO dispara fetch.
   void setQuery(String q) {
     _query = q;
-    _searchDebounceTimer?.cancel();
-    _searchDebounceTimer = Timer(_searchDebounce, load);
+  }
+
+  /// Disparado por el botón "Buscar".
+  Future<void> submitSearch(String q) async {
+    _query = q;
+    await load();
   }
 
   void selectCategory(String? id) {
     _categoryId = id;
-    _searchDebounceTimer?.cancel();
     load();
   }
 
@@ -118,7 +118,6 @@ class CatalogCubit extends Cubit<CatalogState> {
 
   @override
   Future<void> close() {
-    _searchDebounceTimer?.cancel();
     scrollController.removeListener(_onScroll);
     scrollController.dispose();
     return super.close();

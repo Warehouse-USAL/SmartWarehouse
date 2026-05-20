@@ -47,13 +47,6 @@ class CartItemTile extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (p.location != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    'Zona ${p.location!.idZone} · L${p.location!.idLine} · P${p.location!.idPosition}',
-                    style: SwText.body(size: 11, color: SwColors.text3),
-                  ),
-                ],
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -73,7 +66,7 @@ class CartItemTile extends StatelessWidget {
                         ),
                         GestureDetector(
                           onTap: onRemove,
-                          child: Text('Remove',
+                          child: Text('Quitar',
                               style: SwText.body(size: 12, color: SwColors.link)),
                         ),
                       ],

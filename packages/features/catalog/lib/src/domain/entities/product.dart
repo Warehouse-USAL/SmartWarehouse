@@ -3,7 +3,6 @@ import 'package:catalog/src/domain/entities/money.dart';
 import 'package:catalog/src/domain/entities/order_constraints.dart';
 import 'package:catalog/src/domain/entities/product_image.dart';
 import 'package:catalog/src/domain/entities/product_location.dart';
-import 'package:catalog/src/domain/entities/shipping.dart';
 import 'package:catalog/src/domain/entities/spec.dart';
 import 'package:catalog/src/domain/entities/stock.dart';
 
@@ -12,7 +11,7 @@ import 'package:catalog/src/domain/entities/stock.dart';
 ///
 /// Campos siempre presentes: id, sku, name, category, price, stock, orderConstraints.
 /// Campos de la pantalla de detalle (nullables si solo se obtuvo el item desde
-/// el listado): description, images, shipping, specs.
+/// el listado): description, images, specs.
 class Product {
   const Product({
     required this.id,
@@ -27,7 +26,6 @@ class Product {
     this.createdAt,
     this.description,
     this.images,
-    this.shipping,
     this.specs,
   });
 
@@ -47,7 +45,6 @@ class Product {
   // Solo presentes en detalle:
   final String? description;
   final List<ProductImage>? images;
-  final Shipping? shipping;
   final List<Spec>? specs;
 
   /// Máximo permitido por orden: el mínimo entre el stock disponible y el

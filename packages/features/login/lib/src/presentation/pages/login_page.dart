@@ -58,11 +58,11 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       const SizedBox(height: 18),
-                      Center(child: Text('Sign in', style: SwText.display(size: 30))),
+                      Center(child: Text('Iniciar sesión', style: SwText.display(size: 30))),
                       const SizedBox(height: 6),
                       Center(
                         child: Text(
-                          'Manage your orders and deliveries.',
+                          'Gestioná tus pedidos y entregas.',
                           style: SwText.body(size: 14, color: SwColors.text3),
                         ),
                       ),
@@ -70,7 +70,7 @@ class _LoginPageState extends State<LoginPage> {
                       SwTextField(
                         controller: widget.formCubit.emailController,
                         label: 'Email',
-                        placeholder: 'you@company.com',
+                        placeholder: 'vos@empresa.com',
                         keyboardType: TextInputType.emailAddress,
                         error: formState.showErrors ? formState.emailError : null,
                         prefix: _InputLeadingIcon(asset: 'assets/icons/mail.svg'),
@@ -78,14 +78,14 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: 14),
                       SwTextField(
                         controller: widget.formCubit.passwordController,
-                        label: 'Password',
+                        label: 'Contraseña',
                         placeholder: '••••••••',
                         obscure: _obscurePassword,
                         error: formState.showErrors ? formState.passwordError : null,
                         prefix: _InputLeadingIcon(asset: 'assets/icons/lock.svg'),
                         trailingAction: GestureDetector(
                           onTap: () {},
-                          child: Text('Forgot?', style: SwText.body(size: 14, color: SwColors.link)),
+                          child: Text('¿Olvidaste?', style: SwText.body(size: 14, color: SwColors.link)),
                         ),
                         suffix: _PasswordVisibilityToggle(
                           obscured: _obscurePassword,
@@ -98,18 +98,10 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                       const SizedBox(height: 22),
                       SwButton(
-                        label: 'Sign in',
+                        label: 'Iniciar sesión',
                         isLoading: isSubmitting,
                         onPressed: () => _onSubmit(context),
                       ),
-                      const SizedBox(height: 10),
-                      SwButton(
-                        label: 'Continue with SSO',
-                        variant: SwButtonVariant.secondary,
-                        onPressed: () {},
-                      ),
-                      const SizedBox(height: 22),
-                      const _NewToContextBlock(),
                       const SizedBox(height: 28),
                       Center(
                         child: RichText(
@@ -117,10 +109,10 @@ class _LoginPageState extends State<LoginPage> {
                           text: TextSpan(
                             style: SwText.body(size: 12, color: SwColors.text3),
                             children: [
-                              const TextSpan(text: 'By continuing you agree to our '),
-                              TextSpan(text: 'Terms', style: SwText.body(size: 12, color: SwColors.link)),
-                              const TextSpan(text: ' and '),
-                              TextSpan(text: 'Privacy Policy', style: SwText.body(size: 12, color: SwColors.link)),
+                              const TextSpan(text: 'Al continuar aceptás los '),
+                              TextSpan(text: 'Términos', style: SwText.body(size: 12, color: SwColors.link)),
+                              const TextSpan(text: ' y la '),
+                              TextSpan(text: 'Política de Privacidad', style: SwText.body(size: 12, color: SwColors.link)),
                               const TextSpan(text: '.'),
                             ],
                           ),
@@ -154,54 +146,6 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-class _NewToContextBlock extends StatelessWidget {
-  const _NewToContextBlock();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: SwColors.yellowSoft,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: SwColors.yellow,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.inventory_2_outlined, size: 16, color: SwColors.text),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: RichText(
-              text: TextSpan(
-                style: SwText.body(size: 13, color: SwColors.text2, height: 1.45),
-                children: [
-                  TextSpan(
-                    text: 'New to SmartWarehouse? ',
-                    style: SwText.body(size: 13, color: SwColors.text, weight: FontWeight.w600),
-                  ),
-                  TextSpan(
-                    text: 'Request access',
-                    style: SwText.body(size: 13, color: SwColors.yellowDark, weight: FontWeight.w600),
-                  ),
-                  const TextSpan(text: ' from your account manager.'),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _InputLeadingIcon extends StatelessWidget {
   const _InputLeadingIcon({required this.asset});
 
@@ -229,7 +173,7 @@ class _PasswordVisibilityToggle extends StatelessWidget {
     return IconButton(
       onPressed: onToggle,
       splashRadius: 20,
-      tooltip: obscured ? 'Show password' : 'Hide password',
+      tooltip: obscured ? 'Mostrar contraseña' : 'Ocultar contraseña',
       icon: SvgPicture.asset(
         obscured ? 'assets/icons/eye_closed.svg' : 'assets/icons/eye_open.svg',
         width: 20,

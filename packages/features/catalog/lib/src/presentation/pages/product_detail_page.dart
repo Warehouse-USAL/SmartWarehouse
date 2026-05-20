@@ -79,7 +79,7 @@ class _DetailViewState extends State<_DetailView> {
   int _qty = 1;
   int _activeTab = 0;
   int _activeImage = 0;
-  static const _tabs = ['Description', 'Specs'];
+  static const _tabs = ['Descripción', 'Especificaciones'];
 
   List<ProductImage> get _gallery {
     final imgs = widget.product.images;
@@ -189,30 +189,9 @@ class _DetailViewState extends State<_DetailView> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          p.price.taxIncluded == true
-                              ? 'per unit · IVA incluido'
-                              : 'per unit · ex. IVA',
-                          style: SwText.body(size: 12, color: SwColors.text3),
-                        ),
                       ],
                     ),
                   ),
-                  if (p.shipping != null) ...[
-                    const SizedBox(height: 14),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: _ShipsContextBlock(shipping: p.shipping!),
-                    ),
-                  ],
-                  if (p.location != null) ...[
-                    const SizedBox(height: 10),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: _LocationBlock(location: p.location!),
-                    ),
-                  ],
                   const SizedBox(height: 16),
                   _Tabs(active: _activeTab, onChanged: (i) => setState(() => _activeTab = i)),
                   Padding(
@@ -241,7 +220,7 @@ class _DetailViewState extends State<_DetailView> {
                 widget.onAddToCart(p);
               }
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('${p.name} agregado al carrito')),
+                SnackBar(content: Text('${p.name} agregado al pedido')),
               );
             },
           ),
@@ -271,90 +250,8 @@ class _AppBar extends StatelessWidget {
               ),
             ),
           ),
-          SwIconButton(icon: Icons.favorite_border, onPressed: () {}),
-          const SizedBox(width: 8),
-          SwIconButton(icon: Icons.share_outlined, onPressed: () {}),
-        ],
-      ),
-    );
-  }
-}
-
-class _ShipsContextBlock extends StatelessWidget {
-  const _ShipsContextBlock({required this.shipping});
-  final Shipping shipping;
-
-  @override
-  Widget build(BuildContext context) {
-    final cutoff = shipping.cutoffTime;
-    final pickup = shipping.pickupLocation;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: SwColors.yellowSoft,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.local_shipping_outlined, color: SwColors.yellowDark, size: 22),
-          const SizedBox(width: 10),
-          Expanded(
-            child: RichText(
-              text: TextSpan(
-                style: SwText.body(size: 13, color: SwColors.text2, height: 1.4),
-                children: [
-                  TextSpan(
-                    text: shipping.shipsToday ? 'Sale hoy ' : 'Sale al próximo turno ',
-                    style: SwText.body(size: 13, color: SwColors.text, weight: FontWeight.w600),
-                  ),
-                  TextSpan(
-                    text: cutoff.isEmpty
-                        ? '· Retiro en $pickup.'
-                        : 'si la orden se confirma antes de $cutoff · Retiro en $pickup.',
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LocationBlock extends StatelessWidget {
-  const _LocationBlock({required this.location});
-  final ProductLocation location;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: SwColors.white,
-        border: Border.all(color: SwColors.border),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.place_outlined, color: SwColors.text, size: 22),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Ubicación en depósito',
-                  style: SwText.body(size: 12, color: SwColors.text3),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Zona ${location.idZone} · Línea ${location.idLine} · Posición ${location.idPosition} · Altura ${location.height}',
-                  style: SwText.body(size: 13, weight: FontWeight.w600),
-                ),
-              ],
-            ),
-          ),
+          // Espaciador para mantener el SKU centrado (mismo ancho que el botón back).
+          const SizedBox(width: 40),
         ],
       ),
     );
@@ -413,7 +310,6 @@ class _Specs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Combina specs propias del contrato + SKU + categoría como filas base.
     final entries = <(String, String)>[
       ('SKU', product.sku),
       ('Categoría', product.category.name),
@@ -474,7 +370,7 @@ class _StickyFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final total = unitPrice * qty;
-    final label = 'Add to order · ${total.formatted}';
+    final label = 'Agregar al pedido · ${total.formatted}';
     return Container(
       decoration: const BoxDecoration(
         color: SwColors.white,
