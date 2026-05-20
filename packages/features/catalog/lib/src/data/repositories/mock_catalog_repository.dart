@@ -1,5 +1,6 @@
 import 'package:catalog/src/domain/entities/category.dart';
 import 'package:catalog/src/domain/entities/product.dart';
+import 'package:catalog/src/domain/entities/products_page.dart';
 import 'package:catalog/src/domain/repositories/catalog_repository.dart';
 import 'package:dartz/dartz.dart';
 
@@ -115,9 +116,42 @@ class MockCatalogRepository implements CatalogRepository {
   ];
 
   @override
-  Future<Either<CatalogFailure, List<Product>>> getProducts() async {
+  Future<Either<CatalogFailure, ProductsPage>> getProducts({
+    int page = 1,
+    int pageSize = 20,
+    String? search,
+    String? categoryId,
+  }) async {
     await Future<void>.delayed(const Duration(milliseconds: 400));
-    return Right(List.unmodifiable(_products));
+
+    Iterable<Product> filtered = _products;
+    if (categoryId != null) {
+      filtered = filtered.where((p) => p.category.id == categoryId);
+    }
+    if (search != null && search.isNotEmpty) {
+      filtered = filtered.where((p) => p.matchesQuery(search));
+    }
+    final all = filtered.toList(growable: false);
+    final total = all.length;
+    final start = (page - 1) * pageSize;
+    if (start >= total) {
+      return Right(ProductsPage(
+        items: const [],
+        page: page,
+        pageSize: pageSize,
+        total: total,
+        hasNext: false,
+      ));
+    }
+    final end = (start + pageSize).clamp(0, total);
+    final slice = all.sublist(start, end);
+    return Right(ProductsPage(
+      items: slice,
+      page: page,
+      pageSize: pageSize,
+      total: total,
+      hasNext: end < total,
+    ));
   }
 
   @override

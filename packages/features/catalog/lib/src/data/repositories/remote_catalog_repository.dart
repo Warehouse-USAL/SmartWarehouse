@@ -2,25 +2,34 @@ import 'dart:developer';
 
 import 'package:catalog/src/domain/entities/category.dart';
 import 'package:catalog/src/domain/entities/product.dart';
+import 'package:catalog/src/domain/entities/products_page.dart';
 import 'package:catalog/src/domain/repositories/catalog_repository.dart';
 import 'package:commons/commons.dart';
 import 'package:dartz/dartz.dart';
 
 /// Talks to the SmartWarehouse REST API:
-///   GET /products?category=&search=&isActive=
+///   GET /products?page=&page_size=&search=&category=
 ///   GET /products/{id}
-///
-/// Backend uses snake_case JSON. There is no `price` field; the local
-/// [Product.price] stays `null` for products coming from the real API.
 class RemoteCatalogRepository implements CatalogRepository {
   RemoteCatalogRepository({required this.httpHelper});
 
   final HttpHelper httpHelper;
 
   @override
-  Future<Either<CatalogFailure, List<Product>>> getProducts() async {
+  Future<Either<CatalogFailure, ProductsPage>> getProducts({
+    int page = 1,
+    int pageSize = 20,
+    String? search,
+    String? categoryId,
+  }) async {
     try {
-      final result = await httpHelper.get('/products');
+      final query = <String, dynamic>{
+        'page': page,
+        'page_size': pageSize,
+        if (search != null && search.isNotEmpty) 'search': search,
+        if (categoryId != null && categoryId.isNotEmpty) 'category': categoryId,
+      };
+      final result = await httpHelper.get('/products', queryParameters: query);
       return result.fold(
         (error) => Left(CatalogFailure(error.message ?? 'Error obteniendo productos')),
         (response) {
@@ -29,12 +38,28 @@ class RemoteCatalogRepository implements CatalogRepository {
             return const Left(CatalogFailure('Respuesta inválida'));
           }
           final list = (data['products'] as List?) ?? const [];
-          return Right(
-            list
-                .whereType<Map<String, dynamic>>()
-                .map(_parseProduct)
-                .toList(growable: false),
-          );
+          final items = list
+              .whereType<Map<String, dynamic>>()
+              .map(_parseProduct)
+              .toList(growable: false);
+          final pagination = data['pagination'];
+          if (pagination is Map<String, dynamic>) {
+            return Right(ProductsPage(
+              items: items,
+              page: (pagination['page'] as num?)?.toInt() ?? page,
+              pageSize: (pagination['page_size'] as num?)?.toInt() ?? pageSize,
+              total: (pagination['total'] as num?)?.toInt() ?? items.length,
+              hasNext: (pagination['has_next'] as bool?) ?? false,
+            ));
+          }
+          // Backend hasn't shipped pagination yet — treat as single page.
+          return Right(ProductsPage(
+            items: items,
+            page: 1,
+            pageSize: items.length,
+            total: items.length,
+            hasNext: false,
+          ));
         },
       );
     } catch (e, st) {
@@ -45,18 +70,16 @@ class RemoteCatalogRepository implements CatalogRepository {
 
   @override
   Future<Either<CatalogFailure, List<Category>>> getCategories() async {
-    // Backend has no /categories endpoint — derive uniques from /products.
-    final productsResult = await getProducts();
-    return productsResult.map(
-      (products) {
-        final seen = <String>{};
-        final out = <Category>[];
-        for (final p in products) {
-          if (seen.add(p.category.id)) out.add(p.category);
-        }
-        return out;
-      },
-    );
+    // Interim: derive uniques from a single large page until /categories ships.
+    final productsResult = await getProducts(page: 1, pageSize: 200);
+    return productsResult.map((productsPage) {
+      final seen = <String>{};
+      final out = <Category>[];
+      for (final p in productsPage.items) {
+        if (seen.add(p.category.id)) out.add(p.category);
+      }
+      return out;
+    });
   }
 
   @override
@@ -102,7 +125,6 @@ class RemoteCatalogRepository implements CatalogRepository {
       imageUrl: json['image_url'] as String?,
       description: json['description'] as String?,
       stock: available,
-      // price is intentionally not provided by the warehouse backend
     );
   }
 
