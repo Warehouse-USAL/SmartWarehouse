@@ -1,29 +1,27 @@
 import 'dart:developer';
 
+import 'package:catalog/catalog.dart';
 import 'package:commons/commons.dart';
 import 'package:commons/helpers/http/entities/http_response_error.dart';
 import 'package:dartz/dartz.dart' hide Order;
 import 'package:orders/src/domain/entities/order.dart';
+import 'package:orders/src/domain/entities/order_destination.dart';
 import 'package:orders/src/domain/entities/order_item.dart';
 import 'package:orders/src/domain/entities/order_status.dart';
 import 'package:orders/src/domain/repositories/order_repository.dart';
 
-/// Talks to `POST /orders` on the SmartWarehouse backend.
-///
-/// Request shape (snake_case): `{ items: [{product_id, quantity}], destination_area }`.
-/// The backend doesn't carry monetary fields — the returned [Order.total] is
-/// computed locally from the items the caller already had on hand.
+/// Talks to `POST /orders` y `POST /orders/:id/cancel` según contrato
+/// `docs/superpowers/specs/2026-05-19-api-contracts-design.md`.
 class RemoteOrderRepository implements OrderRepository {
-  RemoteOrderRepository({required this.httpHelper, this.destinationArea = 'AREA-A'});
+  RemoteOrderRepository({required this.httpHelper});
 
   final HttpHelper httpHelper;
 
-  /// Hardcoded for now — UI doesn't collect this. The backend rejects orders
-  /// without it.
-  final String destinationArea;
-
   @override
-  Future<Either<OrderFailure, Order>> create(List<OrderItem> items) async {
+  Future<Either<OrderFailure, Order>> create({
+    required List<OrderItem> items,
+    required OrderDestination destination,
+  }) async {
     try {
       final result = await httpHelper.post(
         '/orders',
@@ -31,7 +29,10 @@ class RemoteOrderRepository implements OrderRepository {
           'items': items
               .map((i) => {'product_id': i.productId, 'quantity': i.quantity})
               .toList(),
-          'destination_area': destinationArea,
+          'destination': {
+            'area': destination.area,
+            'address_line': destination.addressLine,
+          },
         },
       );
       return result.fold(
@@ -54,6 +55,26 @@ class RemoteOrderRepository implements OrderRepository {
     }
   }
 
+  @override
+  Future<Either<OrderFailure, Unit>> cancel({
+    required String id,
+    required String reason,
+  }) async {
+    try {
+      final result = await httpHelper.post(
+        '/orders/$id/cancel',
+        data: {'reason': reason},
+      );
+      return result.fold(
+        (error) => Left(OrderFailure(_mapError(error))),
+        (_) => const Right(unit),
+      );
+    } catch (e, st) {
+      log('cancelOrder error', error: e, stackTrace: st);
+      return const Left(OrderFailure('Error de red'));
+    }
+  }
+
   String _mapError(HttpResponseError error) {
     if (error.statusCode == 401 || error.statusCode == 403) {
       return 'No tenés permisos para crear órdenes';
@@ -67,20 +88,6 @@ class RemoteOrderRepository implements OrderRepository {
   Order _parseOrder(Map<String, dynamic> json, {required List<OrderItem> fallbackItems}) {
     final id = (json['id'] as String?) ?? '';
     final status = _parseStatus(json['status'] as String?);
-    final itemsJson = json['items'] as List?;
-    final items = (itemsJson ?? const [])
-        .whereType<Map<String, dynamic>>()
-        .map((j) => OrderItem(
-              productId: (j['product_id'] as String?) ?? '',
-              productName: '',
-              unitPrice: 0,
-              quantity: (j['quantity'] as num?)?.toInt() ?? 0,
-            ))
-        .toList(growable: false);
-
-    // Backend returns items without product names or prices; preserve the
-    // caller's view of items for UI continuity when available.
-    final mergedItems = items.isEmpty ? fallbackItems : items;
 
     final tsJson = json['timestamps'];
     DateTime createdAt = DateTime.now();
@@ -89,14 +96,21 @@ class RemoteOrderRepository implements OrderRepository {
       if (created != null) {
         createdAt = DateTime.tryParse(created) ?? createdAt;
       }
+    } else if (json['created_at'] is String) {
+      createdAt = DateTime.tryParse(json['created_at'] as String) ?? createdAt;
+    }
+
+    // El backend no devuelve montos en /orders — el total se computa local.
+    final currency = fallbackItems.isEmpty ? 'ARS' : fallbackItems.first.unitPrice.currency;
+    var total = Money.zero(currency);
+    for (final i in fallbackItems) {
+      total = total + i.subtotal;
     }
 
     return Order(
       id: id,
-      items: mergedItems,
-      total: fallbackItems.any((i) => i.subtotal == null)
-          ? null
-          : fallbackItems.fold<double>(0, (sum, i) => sum + (i.subtotal ?? 0)),
+      items: fallbackItems,
+      total: total,
       status: status,
       createdAt: createdAt,
     );

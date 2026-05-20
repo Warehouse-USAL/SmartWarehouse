@@ -1,20 +1,17 @@
+import 'package:catalog/catalog.dart';
+
 class OrderItem {
   const OrderItem({
     required this.productId,
     required this.productName,
     required this.quantity,
-    this.unitPrice,
+    required this.unitPrice,
   });
 
   final String productId;
   final String productName;
   final int quantity;
+  final Money unitPrice;
 
-  /// `null` when the backend product has no price.
-  final double? unitPrice;
-
-  double? get subtotal {
-    final p = unitPrice;
-    return p == null ? null : p * quantity;
-  }
+  Money get subtotal => unitPrice * quantity;
 }

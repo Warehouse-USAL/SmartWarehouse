@@ -1,4 +1,4 @@
-import 'package:catalog/src/domain/entities/product.dart';
+import 'package:catalog/catalog.dart';
 import 'package:catalog/src/presentation/widgets/stock_badge.dart';
 import 'package:catalog/src/presentation/widgets/sw_img_placeholder.dart';
 import 'package:design_system/design_system.dart';
@@ -56,29 +56,24 @@ class ProductCard extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Row(
-                mainAxisAlignment: product.price == null
-                    ? MainAxisAlignment.start
-                    : MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  if (product.price != null)
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          _formatPrice(product.price!),
-                          style: SwText.display(size: 16),
-                        ),
-                      ),
-                    ),
-                  if (product.price != null) const SizedBox(width: 6),
                   Flexible(
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
-                      alignment: product.price == null
-                          ? Alignment.centerLeft
-                          : Alignment.centerRight,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        product.price.formatted,
+                        style: SwText.display(size: 16),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
                       child: StockBadge(stock: product.stock),
                     ),
                   ),
@@ -89,17 +84,5 @@ class ProductCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  static String _formatPrice(double value) {
-    final whole = value.truncate();
-    final str = whole.toString();
-    final buf = StringBuffer();
-    for (var i = 0; i < str.length; i++) {
-      final fromRight = str.length - i;
-      buf.write(str[i]);
-      if (fromRight > 1 && fromRight % 3 == 1) buf.write('.');
-    }
-    return '\$${buf.toString()}';
   }
 }

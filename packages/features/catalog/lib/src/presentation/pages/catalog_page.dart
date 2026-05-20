@@ -114,7 +114,7 @@ class _CatalogAppBar extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(left: 46),
                   child: Text(
-                    '$count items · Bay 14',
+                    '$count items',
                     style: SwText.body(size: 13, color: SwColors.text3),
                   ),
                 ),

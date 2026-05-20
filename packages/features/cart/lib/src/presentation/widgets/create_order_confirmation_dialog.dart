@@ -16,6 +16,7 @@ class CreateOrderConfirmationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final total = cart.total;
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: const Text('Confirmar orden'),
@@ -24,10 +25,10 @@ class CreateOrderConfirmationDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('${cart.itemCount} ${cart.itemCount == 1 ? 'unidad' : 'unidades'}'),
-          if (cart.total != null) ...[
+          if (total != null) ...[
             const SizedBox(height: 4),
             Text(
-              'Total: \$${cart.total!.toStringAsFixed(0)}',
+              'Total: ${total.formatted}',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ],

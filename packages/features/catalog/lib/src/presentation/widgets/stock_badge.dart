@@ -1,3 +1,4 @@
+import 'package:catalog/catalog.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
@@ -5,12 +6,11 @@ enum StockStatus { inStock, low, out }
 
 class StockBadge extends StatelessWidget {
   const StockBadge({required this.stock, super.key});
-  final int? stock;
+  final Stock stock;
 
   StockStatus get _status {
-    if (stock == null) return StockStatus.inStock;
-    if (stock! <= 0) return StockStatus.out;
-    if (stock! <= 5) return StockStatus.low;
+    if (stock.isOutOfStock) return StockStatus.out;
+    if (stock.isLow) return StockStatus.low;
     return StockStatus.inStock;
   }
 
@@ -28,8 +28,8 @@ class StockBadge extends StatelessWidget {
       StockStatus.out => SwColors.stockOut,
     };
     final label = switch (status) {
-      StockStatus.inStock => stock != null ? 'En stock · $stock' : 'En stock',
-      StockStatus.low => 'Bajo · $stock',
+      StockStatus.inStock => 'En stock · ${stock.available}',
+      StockStatus.low => 'Bajo · ${stock.available}',
       StockStatus.out => 'Sin stock',
     };
     return Row(

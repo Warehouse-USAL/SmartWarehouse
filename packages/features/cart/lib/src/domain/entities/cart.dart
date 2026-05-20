@@ -1,4 +1,5 @@
 import 'package:cart/src/domain/entities/cart_item.dart';
+import 'package:catalog/catalog.dart';
 
 class Cart {
   const Cart({required this.items});
@@ -9,19 +10,17 @@ class Cart {
 
   int get itemCount => items.fold(0, (sum, i) => sum + i.quantity);
 
-  /// Sum of subtotals or `null` if any item is priceless.
-  double? get total {
-    if (items.isEmpty) return 0;
-    var sum = 0.0;
+  /// Sum de subtotales. Devuelve `null` si el carrito está vacío (sin moneda
+  /// de referencia).
+  Money? get total {
+    if (items.isEmpty) return null;
+    final currency = items.first.product.price.currency;
+    var sum = Money.zero(currency);
     for (final i in items) {
-      final s = i.subtotal;
-      if (s == null) return null;
-      sum += s;
+      sum = sum + i.subtotal;
     }
     return sum;
   }
-
-  bool get hasPrices => items.every((i) => i.subtotal != null);
 
   bool get isEmpty => items.isEmpty;
 
