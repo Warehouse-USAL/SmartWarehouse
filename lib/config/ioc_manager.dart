@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:beamer/beamer.dart';
+import 'package:flutter/foundation.dart';
 import 'package:commons/helpers/build_data/build_data_helper.dart';
 import 'package:commons/helpers/build_data/package_info_build_data_helper.dart';
 import 'package:commons/helpers/permissions/permissions_handler_package/permissions_handler_helper.dart';
@@ -74,6 +75,7 @@ String _localBackendUrl() {
   if (overrideHost.isNotEmpty) {
     return 'http://$overrideHost:$overridePort';
   }
+  if (kIsWeb) return 'http://localhost:$overridePort';
   final host = Platform.isAndroid ? '10.0.2.2' : 'localhost';
   return 'http://$host:$overridePort';
 }
