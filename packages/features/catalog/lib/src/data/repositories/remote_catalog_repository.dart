@@ -5,15 +5,24 @@ import 'package:catalog/src/domain/repositories/catalog_repository.dart';
 import 'package:commons/commons.dart';
 import 'package:dartz/dartz.dart';
 
-/// Talks to the SmartWarehouse REST API alineado al contrato
-/// `docs/superpowers/specs/2026-05-19-api-contracts-design.md`:
+/// Talks to the SmartWarehouse REST API. Shape acordado con el backend
+/// (ver Warehouse-USAL/wh-backend):
 ///
-///   GET /products?page=&page_size=&search=&category=
-///   GET /products/{id}
-///   GET /categories
+///   GET    /products?category=&search=&isActive=&page=&size=
+///   GET    /products/{id}
+///   GET    /categories      ← TODAVÍA NO IMPLEMENTADO en el backend.
 ///
-/// JSON snake_case. Las keys del contrato se respetan literalmente (incluyendo
-/// `order_constrains` con su typo y `image-url` con guion).
+/// Convenciones del backend:
+/// - Paginación **0-indexed** (`page=0` es la primera).
+/// - Param de tamaño se llama `size`, no `page_size`.
+/// - JSON en **snake_case** (forzado por `JacksonConfig` con
+///   `PropertyNamingStrategies.SNAKE_CASE`): `amount_cents`, `tax_included`,
+///   `is_primary`, `max_quantity_per_order`, `order_constraints`, `created_at`,
+///   etc.
+/// - `category` es un string plano (slug), no un objeto `{id, name}`.
+/// - No hay campo `image_url` plano: el thumb del listado se deriva de
+///   `images[]` (la marcada `is_primary` o la primera).
+/// - No vienen `location` ni `shipping` en el response.
 class RemoteCatalogRepository implements CatalogRepository {
   RemoteCatalogRepository({required this.httpHelper});
 
@@ -27,9 +36,10 @@ class RemoteCatalogRepository implements CatalogRepository {
     String? categoryId,
   }) async {
     try {
+      final backendPage = (page - 1).clamp(0, 1 << 30);
       final query = <String, dynamic>{
-        'page': page,
-        'page_size': pageSize,
+        'page': backendPage,
+        'size': pageSize,
         if (search != null && search.isNotEmpty) 'search': search,
         if (categoryId != null && categoryId.isNotEmpty) 'category': categoryId,
       };
@@ -44,19 +54,22 @@ class RemoteCatalogRepository implements CatalogRepository {
           final list = (data['products'] as List?) ?? const [];
           final items = list
               .whereType<Map<String, dynamic>>()
-              .map(_parseListProduct)
+              .map(_parseProduct)
               .toList(growable: false);
+
           final pagination = data['pagination'];
           if (pagination is Map<String, dynamic>) {
+            final backendPageOut = (pagination['page'] as num?)?.toInt() ?? backendPage;
+            final totalPages = (pagination['total_pages'] as num?)?.toInt() ?? 1;
             return Right(ProductsPage(
               items: items,
-              page: (pagination['page'] as num?)?.toInt() ?? page,
-              pageSize: (pagination['page_size'] as num?)?.toInt() ?? pageSize,
-              total: (pagination['total'] as num?)?.toInt() ?? items.length,
-              hasNext: (pagination['has_next'] as bool?) ?? false,
+              page: backendPageOut + 1, // back a 1-indexed para el cubit
+              pageSize: (pagination['size'] as num?)?.toInt() ?? pageSize,
+              total: (pagination['total_elements'] as num?)?.toInt() ?? items.length,
+              hasNext: backendPageOut + 1 < totalPages,
             ));
           }
-          // Backend hasn't shipped pagination yet — treat as single page.
+          // Backend sin paginación — tratar como página única.
           return Right(ProductsPage(
             items: items,
             page: 1,
@@ -74,28 +87,9 @@ class RemoteCatalogRepository implements CatalogRepository {
 
   @override
   Future<Either<CatalogFailure, List<Category>>> getCategories() async {
-    try {
-      final result = await httpHelper.get('/categories');
-      return result.fold(
-        (error) => Left(CatalogFailure(error.message ?? 'Error obteniendo categorías')),
-        (response) {
-          final data = response.data;
-          if (data is! Map<String, dynamic>) {
-            return const Left(CatalogFailure('Respuesta inválida'));
-          }
-          final list = (data['categories'] as List?) ?? const [];
-          return Right(
-            list
-                .whereType<Map<String, dynamic>>()
-                .map(_parseCategory)
-                .toList(growable: false),
-          );
-        },
-      );
-    } catch (e, st) {
-      log('getCategories error', error: e, stackTrace: st);
-      return const Left(CatalogFailure('Error de red'));
-    }
+    // El backend todavía no tiene `/categories`. Devolvemos lista vacía para
+    // que la UI no rompa cuando alguien lo invoque por error.
+    return const Right([]);
   }
 
   @override
@@ -118,7 +112,7 @@ class RemoteCatalogRepository implements CatalogRepository {
           if (raw is! Map<String, dynamic>) {
             return const Left(CatalogFailure('Respuesta inválida'));
           }
-          return Right(_parseDetailProduct(raw, fallbackId: id));
+          return Right(_parseProduct(raw, fallbackId: id));
         },
       );
     } catch (e, st) {
@@ -127,47 +121,39 @@ class RemoteCatalogRepository implements CatalogRepository {
     }
   }
 
-  Product _parseListProduct(Map<String, dynamic> json) {
+  Product _parseProduct(Map<String, dynamic> json, {String? fallbackId}) {
+    final images = _parseImages(json['images']);
+    // El backend no expone un `image_url` plano para el thumb del listado:
+    // la primera imagen (o la marcada como primary) sirve de fallback.
+    final thumbUrl = _pickThumbUrl(images);
     return Product(
-      id: (json['id'] as String?) ?? '',
+      id: (json['id'] as String?) ?? fallbackId ?? '',
       sku: (json['sku'] as String?) ?? '',
       name: (json['name'] as String?) ?? '',
-      category: _parseCategoryFromAny(json['category']),
+      category: _parseCategory(json['category']),
       price: _parseMoney(json['price']),
       stock: _parseStock(json['stock']),
-      orderConstraints: _parseOrderConstraints(json['order_constrains']),
-      imageUrl: (json['image-url'] as String?) ?? (json['image_url'] as String?),
-      location: _parseLocation(json['location']),
+      orderConstraints: _parseOrderConstraints(json['order_constraints']),
+      description: json['description'] as String?,
+      imageUrl: thumbUrl,
+      images: images,
+      specs: _parseSpecs(json['specs']),
       createdAt: _parseDate(json['created_at']),
     );
   }
 
-  Product _parseDetailProduct(Map<String, dynamic> json, {required String fallbackId}) {
-    return Product(
-      id: (json['id'] as String?) ?? fallbackId,
-      sku: (json['sku'] as String?) ?? '',
-      name: (json['name'] as String?) ?? '',
-      category: _parseCategoryFromAny(json['category']),
-      price: _parseMoney(json['price']),
-      stock: _parseStock(json['stock']),
-      orderConstraints: _parseOrderConstraints(json['order_constrains']),
-      description: json['description'] as String?,
-      images: _parseImages(json['images']),
-      specs: _parseSpecs(json['specs']),
+  String? _pickThumbUrl(List<ProductImage>? images) {
+    if (images == null || images.isEmpty) return null;
+    final primary = images.firstWhere(
+      (img) => img.isPrimary,
+      orElse: () => images.first,
     );
+    return primary.url.isEmpty ? null : primary.url;
   }
 
-  Category _parseCategory(Map<String, dynamic> json) {
-    final id = (json['id'] as String?) ?? '';
-    final name = (json['name'] as String?) ?? id;
-    return Category(
-      id: id,
-      name: name,
-      productCount: (json['product_count'] as num?)?.toInt(),
-    );
-  }
-
-  Category _parseCategoryFromAny(dynamic raw) {
+  /// `category` viene como String plano (slug). Si en el futuro pasa a ser
+  /// objeto `{id, name}`, este parser lo tolera.
+  Category _parseCategory(dynamic raw) {
     if (raw is Map<String, dynamic>) {
       return Category(
         id: (raw['id'] as String?) ?? '',
@@ -175,9 +161,11 @@ class RemoteCatalogRepository implements CatalogRepository {
       );
     }
     if (raw is String) {
-      // Tolerancia: si el backend manda solo un slug.
-      final name = raw.isEmpty ? 'Otros' : raw[0].toUpperCase() + raw.substring(1).replaceAll('_', ' ');
-      return Category(id: raw, name: name);
+      final slug = raw;
+      final name = slug.isEmpty
+          ? 'Otros'
+          : slug[0].toUpperCase() + slug.substring(1).replaceAll('_', ' ');
+      return Category(id: slug, name: name);
     }
     return const Category(id: 'other', name: 'Otros');
   }
@@ -186,10 +174,7 @@ class RemoteCatalogRepository implements CatalogRepository {
     if (raw is! Map<String, dynamic>) {
       return const Money(amount: 0, currency: 'ARS');
     }
-    // El contrato usa `amount` en /products y `amount_cents` en /products/{id}.
-    final amount = (raw['amount'] as num?)?.toInt() ??
-        (raw['amount_cents'] as num?)?.toInt() ??
-        0;
+    final amount = (raw['amount_cents'] as num?)?.toInt() ?? 0;
     return Money(
       amount: amount,
       currency: (raw['currency'] as String?) ?? 'ARS',
@@ -201,9 +186,8 @@ class RemoteCatalogRepository implements CatalogRepository {
     if (raw is! Map<String, dynamic>) return Stock.empty;
     return Stock(
       available: (raw['available'] as num?)?.toInt() ?? 0,
-      min: (raw['min'] as num?)?.toInt(),
       reserved: (raw['reserved'] as num?)?.toInt(),
-      lowStockThreshold: (raw['low_stock_threshold'] as num?)?.toInt(),
+      min: (raw['min'] as num?)?.toInt(),
     );
   }
 
@@ -212,16 +196,6 @@ class RemoteCatalogRepository implements CatalogRepository {
     final max = (raw['max_quantity_per_order'] as num?)?.toInt() ??
         OrderConstraints.defaults.maxQuantityPerOrder;
     return OrderConstraints(maxQuantityPerOrder: max);
-  }
-
-  ProductLocation? _parseLocation(dynamic raw) {
-    if (raw is! Map<String, dynamic>) return null;
-    return ProductLocation(
-      idZone: (raw['id_zone'] as String?) ?? '',
-      idLine: (raw['id_line'] as String?) ?? '',
-      idPosition: (raw['id_position'] as String?) ?? '',
-      height: (raw['height'] as String?) ?? '',
-    );
   }
 
   List<ProductImage>? _parseImages(dynamic raw) {

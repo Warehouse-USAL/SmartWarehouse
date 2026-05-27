@@ -20,12 +20,12 @@ class BottomNavigationComponent extends StatelessWidget {
       bloc: CartFeatureBuilder.cartCubit(),
       builder: (context, cart) {
         final tabs = <SwNavTab>[
-          const SwNavTab(id: 'home', label: 'Inicio', icon: Icons.home_outlined),
           const SwNavTab(id: 'products', label: 'Catálogo', icon: Icons.inventory_2_outlined),
           SwNavTab(id: 'cart', label: 'Carrito', icon: Icons.shopping_cart_outlined, badgeCount: cart.itemCount),
+        const SwNavTab(id: 'profile', label: 'Profile', icon: Icons.person_outline),
         ];
         final activeId = selectedTab.when(
-          home: () => 'home',
+          profile: () => 'home',
           products: () => 'products',
           cart: () => 'cart',
         );
@@ -34,10 +34,10 @@ class BottomNavigationComponent extends StatelessWidget {
           activeId: activeId,
           onTabSelected: (id) {
             final option = switch (id) {
-              'home' => const NavigationBarOption.home(),
+              'profile' => const NavigationBarOption.profile(),
               'products' => const NavigationBarOption.products(),
               'cart' => const NavigationBarOption.cart(),
-              _ => const NavigationBarOption.home(),
+              _ => const NavigationBarOption.products(),
             };
             onItemPressed(context, option);
           },

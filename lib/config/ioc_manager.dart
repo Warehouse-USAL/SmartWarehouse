@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:beamer/beamer.dart';
 import 'package:commons/helpers/build_data/build_data_helper.dart';
 import 'package:commons/helpers/build_data/package_info_build_data_helper.dart';
@@ -29,12 +31,9 @@ class IocManager {
       ..registerLazySingleton<HttpHelper>(
         () => DioHttpHelper(
           baseUrl: config.environment.when(
-            // Backend hosteado por un compañero — cambiar IP según quién lo
-            // levante. Para emulator Android local usar 10.0.2.2; para iOS
-            // simulator local usar localhost.
-            dev: () => 'http://172.16.130.199:8080',
-            qa: () => 'https://api-qa.smartwarehouse.dev/v1',
-            prod: () => 'https://api.smartwarehouse.dev/v1',
+            dev: _localBackendUrl,
+            qa: _localBackendUrl,
+            prod: _localBackendUrl,
           ),
           onRefreshToken: AuthFeatureBuilder.refreshToken,
           isExpiredToken: AuthFeatureBuilder.isExpiredToken,
@@ -58,4 +57,23 @@ class IocManager {
     OrdersFeatureBuilder.injectDependencies();
     CartFeatureBuilder.injectDependencies();
   }
+}
+
+/// URL del backend cuando corre en `localhost` del host de desarrollo.
+///
+/// El emulator Android no ve `localhost` de la máquina anfitriona — para él
+/// `localhost` es el propio emulator. Se debe usar `10.0.2.2` (alias mágico
+/// que Android le da al host). En iOS simulator y desktop, `localhost`
+/// funciona porque comparten network stack.
+///
+/// Para device físico, pasar la IP de tu máquina en la red local con
+/// `--dart-define=API_HOST=192.168.x.x` (y opcional `API_PORT=8080`).
+String _localBackendUrl() {
+  const overrideHost = String.fromEnvironment('API_HOST');
+  const overridePort = String.fromEnvironment('API_PORT', defaultValue: '8080');
+  if (overrideHost.isNotEmpty) {
+    return 'http://$overrideHost:$overridePort';
+  }
+  final host = Platform.isAndroid ? '10.0.2.2' : 'localhost';
+  return 'http://$host:$overridePort';
 }

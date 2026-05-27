@@ -20,16 +20,18 @@ class CatalogCubit extends Cubit<CatalogState> {
 
   String _query = '';
   String? _categoryId;
-  List<Category> _categoriesCache = const [];
+  final List<Category> _categoriesCache = const [];
 
   Future<void> load() async {
     final seq = ++_requestSeq;
     emit(const CatalogLoading());
 
-    if (_categoriesCache.isEmpty) {
-      final categoriesResult = await _repository.getCategories();
-      categoriesResult.fold((_) {}, (c) => _categoriesCache = c);
-    }
+    // /categories no está implementado en el backend todavía. Cuando esté,
+    // restaurar la llamada para popular el filtro de categorías.
+    // if (_categoriesCache.isEmpty) {
+    //   final categoriesResult = await _repository.getCategories();
+    //   categoriesResult.fold((_) {}, (c) => _categoriesCache = c);
+    // }
 
     final productsResult = await _repository.getProducts(
       page: 1,

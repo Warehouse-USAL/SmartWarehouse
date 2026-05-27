@@ -6,13 +6,13 @@ part 'navigation_bar_option.freezed.dart';
 sealed class NavigationBarOption with _$NavigationBarOption {
   const NavigationBarOption._();
 
-  const factory NavigationBarOption.home() = HomeNavigationBarOption;
+  const factory NavigationBarOption.profile() = ProfileNavigationBarOption;
 
   const factory NavigationBarOption.products() = ProductsNavigationBarOption;
 
   const factory NavigationBarOption.cart() = CartNavigationBarOption;
 
-  bool get isHome => maybeWhen(home: () => true, orElse: () => false);
+  bool get isProfile => maybeWhen(profile: () => true, orElse: () => false);
 
   bool get isProducts => maybeWhen(products: () => true, orElse: () => false);
 

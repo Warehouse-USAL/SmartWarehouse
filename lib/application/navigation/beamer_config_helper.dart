@@ -46,13 +46,13 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
           ),
         );
       },
-      Routes.home: (_, __, ___) {
+      Routes.profile: (_, __, ___) {
         return _beamerPage(
-          title: 'Home',
-          key: 'home',
+          title: 'Profile',
+          key: 'profile',
           child: const Scaffold(
             body: Center(
-              child: Text('Home - TODO: Implement home feature'),
+              child: Text('Profile - TODO: Implement profile feature'),
             ),
           ),
         );

@@ -1,3 +1,4 @@
+import 'package:bottom_navigation_bar/bottom_navigation_bar.dart';
 import 'package:catalog/catalog.dart';
 import 'package:catalog/src/domain/repositories/catalog_repository.dart';
 import 'package:catalog/src/presentation/widgets/qty_stepper.dart';
@@ -6,12 +7,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
 class ProductDetailPage extends StatefulWidget {
-  const ProductDetailPage({
-    required this.productId,
-    required this.repository,
-    required this.onAddToCart,
-    super.key,
-  });
+  const ProductDetailPage({required this.productId, required this.repository, required this.onAddToCart, super.key});
 
   final String productId;
   final CatalogRepository repository;
@@ -42,23 +38,21 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: SwColors.white,
-      body: FutureBuilder<({Product? product, String? error})>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final data = snapshot.data!;
-          if (data.product == null) {
-            return Center(
-              child: Text(data.error ?? 'Producto no encontrado', style: SwText.body()),
-            );
-          }
-          return _DetailView(
-            product: data.product!,
-            onAddToCart: widget.onAddToCart,
-          );
-        },
+      bottomNavigationBar: BottomNavigationBarFeatureBuilder.build(context, const NavigationBarOption.products()),
+      body: SafeArea(
+        child: FutureBuilder<({Product? product, String? error})>(
+          future: _future,
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final data = snapshot.data!;
+            if (data.product == null) {
+              return Center(child: Text(data.error ?? 'Producto no encontrado', style: SwText.body()));
+            }
+            return _DetailView(product: data.product!, onAddToCart: widget.onAddToCart);
+          },
+        ),
       ),
     );
   }
@@ -66,6 +60,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
 class _DetailView extends StatefulWidget {
   const _DetailView({required this.product, required this.onAddToCart});
+
   final Product product;
   final void Function(Product product) onAddToCart;
 
@@ -77,6 +72,7 @@ class _DetailViewState extends State<_DetailView> {
   int _qty = 1;
   int _activeTab = 0;
   int _activeImage = 0;
+  late final PageController _pageController = PageController();
   static const _tabs = ['Descripción', 'Especificaciones'];
 
   List<ProductImage> get _gallery {
@@ -90,139 +86,222 @@ class _DetailViewState extends State<_DetailView> {
   }
 
   @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final p = widget.product;
     final outOfStock = p.stock.isOutOfStock;
     final maxQty = p.maxOrderableQuantity;
     final gallery = _gallery;
-    final activeImage =
-        gallery.isEmpty ? null : gallery[_activeImage.clamp(0, gallery.length - 1)];
-    return SafeArea(
-      child: Column(
-        children: [
-          _AppBar(sku: p.sku, onBack: () => Navigator.of(context).maybePop()),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: AspectRatio(
-                      aspectRatio: 1,
-                      child: SwImgPlaceholder(
-                        label: activeImage?.alt ??
-                            'PRODUCT ${_activeImage + 1}${gallery.isEmpty ? '' : ' / ${gallery.length}'}',
-                        tinted: _activeImage == 0,
-                        imageUrl: activeImage?.url,
-                        borderRadius: 18,
+    return Column(
+      children: [
+        _AppBar(sku: p.sku, onBack: () => Navigator.of(context).maybePop()),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 12),
+                _ImageCarousel(
+                  gallery: gallery,
+                  activeIndex: _activeImage,
+                  controller: _pageController,
+                  onPageChanged: (i) => setState(() => _activeImage = i),
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        p.category.name.toUpperCase(),
+                        style: SwText.mono(size: 12, color: SwColors.text3, letterSpacing: 0.08),
                       ),
-                    ),
-                  ),
-                  if (gallery.length > 1) ...[
-                    const SizedBox(height: 10),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: List.generate(gallery.length, (i) {
-                          final selected = i == _activeImage;
-                          return Expanded(
-                            child: GestureDetector(
-                              onTap: () => setState(() => _activeImage = i),
-                              child: Container(
-                                margin: EdgeInsets.only(right: i < gallery.length - 1 ? 8 : 0),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: selected ? SwColors.text : SwColors.border,
-                                    width: selected ? 2 : 1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: AspectRatio(
-                                  aspectRatio: 1,
-                                  child: SwImgPlaceholder(
-                                    borderRadius: 8,
-                                    tinted: i == 0,
-                                    imageUrl: gallery[i].url,
-                                  ),
-                                ),
-                              ),
+                      const SizedBox(height: 6),
+                      Text(p.name, style: SwText.display(size: 22, height: 1.2)),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(p.price.formatted, style: SwText.display(size: 30)),
                             ),
-                          );
-                        }),
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerRight,
+                              child: StockBadge(stock: p.stock),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          p.category.name.toUpperCase(),
-                          style: SwText.mono(size: 12, color: SwColors.text3, letterSpacing: 0.08),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(p.name, style: SwText.display(size: 22, height: 1.2)),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Flexible(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(p.price.formatted, style: SwText.display(size: 30)),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerRight,
-                                child: StockBadge(stock: p.stock),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  _Tabs(active: _activeTab, onChanged: (i) => setState(() => _activeTab = i)),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-                    child: switch (_activeTab) {
-                      0 => Text(
-                          p.description ??
-                              'Sin descripción disponible. Producto del catálogo SmartWarehouse.',
-                          style: SwText.body(size: 14, color: SwColors.text2, height: 1.55),
-                        ),
-                      _ => _Specs(product: p),
-                    },
-                  ),
-                ],
+                ),
+                const SizedBox(height: 16),
+                _Tabs(active: _activeTab, onChanged: (i) => setState(() => _activeTab = i)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                  child: switch (_activeTab) {
+                    0 => Text(
+                      p.description ?? 'Sin descripción disponible. Producto del catálogo SmartWarehouse.',
+                      style: SwText.body(size: 14, color: SwColors.text2, height: 1.55),
+                    ),
+                    _ => _Specs(product: p),
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        _StickyFooter(
+          qty: _qty,
+          maxQty: maxQty,
+          unitPrice: p.price,
+          disabled: outOfStock,
+          onQtyChanged: (v) => setState(() => _qty = v),
+          onAdd: () {
+            for (var i = 0; i < _qty; i++) {
+              widget.onAddToCart(p);
+            }
+          },
+        ),
+      ],
+    );
+  }
+}
+
+/// Carrusel swipeable de imágenes del producto + dots indicator.
+///
+/// - Si la galería trae 1 imagen → se renderiza fija.
+/// - Si trae 2+ → `PageView` horizontal con dots animados abajo.
+/// - Si está vacía → placeholder rayado del design system.
+class _ImageCarousel extends StatelessWidget {
+  const _ImageCarousel({
+    required this.gallery,
+    required this.activeIndex,
+    required this.controller,
+    required this.onPageChanged,
+  });
+
+  final List<ProductImage> gallery;
+  final int activeIndex;
+  final PageController controller;
+  final ValueChanged<int> onPageChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    if (gallery.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: const AspectRatio(
+          aspectRatio: 1,
+          child: SwImgPlaceholder(borderRadius: 18, tinted: true),
+        ),
+      );
+    }
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: PageView.builder(
+                controller: controller,
+                onPageChanged: onPageChanged,
+                itemCount: gallery.length,
+                itemBuilder: (context, i) {
+                  final img = gallery[i];
+                  return SwImgPlaceholder(
+                    label: img.alt,
+                    tinted: i == 0,
+                    imageUrl: img.url,
+                    borderRadius: 18,
+                  );
+                },
               ),
             ),
           ),
-          _StickyFooter(
-            qty: _qty,
-            maxQty: maxQty,
-            unitPrice: p.price,
-            disabled: outOfStock,
-            onQtyChanged: (v) => setState(() => _qty = v),
-            onAdd: () {
-              for (var i = 0; i < _qty; i++) {
-                widget.onAddToCart(p);
-              }
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('${p.name} agregado al pedido')),
-              );
-            },
+        ),
+        if (gallery.length > 1) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 64,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: gallery.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, i) {
+                final selected = i == activeIndex;
+                return _Thumbnail(
+                  image: gallery[i],
+                  selected: selected,
+                  tinted: i == 0,
+                  onTap: () => controller.animateToPage(
+                    i,
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOut,
+                  ),
+                );
+              },
+            ),
           ),
         ],
+      ],
+    );
+  }
+}
+
+class _Thumbnail extends StatelessWidget {
+  const _Thumbnail({
+    required this.image,
+    required this.selected,
+    required this.tinted,
+    required this.onTap,
+  });
+
+  final ProductImage image;
+  final bool selected;
+  final bool tinted;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        width: 64,
+        height: 64,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: selected ? SwColors.text : SwColors.border,
+            width: selected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: SwImgPlaceholder(
+            borderRadius: 8,
+            tinted: tinted,
+            imageUrl: image.url,
+          ),
+        ),
       ),
     );
   }
@@ -230,6 +309,7 @@ class _DetailViewState extends State<_DetailView> {
 
 class _AppBar extends StatelessWidget {
   const _AppBar({required this.sku, required this.onBack});
+
   final String sku;
   final VoidCallback onBack;
 
@@ -242,10 +322,7 @@ class _AppBar extends StatelessWidget {
           SwIconButton(icon: Icons.chevron_left, onPressed: onBack),
           Expanded(
             child: Center(
-              child: Text(
-                sku,
-                style: SwText.mono(size: 13, color: SwColors.text3, letterSpacing: 0.05),
-              ),
+              child: Text(sku, style: SwText.mono(size: 13, color: SwColors.text3, letterSpacing: 0.05)),
             ),
           ),
           // Espaciador para mantener el SKU centrado (mismo ancho que el botón back).
@@ -258,6 +335,7 @@ class _AppBar extends StatelessWidget {
 
 class _Tabs extends StatelessWidget {
   const _Tabs({required this.active, required this.onChanged});
+
   final int active;
   final ValueChanged<int> onChanged;
 
@@ -278,12 +356,7 @@ class _Tabs extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.only(bottom: 10),
                 decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: isActive ? SwColors.yellow : Colors.transparent,
-                      width: 2,
-                    ),
-                  ),
+                  border: Border(bottom: BorderSide(color: isActive ? SwColors.yellow : Colors.transparent, width: 2)),
                 ),
                 child: Text(
                   _DetailViewState._tabs[i],
@@ -304,6 +377,7 @@ class _Tabs extends StatelessWidget {
 
 class _Specs extends StatelessWidget {
   const _Specs({required this.product});
+
   final Product product;
 
   @override
@@ -325,13 +399,13 @@ class _Specs extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                border: i < entries.length - 1
-                    ? const Border(bottom: BorderSide(color: SwColors.border))
-                    : null,
+                border: i < entries.length - 1 ? const Border(bottom: BorderSide(color: SwColors.border)) : null,
               ),
               child: Row(
                 children: [
-                  Expanded(child: Text(e.$1, style: SwText.body(size: 14, color: SwColors.text3))),
+                  Expanded(
+                    child: Text(e.$1, style: SwText.body(size: 14, color: SwColors.text3)),
+                  ),
                   Text(e.$2, style: SwText.body(size: 14, weight: FontWeight.w600)),
                 ],
               ),
@@ -376,11 +450,7 @@ class _StickyFooter extends StatelessWidget {
             QtyStepper(value: qty, onChanged: onQtyChanged, min: 1, max: maxQty, large: true),
             const SizedBox(width: 12),
             Expanded(
-              child: SwButton(
-                label: label,
-                icon: Icons.add,
-                onPressed: disabled ? null : onAdd,
-              ),
+              child: SwButton(label: label, icon: Icons.add, onPressed: disabled ? null : onAdd),
             ),
           ],
         ),

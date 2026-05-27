@@ -61,25 +61,46 @@ class AuthCubit extends Cubit<AuthState> {
     );
   }
 
-  Future<void> _refreshToken() async {
-    await state.whenOrNull(
+  /// Devuelve `true` si el access token se renovó correctamente; `false` si
+  /// no se pudo refrescar (en cuyo caso el caller debe propagar el 401
+  /// original al usuario sin reintentar — sino se produce un loop).
+  Future<bool> _refreshToken() async {
+    final result = await state.whenOrNull(
       data: (data, _) async {
-        final result = await authRepository.refresh(refreshToken: data.refreshToken);
-        result.fold(
-          (failure) => load(),
-          (data) => emit(data == null ? const AuthState.empty() : AuthState.data(data, hasUpdated: true)),
+        // Si el backend no nos dio refresh token (ej. el contrato actual de
+        // /auth/login no expone uno), no podemos refrescar — pero tampoco
+        // queremos hacer logout ante cualquier 401 transitorio. Dejamos el
+        // state como está y devolvemos false para que el caller no reintente.
+        final refreshToken = data.refreshToken;
+        if (refreshToken == null || refreshToken.isEmpty) return false;
+
+        final refreshResult = await authRepository.refresh(refreshToken: refreshToken);
+        return refreshResult.fold(
+          (failure) {
+            load();
+            return false;
+          },
+          (refreshed) {
+            if (refreshed == null) {
+              emit(const AuthState.empty());
+              return false;
+            }
+            emit(AuthState.data(refreshed, hasUpdated: true));
+            return true;
+          },
         );
       },
     );
+    return result ?? false;
   }
 
-  Future<void>? _refreshingFuture;
+  Future<bool>? _refreshingFuture;
 
   Future<bool> onRefreshToken() async {
     _refreshingFuture ??= _refreshToken();
-    await _refreshingFuture;
+    final success = await _refreshingFuture!;
     _refreshingFuture = null;
-    return state.whenOrNull(data: (data, _) => data) != null;
+    return success;
   }
 
   /// Returns true if the token is expired and the user should be forced to refresh it.

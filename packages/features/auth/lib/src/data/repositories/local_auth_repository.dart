@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:developer';
 
 import 'package:auth/src/data/models/persistable_auth_data.dart';
@@ -15,41 +14,23 @@ class LocalAuthRepository implements AuthRepository {
   static const _authKey = 'smart-warehouse-auth-key';
   final PersistenceHelper persistenceHelper;
 
-  T? _decodeToken<T>({required String token, required String key}) {
-    try {
-      final parts = token.split('.');
-      if (parts.length != 3) {
-        throw Exception('invalid token');
-      }
-      final payload = parts[1];
-      final normalized = base64Url.normalize(payload);
-      final resp = utf8.decode(base64Url.decode(normalized));
-      final map = json.decode(resp);
-      if (map is! Map<String, dynamic>) throw Exception('invalid payload');
-      return map['user'][key] as T?;
-    } catch (e) {
-      log('$e');
-      return null;
-    }
-  }
-
   @override
   Future<Either<AuthFailure, AuthData?>> load() async {
     try {
-      if (await persistenceHelper.exists(_authKey)) {
-        final result = await persistenceHelper.get(_authKey, PersistableAuthData.fromJson);
-        return result.fold(
-          (failure) => Left(AuthFailure()),
-          (data) {
-            final isRegistered = _decodeToken<bool>(token: data.authData.token, key: 'isRegistered');
-            if (isRegistered == null) return Left(AuthFailure());
-            return isRegistered ? Right(data.authData) : const Right(null);
-          },
-        );
-      } else {
+      if (!await persistenceHelper.exists(_authKey)) {
         return const Right(null);
       }
+      final result = await persistenceHelper.get(_authKey, PersistableAuthData.fromJson);
+      return result.fold(
+        (failure) => Left(AuthFailure()),
+        (data) {
+          final token = data.authData.token;
+          if (token.isEmpty) return const Right(null);
+          return Right(data.authData);
+        },
+      );
     } catch (e) {
+      log('LocalAuthRepository.load error: $e');
       return Left(AuthFailure());
     }
   }

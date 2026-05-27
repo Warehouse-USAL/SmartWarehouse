@@ -10,9 +10,9 @@ class BottomNavigationBarFeatureBuilder {
       selectedTab: selectedTab,
       onItemPressed: (context, option) {
         option.when(
-          home: () => Beamer.of(context).beamToNamed(Routes.home),
           products: () => Beamer.of(context).beamToNamed(Routes.catalog),
           cart: () => Beamer.of(context).beamToNamed(Routes.cart),
+          profile: () => Beamer.of(context).beamToNamed(Routes.profile),
         );
       },
     );
