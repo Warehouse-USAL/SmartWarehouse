@@ -229,12 +229,32 @@ class DioHttpHelper implements HttpHelper {
 
   HttpResponseError _onResponseError(DioException error) {
     final data = error.response?.data;
+    // El backend devuelve errors con shape `{"error": {"code": "...",
+    // "message": "..."}}`. Toleramos también shapes legacy (`{message,
+    // errorType, error: {reason}}`) y `data` como string plano por si algún
+    // endpoint devuelve texto crudo.
+    String? message;
+    String? reason;
+    String? errorType;
+
+    if (data is Map<String, dynamic>) {
+      final err = data['error'];
+      if (err is Map<String, dynamic>) {
+        message = err['message']?.toString();
+        reason = (err['code'] ?? err['reason'])?.toString();
+      }
+      message ??= data['message']?.toString();
+      errorType = data['error_type']?.toString() ?? data['errorType']?.toString();
+    } else if (data is String && data.isNotEmpty) {
+      message = data;
+    }
+
     return HttpResponseError(
-      message: data is Map<String, dynamic> ? data['message'].toString() : data,
+      message: message,
       stackTrace: error.stackTrace,
-      reason: data is Map<String, dynamic> ? data['error']['reason'].toString() : null,
+      reason: reason,
       statusCode: error.response?.statusCode,
-      errorType: data is Map<String, dynamic> ? data['errorType'].toString() : null,
+      errorType: errorType,
     );
   }
 

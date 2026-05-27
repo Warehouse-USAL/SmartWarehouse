@@ -63,20 +63,12 @@ class CartPage extends StatelessWidget {
       );
       return;
     }
-    final destination = _destinationFor(cart);
-    if (destination == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo determinar la ubicación de los productos')),
-      );
-      return;
-    }
     final confirmed = await CreateOrderConfirmationDialog.show(context, cart);
     if (!confirmed) return;
-    await createOrderCubit.submit(items: _toOrderItems(cart), destination: destination);
-  }
-
-  OrderDestination? _destinationFor(Cart cart) {
-    return OrderDestination.fromProductLocations(cart.items.map((i) => i.product));
+    await createOrderCubit.submit(
+      items: _toOrderItems(cart),
+      destination: OrderDestination.defaults,
+    );
   }
 
   void _onOrderStateChanged(BuildContext context, CreateOrderState state) {
@@ -95,11 +87,10 @@ class CartPage extends StatelessWidget {
             content: Text(message),
             action: SnackBarAction(
               label: 'Reintentar',
-              onPressed: () {
-                final dest = _destinationFor(cartCubit.state);
-                if (dest == null) return;
-                createOrderCubit.submit(items: _toOrderItems(cartCubit.state), destination: dest);
-              },
+              onPressed: () => createOrderCubit.submit(
+                items: _toOrderItems(cartCubit.state),
+                destination: OrderDestination.defaults,
+              ),
             ),
           ),
         );
@@ -132,14 +123,9 @@ class _CartAppBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.chevron_left, color: SwColors.text),
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
           Expanded(
             child: Center(child: Text('Tu pedido', style: SwText.display(size: 20))),
           ),
-          const SizedBox(width: 40),
         ],
       ),
     );

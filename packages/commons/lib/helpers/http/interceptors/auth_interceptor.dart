@@ -10,4 +10,5 @@ class AuthInterceptor extends Interceptor {
     options.headers = requestInterceptionData(options.headers);
     super.onRequest(options, handler);
   }
+
 }

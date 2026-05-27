@@ -43,63 +43,131 @@ $NavigationBarOptionCopyWith(NavigationBarOption _, $Res Function(NavigationBarO
 
 /// Adds pattern-matching-related methods to [NavigationBarOption].
 extension NavigationBarOptionPatterns on NavigationBarOption {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( HomeNavigationBarOption value)?  home,TResult Function( ProductsNavigationBarOption value)?  products,TResult Function( CartNavigationBarOption value)?  cart,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ProfileNavigationBarOption value)?  profile,TResult Function( ProductsNavigationBarOption value)?  products,TResult Function( CartNavigationBarOption value)?  cart,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case HomeNavigationBarOption() when home != null:
-return home(_that);case ProductsNavigationBarOption() when products != null:
+case ProfileNavigationBarOption() when profile != null:
+return profile(_that);case ProductsNavigationBarOption() when products != null:
 return products(_that);case CartNavigationBarOption() when cart != null:
 return cart(_that);case _:
   return orElse();
 
 }
 }
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( HomeNavigationBarOption value)  home,required TResult Function( ProductsNavigationBarOption value)  products,required TResult Function( CartNavigationBarOption value)  cart,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ProfileNavigationBarOption value)  profile,required TResult Function( ProductsNavigationBarOption value)  products,required TResult Function( CartNavigationBarOption value)  cart,}){
 final _that = this;
 switch (_that) {
-case HomeNavigationBarOption():
-return home(_that);case ProductsNavigationBarOption():
+case ProfileNavigationBarOption():
+return profile(_that);case ProductsNavigationBarOption():
 return products(_that);case CartNavigationBarOption():
 return cart(_that);}
 }
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( HomeNavigationBarOption value)?  home,TResult? Function( ProductsNavigationBarOption value)?  products,TResult? Function( CartNavigationBarOption value)?  cart,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ProfileNavigationBarOption value)?  profile,TResult? Function( ProductsNavigationBarOption value)?  products,TResult? Function( CartNavigationBarOption value)?  cart,}){
 final _that = this;
 switch (_that) {
-case HomeNavigationBarOption() when home != null:
-return home(_that);case ProductsNavigationBarOption() when products != null:
+case ProfileNavigationBarOption() when profile != null:
+return profile(_that);case ProductsNavigationBarOption() when products != null:
 return products(_that);case CartNavigationBarOption() when cart != null:
 return cart(_that);case _:
   return null;
 
 }
 }
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  home,TResult Function()?  products,TResult Function()?  cart,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  profile,TResult Function()?  products,TResult Function()?  cart,required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case HomeNavigationBarOption() when home != null:
-return home();case ProductsNavigationBarOption() when products != null:
+case ProfileNavigationBarOption() when profile != null:
+return profile();case ProductsNavigationBarOption() when products != null:
 return products();case CartNavigationBarOption() when cart != null:
 return cart();case _:
   return orElse();
 
 }
 }
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  home,required TResult Function()  products,required TResult Function()  cart,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  profile,required TResult Function()  products,required TResult Function()  cart,}) {final _that = this;
 switch (_that) {
-case HomeNavigationBarOption():
-return home();case ProductsNavigationBarOption():
+case ProfileNavigationBarOption():
+return profile();case ProductsNavigationBarOption():
 return products();case CartNavigationBarOption():
 return cart();}
 }
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  home,TResult? Function()?  products,TResult? Function()?  cart,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  profile,TResult? Function()?  products,TResult? Function()?  cart,}) {final _that = this;
 switch (_that) {
-case HomeNavigationBarOption() when home != null:
-return home();case ProductsNavigationBarOption() when products != null:
+case ProfileNavigationBarOption() when profile != null:
+return profile();case ProductsNavigationBarOption() when products != null:
 return products();case CartNavigationBarOption() when cart != null:
 return cart();case _:
   return null;
@@ -112,8 +180,9 @@ return cart();case _:
 /// @nodoc
 
 
-class HomeNavigationBarOption extends NavigationBarOption {
-  const HomeNavigationBarOption(): super._();
+class ProfileNavigationBarOption extends NavigationBarOption {
+  const ProfileNavigationBarOption(): super._();
+  
 
 
 
@@ -122,7 +191,7 @@ class HomeNavigationBarOption extends NavigationBarOption {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HomeNavigationBarOption);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProfileNavigationBarOption);
 }
 
 
@@ -131,7 +200,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'NavigationBarOption.home()';
+  return 'NavigationBarOption.profile()';
 }
 
 
@@ -145,6 +214,8 @@ String toString() {
 
 class ProductsNavigationBarOption extends NavigationBarOption {
   const ProductsNavigationBarOption(): super._();
+  
+
 
 
 
@@ -175,6 +246,8 @@ String toString() {
 
 class CartNavigationBarOption extends NavigationBarOption {
   const CartNavigationBarOption(): super._();
+  
+
 
 
 

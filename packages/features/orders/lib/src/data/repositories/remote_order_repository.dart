@@ -10,8 +10,37 @@ import 'package:orders/src/domain/entities/order_item.dart';
 import 'package:orders/src/domain/entities/order_status.dart';
 import 'package:orders/src/domain/repositories/order_repository.dart';
 
-/// Talks to `POST /orders` y `POST /orders/:id/cancel` según contrato
-/// `docs/superpowers/specs/2026-05-19-api-contracts-design.md`.
+/// Talks to `POST /orders` y `POST /orders/{id}/cancel`.
+///
+/// Contrato real del backend (`Warehouse-USAL/wh-backend`):
+///
+/// ```json
+/// // POST /orders
+/// {
+///   "items": [{ "product_id": "p1", "quantity": 2 }],
+///   "destination_area": "Bay 14"
+/// }
+/// ```
+///
+/// Response (`OrderResponse`) en **snake_case** (forzado por
+/// `JacksonConfig.SNAKE_CASE`):
+/// ```json
+/// {
+///   "order": {
+///     "id": "...",
+///     "status": "PENDING",
+///     "requested_by_user_id": "...",
+///     "items": [{ "product_id": "p1", "sku": "...", "quantity": 2 }],
+///     "destination_area": "Bay 14",
+///     "assigned_vehicle_id": null,
+///     "timestamps": { "created_at": "...", "started_at": null, "completed_at": null },
+///     "cancel_reason": null
+///   }
+/// }
+/// ```
+///
+/// El backend NO devuelve montos en orders; el total lo computamos local
+/// desde los items que enviamos.
 class RemoteOrderRepository implements OrderRepository {
   RemoteOrderRepository({required this.httpHelper});
 
@@ -29,10 +58,7 @@ class RemoteOrderRepository implements OrderRepository {
           'items': items
               .map((i) => {'product_id': i.productId, 'quantity': i.quantity})
               .toList(),
-          'destination': {
-            'area': destination.area,
-            'address_line': destination.addressLine,
-          },
+          'destination_area': destination.area,
         },
       );
       return result.fold(
@@ -89,18 +115,19 @@ class RemoteOrderRepository implements OrderRepository {
     final id = (json['id'] as String?) ?? '';
     final status = _parseStatus(json['status'] as String?);
 
-    final tsJson = json['timestamps'];
+    // Timestamps en snake_case (JacksonConfig.SNAKE_CASE).
     DateTime createdAt = DateTime.now();
+    final tsJson = json['timestamps'];
     if (tsJson is Map<String, dynamic>) {
       final created = tsJson['created_at'] as String?;
       if (created != null) {
         createdAt = DateTime.tryParse(created) ?? createdAt;
       }
-    } else if (json['created_at'] is String) {
-      createdAt = DateTime.tryParse(json['created_at'] as String) ?? createdAt;
     }
 
-    // El backend no devuelve montos en /orders — el total se computa local.
+    // El backend devuelve `items: [{productId, sku, quantity}]` sin precio.
+    // Tomamos los items que enviamos (fallbackItems) para preservar nombre y
+    // precio en la UI post-creación.
     final currency = fallbackItems.isEmpty ? 'ARS' : fallbackItems.first.unitPrice.currency;
     var total = Money.zero(currency);
     for (final i in fallbackItems) {
@@ -116,6 +143,7 @@ class RemoteOrderRepository implements OrderRepository {
     );
   }
 
+  /// El backend usa enums en uppercase: PENDING, IN_PROGRESS, COMPLETED, CANCELLED.
   OrderStatus _parseStatus(String? raw) {
     switch (raw?.toLowerCase()) {
       case 'pending':

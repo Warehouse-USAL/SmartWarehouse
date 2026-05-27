@@ -1,5 +1,4 @@
 import 'package:catalog/src/presentation/bloc/catalog_cubit.dart';
-import 'package:catalog/src/presentation/widgets/catalog_search_bar.dart';
 import 'package:catalog/src/presentation/widgets/product_card.dart';
 import 'package:catalog/src/presentation/widgets/product_card_skeleton.dart';
 import 'package:core/core.dart';
@@ -47,14 +46,16 @@ class _CatalogPageState extends State<CatalogPage> {
             return Column(
               children: [
                 _CatalogAppBar(state: state),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                  child: CatalogSearchBar(
-                    controller: _searchController,
-                    onChanged: widget.cubit.setQuery,
-                    onSubmit: widget.cubit.submitSearch,
-                  ),
-                ),
+                // Search bar oculto: el backend todavía no soporta `search` ni
+                // `category` filtering. Cuando esté listo, restaurar:
+                // Padding(
+                //   padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                //   child: CatalogSearchBar(
+                //     controller: _searchController,
+                //     onChanged: widget.cubit.setQuery,
+                //     onSubmit: widget.cubit.submitSearch,
+                //   ),
+                // ),
                 Expanded(child: _Results(cubit: widget.cubit, state: state, onProductTap: _onProductTap)),
               ],
             );
