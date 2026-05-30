@@ -44,11 +44,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           future: _future,
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
+              return const SwLoadingSpinner();
             }
             final data = snapshot.data!;
             if (data.product == null) {
-              return Center(child: Text(data.error ?? 'Producto no encontrado', style: SwText.body()));
+              return SwErrorView(
+                message: data.error ?? 'Producto no encontrado',
+                onRetry: () => setState(() => _future = _load()),
+              );
             }
             return _DetailView(product: data.product!, onAddToCart: widget.onAddToCart);
           },

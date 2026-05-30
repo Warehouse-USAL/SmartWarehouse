@@ -55,13 +55,14 @@ extension NavigationBarOptionPatterns on NavigationBarOption {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ProfileNavigationBarOption value)?  profile,TResult Function( ProductsNavigationBarOption value)?  products,TResult Function( CartNavigationBarOption value)?  cart,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ProductsNavigationBarOption value)?  products,TResult Function( CartNavigationBarOption value)?  cart,TResult Function( OrdersNavigationBarOption value)?  orders,TResult Function( ProfileNavigationBarOption value)?  profile,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case ProfileNavigationBarOption() when profile != null:
-return profile(_that);case ProductsNavigationBarOption() when products != null:
+case ProductsNavigationBarOption() when products != null:
 return products(_that);case CartNavigationBarOption() when cart != null:
-return cart(_that);case _:
+return cart(_that);case OrdersNavigationBarOption() when orders != null:
+return orders(_that);case ProfileNavigationBarOption() when profile != null:
+return profile(_that);case _:
   return orElse();
 
 }
@@ -79,13 +80,14 @@ return cart(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ProfileNavigationBarOption value)  profile,required TResult Function( ProductsNavigationBarOption value)  products,required TResult Function( CartNavigationBarOption value)  cart,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ProductsNavigationBarOption value)  products,required TResult Function( CartNavigationBarOption value)  cart,required TResult Function( OrdersNavigationBarOption value)  orders,required TResult Function( ProfileNavigationBarOption value)  profile,}){
 final _that = this;
 switch (_that) {
-case ProfileNavigationBarOption():
-return profile(_that);case ProductsNavigationBarOption():
+case ProductsNavigationBarOption():
 return products(_that);case CartNavigationBarOption():
-return cart(_that);}
+return cart(_that);case OrdersNavigationBarOption():
+return orders(_that);case ProfileNavigationBarOption():
+return profile(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -99,13 +101,14 @@ return cart(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ProfileNavigationBarOption value)?  profile,TResult? Function( ProductsNavigationBarOption value)?  products,TResult? Function( CartNavigationBarOption value)?  cart,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ProductsNavigationBarOption value)?  products,TResult? Function( CartNavigationBarOption value)?  cart,TResult? Function( OrdersNavigationBarOption value)?  orders,TResult? Function( ProfileNavigationBarOption value)?  profile,}){
 final _that = this;
 switch (_that) {
-case ProfileNavigationBarOption() when profile != null:
-return profile(_that);case ProductsNavigationBarOption() when products != null:
+case ProductsNavigationBarOption() when products != null:
 return products(_that);case CartNavigationBarOption() when cart != null:
-return cart(_that);case _:
+return cart(_that);case OrdersNavigationBarOption() when orders != null:
+return orders(_that);case ProfileNavigationBarOption() when profile != null:
+return profile(_that);case _:
   return null;
 
 }
@@ -122,12 +125,13 @@ return cart(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  profile,TResult Function()?  products,TResult Function()?  cart,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  products,TResult Function()?  cart,TResult Function()?  orders,TResult Function()?  profile,required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case ProfileNavigationBarOption() when profile != null:
-return profile();case ProductsNavigationBarOption() when products != null:
+case ProductsNavigationBarOption() when products != null:
 return products();case CartNavigationBarOption() when cart != null:
-return cart();case _:
+return cart();case OrdersNavigationBarOption() when orders != null:
+return orders();case ProfileNavigationBarOption() when profile != null:
+return profile();case _:
   return orElse();
 
 }
@@ -145,12 +149,13 @@ return cart();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  profile,required TResult Function()  products,required TResult Function()  cart,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  products,required TResult Function()  cart,required TResult Function()  orders,required TResult Function()  profile,}) {final _that = this;
 switch (_that) {
-case ProfileNavigationBarOption():
-return profile();case ProductsNavigationBarOption():
+case ProductsNavigationBarOption():
 return products();case CartNavigationBarOption():
-return cart();}
+return cart();case OrdersNavigationBarOption():
+return orders();case ProfileNavigationBarOption():
+return profile();}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -164,50 +169,19 @@ return cart();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  profile,TResult? Function()?  products,TResult? Function()?  cart,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  products,TResult? Function()?  cart,TResult? Function()?  orders,TResult? Function()?  profile,}) {final _that = this;
 switch (_that) {
-case ProfileNavigationBarOption() when profile != null:
-return profile();case ProductsNavigationBarOption() when products != null:
+case ProductsNavigationBarOption() when products != null:
 return products();case CartNavigationBarOption() when cart != null:
-return cart();case _:
+return cart();case OrdersNavigationBarOption() when orders != null:
+return orders();case ProfileNavigationBarOption() when profile != null:
+return profile();case _:
   return null;
 
 }
 }
 
 }
-
-/// @nodoc
-
-
-class ProfileNavigationBarOption extends NavigationBarOption {
-  const ProfileNavigationBarOption(): super._();
-  
-
-
-
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProfileNavigationBarOption);
-}
-
-
-@override
-int get hashCode => runtimeType.hashCode;
-
-@override
-String toString() {
-  return 'NavigationBarOption.profile()';
-}
-
-
-}
-
-
-
 
 /// @nodoc
 
@@ -265,6 +239,70 @@ int get hashCode => runtimeType.hashCode;
 @override
 String toString() {
   return 'NavigationBarOption.cart()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class OrdersNavigationBarOption extends NavigationBarOption {
+  const OrdersNavigationBarOption(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrdersNavigationBarOption);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'NavigationBarOption.orders()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class ProfileNavigationBarOption extends NavigationBarOption {
+  const ProfileNavigationBarOption(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProfileNavigationBarOption);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'NavigationBarOption.profile()';
 }
 
 

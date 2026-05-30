@@ -1241,9 +1241,9 @@ class _CatalogPageState extends State<CatalogPage> {
                 bloc: widget.cubit,
                 builder: (context, state) {
                   return switch (state) {
-                    CatalogLoading() => const Center(child: CircularProgressIndicator()),
+                    CatalogLoading() => const SwLoadingSpinner(),
                     CatalogError(:final message) =>
-                        _ErrorView(message: message, onRetry: widget.cubit.load),
+                        SwErrorView(message: message, onRetry: widget.cubit.load),
                     CatalogReady() => _ReadyView(
                         cubit: widget.cubit,
                         state: state,
@@ -1484,32 +1484,6 @@ class _EmptyView extends StatelessWidget {
           style: SwText.body(size: 14, color: SwColors.text3),
           textAlign: TextAlign.center,
         ),
-      ),
-    );
-  }
-}
-
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message, required this.onRetry});
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.error_outline, color: SwColors.stockOut, size: 40),
-          const SizedBox(height: 12),
-          Text(message, style: SwText.body(size: 14)),
-          const SizedBox(height: 16),
-          SwButton(
-            label: 'Reintentar',
-            variant: SwButtonVariant.secondary,
-            onPressed: onRetry,
-          ),
-        ],
       ),
     );
   }

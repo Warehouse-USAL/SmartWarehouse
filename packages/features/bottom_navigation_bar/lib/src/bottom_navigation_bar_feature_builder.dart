@@ -2,7 +2,7 @@ import 'package:beamer/beamer.dart';
 import 'package:bottom_navigation_bar/src/presentation/components/bottom_navigation_component.dart';
 import 'package:bottom_navigation_bar/src/presentation/components/bottom_navigation_scaffold.dart';
 import 'package:core/core.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 class BottomNavigationBarFeatureBuilder {
   static Widget build(BuildContext context, NavigationBarOption selectedTab) {
@@ -12,6 +12,9 @@ class BottomNavigationBarFeatureBuilder {
         option.when(
           products: () => Beamer.of(context).beamToNamed(Routes.catalog),
           cart: () => Beamer.of(context).beamToNamed(Routes.cart),
+          orders: () => ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Órdenes - Próximamente')),
+          ),
           profile: () => Beamer.of(context).beamToNamed(Routes.profile),
         );
       },

@@ -143,10 +143,10 @@ class _Results extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = state;
     if (s is CatalogLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const SwLoadingSpinner();
     }
     if (s is CatalogError) {
-      return _ErrorView(message: s.message, onRetry: cubit.load);
+      return SwErrorView(message: s.message, onRetry: cubit.load);
     }
     final ready = s as CatalogReady;
     final products = ready.products;
@@ -171,7 +171,10 @@ class _Results extends StatelessWidget {
         ),
         Expanded(
           child: products.isEmpty && !ready.isLoadingMore
-              ? const _EmptyView()
+              ? const SwEmptyView(
+                  title: 'No se encontraron productos',
+                  message: 'Probá ajustando los filtros o buscando otro término.',
+                )
               : GridView.builder(
                   controller: cubit.scrollController,
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -206,50 +209,6 @@ class _Results extends StatelessWidget {
                 ),
         ),
       ],
-    );
-  }
-}
-
-class _EmptyView extends StatelessWidget {
-  const _EmptyView();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Text(
-          'No se encontraron productos.',
-          style: SwText.body(size: 14, color: SwColors.text3),
-          textAlign: TextAlign.center,
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message, required this.onRetry});
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.error_outline, color: SwColors.stockOut, size: 40),
-          const SizedBox(height: 12),
-          Text(message, style: SwText.body(size: 14)),
-          const SizedBox(height: 16),
-          SwButton(
-            label: 'Reintentar',
-            variant: SwButtonVariant.secondary,
-            onPressed: onRetry,
-          ),
-        ],
-      ),
     );
   }
 }
