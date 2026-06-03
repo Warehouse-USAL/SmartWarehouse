@@ -6,6 +6,9 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../widgets/catalog_search_bar.dart';
+import '../widgets/category_filter_bar.dart';
+
 class CatalogPage extends StatefulWidget {
   const CatalogPage({required this.cubit, super.key});
   final CatalogCubit cubit;
@@ -46,16 +49,23 @@ class _CatalogPageState extends State<CatalogPage> {
             return Column(
               children: [
                 _CatalogAppBar(state: state),
-                // Search bar oculto: el backend todavía no soporta `search` ni
-                // `category` filtering. Cuando esté listo, restaurar:
-                // Padding(
-                //   padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                //   child: CatalogSearchBar(
-                //     controller: _searchController,
-                //     onChanged: widget.cubit.setQuery,
-                //     onSubmit: widget.cubit.submitSearch,
-                //   ),
-                // ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                  child: CatalogSearchBar(
+                    controller: _searchController,
+                    onChanged: widget.cubit.setQuery,
+                    onSubmit: widget.cubit.submitSearch,
+                  ),
+                ),
+                if (widget.cubit.categories.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: CategoryFilterBar(
+                      categories: widget.cubit.categories,
+                      selectedCategoryId: widget.cubit.selectedCategoryId,
+                      onSelected: widget.cubit.selectCategory,
+                    ),
+                  ),
                 Expanded(child: _Results(cubit: widget.cubit, state: state, onProductTap: _onProductTap)),
               ],
             );

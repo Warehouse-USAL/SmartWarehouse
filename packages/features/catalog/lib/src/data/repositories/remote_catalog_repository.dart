@@ -87,10 +87,17 @@ class RemoteCatalogRepository implements CatalogRepository {
 
   @override
   Future<Either<CatalogFailure, List<Category>>> getCategories() async {
-    // El backend todavía no tiene `/categories`. Devolvemos lista vacía para
-    // que la UI no rompa cuando alguien lo invoque por error.
-    return const Right([]);
+    // El backend todavía no tiene `/categories`. Devolvemos una lista hardcoded
+    // con los slugs que existen en los products seedeados, para que el filtro
+    // de la UI funcione. Cuando el endpoint exista, reemplazar por HTTP real.
+    return const Right(_mockCategories);
   }
+
+  static const _mockCategories = [
+    Category(id: 'seguridad', name: 'Seguridad'),
+    Category(id: 'herramientas', name: 'Herramientas'),
+    Category(id: 'almacenamiento', name: 'Almacenamiento'),
+  ];
 
   @override
   Future<Either<CatalogFailure, Product>> getProductById(String id) async {
