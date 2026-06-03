@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint, unreachable_switch_case
+// ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'refresh_token_model.dart';
@@ -116,10 +116,7 @@ return $default(_that);case _:
 final _that = this;
 switch (_that) {
 case _RefreshTokenModel():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
+return $default(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -178,10 +175,7 @@ return $default(_that.token,_that.refreshToken);case _:
 @optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'accessToken')  String token, @JsonKey(name: 'refreshToken')  String refreshToken)  $default,) {final _that = this;
 switch (_that) {
 case _RefreshTokenModel():
-return $default(_that.token,_that.refreshToken);case _:
-  throw StateError('Unexpected subclass');
-
-}
+return $default(_that.token,_that.refreshToken);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///

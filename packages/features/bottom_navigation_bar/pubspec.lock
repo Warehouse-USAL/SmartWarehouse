@@ -136,7 +136,7 @@ packages:
     source: path
     version: "0.0.1"
   catalog:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       path: "../catalog"
       relative: true
@@ -722,7 +722,7 @@ packages:
     source: hosted
     version: "1.0.0"
   orders:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       path: "../orders"
       relative: true
