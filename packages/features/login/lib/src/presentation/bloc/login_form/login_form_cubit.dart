@@ -32,6 +32,10 @@ class LoginFormCubit extends Cubit<LoginFormState> {
     return state.isValid;
   }
 
+  void toggleObscurePassword() {
+    emit(state.copyWith(obscurePassword: !state.obscurePassword));
+  }
+
   @override
   Future<void> close() {
     emailController.dispose();

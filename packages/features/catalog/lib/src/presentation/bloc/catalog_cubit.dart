@@ -9,6 +9,7 @@ export 'catalog_state.dart';
 class CatalogCubit extends Cubit<CatalogState> {
   CatalogCubit(this._repository) : super(const CatalogLoading()) {
     scrollController = ScrollController()..addListener(_onScroll);
+    searchController = TextEditingController();
   }
 
   static const _pageSize = 20;
@@ -16,6 +17,7 @@ class CatalogCubit extends Cubit<CatalogState> {
 
   final CatalogRepository _repository;
   late final ScrollController scrollController;
+  late final TextEditingController searchController;
   int _requestSeq = 0;
 
   String _query = '';
@@ -128,6 +130,7 @@ class CatalogCubit extends Cubit<CatalogState> {
   Future<void> close() {
     scrollController.removeListener(_onScroll);
     scrollController.dispose();
+    searchController.dispose();
     return super.close();
   }
 }
