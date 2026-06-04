@@ -6,7 +6,7 @@ import 'package:login/src/domain/entities/auth_tokens.dart';
 import 'package:login/src/presentation/bloc/login/login_cubit.dart';
 import 'package:login/src/presentation/bloc/login_form/login_form_cubit.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginPage extends StatelessWidget {
   const LoginPage({
     required this.formCubit,
     required this.loginCubit,
@@ -19,20 +19,18 @@ class LoginPage extends StatefulWidget {
   final void Function(BuildContext context, AuthTokens tokens) onLoginSuccess;
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage> {
-  bool _obscurePassword = true;
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: SwColors.white,
       body: SafeArea(
         child: BlocConsumer<LoginCubit, LoginState>(
-          bloc: widget.loginCubit,
-          listener: _onLoginStateChanged,
+          bloc: loginCubit,
+          listener: (context, state) {
+            if (state is LoginSuccess) {
+              onLoginSuccess(context, state.tokens);
+              loginCubit.reset();
+            }
+          },
           builder: (context, loginState) {
             final isSubmitting = loginState is LoginSubmitting;
             final failureMessage =
@@ -40,7 +38,7 @@ class _LoginPageState extends State<LoginPage> {
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(22, 24, 22, 24),
               child: BlocBuilder<LoginFormCubit, LoginFormState>(
-                bloc: widget.formCubit,
+                bloc: formCubit,
                 builder: (context, formState) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -67,7 +65,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 26),
                       SwTextField(
-                        controller: widget.formCubit.emailController,
+                        controller: formCubit.emailController,
                         label: 'Email',
                         placeholder: 'vos@empresa.com',
                         keyboardType: TextInputType.emailAddress,
@@ -76,10 +74,10 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 14),
                       SwTextField(
-                        controller: widget.formCubit.passwordController,
+                        controller: formCubit.passwordController,
                         label: 'Contraseña',
                         placeholder: '••••••••',
-                        obscure: _obscurePassword,
+                        obscure: formState.obscurePassword,
                         error: formState.showErrors ? formState.passwordError : null,
                         prefix: _InputLeadingIcon(asset: 'assets/icons/lock.svg'),
                         trailingAction: GestureDetector(
@@ -87,8 +85,8 @@ class _LoginPageState extends State<LoginPage> {
                           child: Text('¿Olvidaste?', style: SwText.body(size: 14, color: SwColors.link)),
                         ),
                         suffix: _PasswordVisibilityToggle(
-                          obscured: _obscurePassword,
-                          onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
+                          obscured: formState.obscurePassword,
+                          onToggle: formCubit.toggleObscurePassword,
                         ),
                       ),
                       if (failureMessage != null) ...[
@@ -99,7 +97,14 @@ class _LoginPageState extends State<LoginPage> {
                       SwButton(
                         label: 'Iniciar sesión',
                         isLoading: isSubmitting,
-                        onPressed: () => _onSubmit(context),
+                        onPressed: () {
+                          FocusScope.of(context).unfocus();
+                          if (!formCubit.validate()) return;
+                          loginCubit.submit(
+                            email: formCubit.state.email,
+                            password: formCubit.state.password,
+                          );
+                        },
                       ),
                       const SizedBox(height: 28),
                       Center(
@@ -126,22 +131,6 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
-  }
-
-  void _onSubmit(BuildContext context) {
-    FocusScope.of(context).unfocus();
-    if (!widget.formCubit.validate()) return;
-    widget.loginCubit.submit(
-      email: widget.formCubit.state.email,
-      password: widget.formCubit.state.password,
-    );
-  }
-
-  void _onLoginStateChanged(BuildContext context, LoginState state) {
-    if (state is LoginSuccess) {
-      widget.onLoginSuccess(context, state.tokens);
-      widget.loginCubit.reset();
-    }
   }
 }
 

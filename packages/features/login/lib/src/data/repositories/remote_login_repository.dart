@@ -4,10 +4,12 @@ import 'dart:developer';
 import 'package:commons/commons.dart';
 import 'package:commons/helpers/http/entities/http_response_error.dart';
 import 'package:dartz/dartz.dart';
+import 'package:login/src/data/dtos/login_request_dto.dart';
+import 'package:login/src/data/dtos/login_response_dto.dart';
+import 'package:login/src/data/mappers/login_mapper.dart';
 import 'package:login/src/domain/entities/auth_tokens.dart';
 import 'package:login/src/domain/entities/login_credentials.dart';
 import 'package:login/src/domain/entities/login_failure.dart';
-import 'package:login/src/domain/entities/user.dart';
 import 'package:login/src/domain/repositories/login_repository.dart';
 
 /// Talks to `POST /auth/login`. Contrato:
@@ -21,12 +23,14 @@ class RemoteLoginRepository implements LoginRepository {
   @override
   Future<Either<LoginFailure, AuthTokens>> login(LoginCredentials credentials) async {
     try {
+      final body = LoginRequestDto(
+        email: credentials.email.toLowerCase(),
+        password: credentials.password,
+      ).toJson();
+
       final result = await httpHelper.post(
         '/auth/login',
-        data: {
-          'email': credentials.email.toLowerCase(),
-          'password': credentials.password,
-        },
+        data: body,
         retryOnTokenExpired: false,
       );
       return result.fold(
@@ -34,28 +38,15 @@ class RemoteLoginRepository implements LoginRepository {
         (response) {
           final data = response.data;
           if (data is! Map<String, dynamic>) return const Left(UnknownLoginFailure());
-          final token = data['token'] as String?;
-          if (token == null || token.isEmpty) return const Left(UnknownLoginFailure());
-          return Right(AuthTokens(
-            accessToken: token,
-            user: _parseUser(data['user']),
-          ));
+          final dto = LoginResponseDto.fromJson(data);
+          if (dto.token.isEmpty) return const Left(UnknownLoginFailure());
+          return Right(dto.toEntity());
         },
       );
     } catch (e, st) {
       log('login error', error: e, stackTrace: st);
       return const Left(UnknownLoginFailure());
     }
-  }
-
-  User? _parseUser(dynamic raw) {
-    if (raw is! Map<String, dynamic>) return null;
-    return User(
-      id: (raw['id'] as String?) ?? '',
-      name: (raw['name'] as String?) ?? '',
-      email: (raw['email'] as String?) ?? '',
-      role: (raw['role'] as String?) ?? '',
-    );
   }
 
   LoginFailure _mapError(HttpResponseError error) {

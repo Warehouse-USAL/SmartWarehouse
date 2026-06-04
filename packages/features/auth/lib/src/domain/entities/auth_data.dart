@@ -1,7 +1,7 @@
 class AuthData {
-  AuthData({required this.token, this.refreshToken});
+  const AuthData({required this.token, this.refreshToken});
 
-  factory AuthData.empty() => AuthData(token: '', refreshToken: '');
+  factory AuthData.empty() => const AuthData(token: '', refreshToken: '');
 
   final String token;
   final String? refreshToken;
@@ -15,12 +15,5 @@ class AuthData {
           refreshToken == other.refreshToken;
 
   @override
-  int get hashCode => token.hashCode ^ refreshToken.hashCode;
-
-  factory AuthData.fromJson(Map<String, dynamic> json) {
-    return AuthData(
-      token: json['accessToken'],
-      refreshToken: json['refreshToken'],
-    );
-  }
+  int get hashCode => Object.hash(token, refreshToken);
 }
