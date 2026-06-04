@@ -7,6 +7,7 @@ class LoginFormState {
     this.emailError,
     this.passwordError,
     this.showErrors = false,
+    this.obscurePassword = true,
   });
 
   final String email;
@@ -14,6 +15,7 @@ class LoginFormState {
   final String? emailError;
   final String? passwordError;
   final bool showErrors;
+  final bool obscurePassword;
 
   bool get isEmailValid => email.isNotEmpty && EmailValidator.validate(email);
   bool get isPasswordValid => password.length >= 6;
@@ -25,6 +27,7 @@ class LoginFormState {
     Object? emailError = _sentinel,
     Object? passwordError = _sentinel,
     bool? showErrors,
+    bool? obscurePassword,
   }) {
     return LoginFormState(
       email: email ?? this.email,
@@ -36,6 +39,7 @@ class LoginFormState {
           ? this.passwordError
           : passwordError as String?,
       showErrors: showErrors ?? this.showErrors,
+      obscurePassword: obscurePassword ?? this.obscurePassword,
     );
   }
 }

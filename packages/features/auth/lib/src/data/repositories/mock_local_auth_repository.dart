@@ -103,7 +103,7 @@ class MockLocalAuthRepository implements AuthRepository {
   @override
   Future<Option<AuthFailure>> save(AuthData authData) async {
     try {
-      final result = await persistenceHelper.set(_authKey, PersistableAuthData(authData: authData));
+      final result = await persistenceHelper.set(_authKey, PersistableAuthData.fromAuthData(authData));
       return result.fold(() => const None(), (_) => Some(AuthFailure()));
     } catch (e) {
       return Some(AuthFailure());
