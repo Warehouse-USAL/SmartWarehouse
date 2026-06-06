@@ -1,0 +1,152 @@
+name: Stable Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - master
+
+jobs:
+  gate:
+    name: Verify release conditions
+    if: >
+      github.event.pull_request.merged == true &&
+      (startsWith(github.event.pull_request.head.ref, 'beta/') ||
+       startsWith(github.event.pull_request.head.ref, 'hotfix/'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release conditions verified
+        run: echo "Merged from release branch — proceeding with stable release"
+
+  build-web:
+    name: Build Web
+    needs: gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Activate melos
+        run: dart pub global activate melos
+
+      - name: Bootstrap packages
+        run: melos bootstrap
+
+      - name: Build web
+        run: flutter build web --release
+
+      - name: Zip web build
+        run: zip -r smart-warehouse-web.zip build/web
+
+      - name: Upload web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: smart-warehouse-web.zip
+
+  build-android:
+    name: Build Android
+    needs: gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Activate melos
+        run: dart pub global activate melos
+
+      - name: Bootstrap packages
+        run: melos bootstrap
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  stable-release:
+    name: Publish stable release
+    needs: [build-web, build-android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    outputs:
+      version: ${{ steps.tag.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Derive stable version tag
+        id: tag
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          BRANCH="$HEAD_REF"
+          if [[ "$BRANCH" == beta/* ]]; then
+            VERSION="${BRANCH#beta/}"
+          elif [[ "$BRANCH" == hotfix/* ]]; then
+            VERSION="${BRANCH#hotfix/}"
+          else
+            echo "ERROR: unexpected branch '$BRANCH'" >&2
+            exit 1
+          fi
+          echo "version=v${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Stable version: v${VERSION}"
+
+      - name: Download web artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: .
+
+      - name: Download android artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-build
+          path: .
+
+      - name: Create git tag
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$VERSION"
+          git push origin "$VERSION"
+
+      - name: Create stable release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.version }}
+          name: Release ${{ steps.tag.outputs.version }}
+          prerelease: false
+          files: |
+            smart-warehouse-web.zip
+            app-release.apk
+          generate_release_notes: true
+
+  trigger-backport:
+    name: Trigger backport to develop
+    needs: stable-release
+    uses: ./.github/workflows/backport.yml
+    with:
+      version: ${{ needs.stable-release.outputs.version }}
