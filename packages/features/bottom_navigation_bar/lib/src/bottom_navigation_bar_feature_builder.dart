@@ -12,9 +12,7 @@ class BottomNavigationBarFeatureBuilder {
         option.when(
           products: () => Beamer.of(context).beamToNamed(Routes.catalog),
           cart: () => Beamer.of(context).beamToNamed(Routes.cart),
-          orders: () => ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Órdenes - Próximamente')),
-          ),
+          orders: () => Beamer.of(context).beamToNamed(Routes.orders),
           profile: () => Beamer.of(context).beamToNamed(Routes.profile),
         );
       },

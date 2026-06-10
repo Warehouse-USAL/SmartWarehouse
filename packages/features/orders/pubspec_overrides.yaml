@@ -1,4 +1,4 @@
-# melos_managed_dependency_overrides: auth,bottom_navigation_bar,cart,catalog,commons,core,design_system,login,token_repository
+# melos_managed_dependency_overrides: auth,bottom_navigation_bar,cart,catalog,commons,core,design_system,login,token_repository,order_tracking
 dependency_overrides:
   auth:
     path: ../auth
@@ -16,5 +16,7 @@ dependency_overrides:
     path: ../../design_system
   login:
     path: ../login
+  order_tracking:
+    path: ../order_tracking
   token_repository:
     path: ../repositories/token_repository

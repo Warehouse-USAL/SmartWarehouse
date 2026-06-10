@@ -57,6 +57,9 @@ class _SmartWarehouseAppState extends State<SmartWarehouseApp> {
             alwaysBeamBack: true,
           ),
           title: 'SmartWarehouse',
+          builder: (_, child) => OrderTrackingFeatureBuilder.buildNotificationListener(
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
       ),
     );
@@ -77,6 +80,7 @@ class _SmartWarehouseAppState extends State<SmartWarehouseApp> {
     final context = _navigatorContext;
     if (context == null) return;
     OnUserAuthenticatedUseCase.call(context);
+    OrderTrackingFeatureBuilder.startNotifications();
   }
 
   BuildContext? get _navigatorContext => _routerDelegate.navigatorKey.currentContext;

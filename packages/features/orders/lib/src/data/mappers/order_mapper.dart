@@ -50,12 +50,11 @@ OrderStatus _parseStatus(String raw) {
       return OrderStatus.pending;
     case 'in_progress':
     case 'confirmed':
-      return OrderStatus.confirmed;
     case 'shipped':
-      return OrderStatus.shipped;
+      return OrderStatus.inProgress;
     case 'completed':
     case 'delivered':
-      return OrderStatus.delivered;
+      return OrderStatus.completed;
     case 'cancelled':
       return OrderStatus.cancelled;
     default:

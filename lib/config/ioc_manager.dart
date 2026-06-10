@@ -57,6 +57,13 @@ class IocManager {
     CatalogFeatureBuilder.injectDependencies();
     OrdersFeatureBuilder.injectDependencies();
     CartFeatureBuilder.injectDependencies();
+    OrderTrackingFeatureBuilder.injectDependencies(
+      baseUrl: config.environment.when(
+        dev: _localBackendUrl,
+        qa: _localBackendUrl,
+        prod: _localBackendUrl,
+      ),
+    );
   }
 }
 

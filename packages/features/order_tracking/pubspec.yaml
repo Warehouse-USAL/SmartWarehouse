@@ -1,0 +1,35 @@
+name: order_tracking
+description: "Order tracking: list orders and real-time status updates via WebSocket."
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: '>=3.8.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  commons:
+    path: ../../commons
+  core:
+    path: ../../core
+  design_system:
+    path: ../../design_system
+  catalog:
+    path: ../catalog
+  orders:
+    path: ../orders
+  dartz: ^0.10.1
+  flutter_bloc: ^9.1.1
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.11.0
+  web_socket_channel: ^3.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.13
+  freezed: ^3.2.3
+  json_serializable: ^6.10.0
+  dio: ^5.9.2
