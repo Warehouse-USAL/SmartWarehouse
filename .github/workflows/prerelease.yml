@@ -1,0 +1,152 @@
+name: Pre-release
+
+on:
+  push:
+    branches:
+      - 'beta/**'
+      - 'hotfix/**'
+
+concurrency:
+  group: prerelease-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-web:
+    name: Build Web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Activate melos
+        run: dart pub global activate melos
+
+      - name: Bootstrap packages
+        run: melos bootstrap
+
+      - name: Build web
+        run: flutter build web --release
+
+      - name: Zip web build
+        run: zip -r smart-warehouse-web.zip build/web
+
+      - name: Upload web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: smart-warehouse-web.zip
+
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Activate melos
+        run: dart pub global activate melos
+
+      - name: Bootstrap packages
+        run: melos bootstrap
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  release:
+    name: Publish pre-release
+    needs: [build-web, build-android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Derive pre-release tag
+        id: tag
+        run: |
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          echo "Branch: $BRANCH"
+          if [[ "$BRANCH" == beta/* ]]; then
+            SERIES="${BRANCH#beta/}"
+            EXISTING=$(git tag -l "beta-${SERIES}-*" | sort -V | tail -1)
+            if [ -z "$EXISTING" ]; then
+              N=1
+            else
+              LAST_N="${EXISTING##*-}"
+              N=$((LAST_N + 1))
+            fi
+            TAG="beta-${SERIES}-${N}"
+          elif [[ "$BRANCH" == hotfix/* ]]; then
+            VERSION="${BRANCH#hotfix/}"
+            EXISTING=$(git tag -l "hotfix-${VERSION}-*" | sort -V | tail -1)
+            if [ -z "$EXISTING" ]; then
+              N=1
+            else
+              LAST_N="${EXISTING##*-}"
+              N=$((LAST_N + 1))
+            fi
+            TAG="hotfix-${VERSION}-${N}"
+          else
+            echo "ERROR: unexpected branch '$BRANCH'" >&2
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Pre-release tag: $TAG"
+
+      - name: Download web artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: .
+
+      - name: Download android artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-build
+          path: .
+
+      - name: Create git tag
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - name: Create GitHub pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: Pre-release ${{ steps.tag.outputs.tag }}
+          prerelease: true
+          files: |
+            smart-warehouse-web.zip
+            app-release.apk
+          generate_release_notes: true
