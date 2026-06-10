@@ -8,6 +8,7 @@ import 'package:commons/helpers/permissions/permissions_handler_package/permissi
 import 'package:commons/helpers/permissions/permissions_helper.dart';
 import 'package:commons/helpers/persistence_helper/hive_persistence_helper.dart';
 import 'package:core/core.dart';
+import 'package:profile/profile.dart';
 import 'package:smart_warehouse/application/navigation/beamer_config_helper.dart';
 
 /// IoC (Inversion of Control) manager for dependency registration.
@@ -64,6 +65,7 @@ class IocManager {
         prod: _localBackendUrl,
       ),
     );
+    ProfileFeatureBuilder.injectDependencies();
   }
 }
 
