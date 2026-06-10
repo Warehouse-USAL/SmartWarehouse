@@ -9,4 +9,6 @@ class Routes {
   static String catalogDetail(String productId) => '/catalog/$productId';
 
   static String orderSuccess(String orderId) => '/order/$orderId/success';
+
+  static String orderDetail(String id) => '/orders/$id';
 }
