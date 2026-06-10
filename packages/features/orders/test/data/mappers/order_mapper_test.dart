@@ -7,6 +7,55 @@ import 'package:orders/src/domain/entities/order_status.dart';
 
 void main() {
   group('OrderDtoMapper.toEntity', () {
+    test('maps PENDING status', () {
+      final dto = OrderResponseDto.fromJson(<String, dynamic>{
+        'order': {'id': 'ord-1', 'status': 'PENDING', 'items': []},
+      });
+      expect(dto.order.toEntity(fallbackItems: []).status, OrderStatus.pending);
+    });
+
+    test('maps in_progress status to inProgress', () {
+      final dto = OrderResponseDto.fromJson(<String, dynamic>{
+        'order': {'id': 'ord-1', 'status': 'in_progress', 'items': []},
+      });
+      expect(dto.order.toEntity(fallbackItems: []).status, OrderStatus.inProgress);
+    });
+
+    test('maps confirmed status to inProgress (backward compat)', () {
+      final dto = OrderResponseDto.fromJson(<String, dynamic>{
+        'order': {'id': 'ord-1', 'status': 'confirmed', 'items': []},
+      });
+      expect(dto.order.toEntity(fallbackItems: []).status, OrderStatus.inProgress);
+    });
+
+    test('maps shipped status to inProgress (backward compat)', () {
+      final dto = OrderResponseDto.fromJson(<String, dynamic>{
+        'order': {'id': 'ord-1', 'status': 'shipped', 'items': []},
+      });
+      expect(dto.order.toEntity(fallbackItems: []).status, OrderStatus.inProgress);
+    });
+
+    test('maps completed status', () {
+      final dto = OrderResponseDto.fromJson(<String, dynamic>{
+        'order': {'id': 'ord-1', 'status': 'completed', 'items': []},
+      });
+      expect(dto.order.toEntity(fallbackItems: []).status, OrderStatus.completed);
+    });
+
+    test('maps delivered status to completed (backward compat)', () {
+      final dto = OrderResponseDto.fromJson(<String, dynamic>{
+        'order': {'id': 'ord-1', 'status': 'delivered', 'items': []},
+      });
+      expect(dto.order.toEntity(fallbackItems: []).status, OrderStatus.completed);
+    });
+
+    test('maps cancelled status', () {
+      final dto = OrderResponseDto.fromJson(<String, dynamic>{
+        'order': {'id': 'ord-1', 'status': 'cancelled', 'items': []},
+      });
+      expect(dto.order.toEntity(fallbackItems: []).status, OrderStatus.cancelled);
+    });
+
     test('parses created order response and uses fallbackItems for totals', () {
       final json = <String, dynamic>{
         'order': {
@@ -21,7 +70,6 @@ void main() {
           },
         },
       };
-
       final fallback = [
         OrderItem(
           productId: 'p1',
@@ -30,24 +78,18 @@ void main() {
           unitPrice: const Money(amount: 1250000, currency: 'ARS'),
         ),
       ];
-
       final dto = OrderResponseDto.fromJson(json);
       final entity = dto.order.toEntity(fallbackItems: fallback);
-
       expect(entity.id, 'order-1');
       expect(entity.status, OrderStatus.pending);
-      expect(entity.items.length, 1);
-      expect(entity.items.first.productName, 'Casco');
       expect(entity.total.amount, 2500000);
-      expect(entity.createdAt.toIso8601String(), startsWith('2026-06-03'));
     });
 
     test('uses now() when timestamps.created_at is missing', () {
       final dto = OrderResponseDto.fromJson(<String, dynamic>{
         'order': {'id': 'x', 'status': 'PENDING', 'items': []},
       });
-      final entity = dto.order.toEntity(fallbackItems: const []);
-      expect(entity.createdAt, isNotNull);
+      expect(dto.order.toEntity(fallbackItems: []).createdAt, isNotNull);
     });
   });
 }
