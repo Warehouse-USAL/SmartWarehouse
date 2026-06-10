@@ -2,6 +2,7 @@ import 'package:beamer/beamer.dart';
 import 'package:core/core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:profile/profile.dart';
 import 'package:smart_warehouse/application/navigation/guards/auth/authenticated_guard.dart';
 import 'package:smart_warehouse/application/navigation/guards/auth/not_authenticated_guard.dart';
 import 'package:upgrader/upgrader.dart';
@@ -47,11 +48,7 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
       Routes.profile: (_, __, ___) => _beamerPage(
             title: 'Perfil',
             key: 'profile',
-            child: const Scaffold(
-              body: Center(
-                child: Text('Perfil - TODO: Implementar perfil'),
-              ),
-            ),
+            child: ProfileFeatureBuilder.buildProfilePage(),
           ),
       Routes.catalog: (_, __, ___) => _beamerPage(
             title: 'Catálogo',

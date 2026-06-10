@@ -50,6 +50,8 @@ dependencies:
     path: packages/features/cart
   orders:
     path: packages/features/orders
+  profile:
+    path: packages/features/profile
   token_repository:
     path: packages/features/repositories/token_repository
 
