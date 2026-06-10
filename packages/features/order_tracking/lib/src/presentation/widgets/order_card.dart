@@ -12,28 +12,52 @@ class OrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: SwCard(
-        padding: const EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
           children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: SwColors.yellowSoft,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.inventory_2_outlined,
+                size: 20,
+                color: SwColors.yellowDark,
+              ),
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Order ${order.id}',
+                    order.id,
                     style: SwText.body(size: 14, weight: FontWeight.w600),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
-                    _formatDate(order.createdAt),
+                    '${_formatDate(order.createdAt)} · ${order.items.length} items · ${_statusLabel(order.status)}',
                     style: SwText.body(size: 12, color: SwColors.text3),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
-            _StatusBadge(status: order.status),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  order.total.formatted,
+                  style: SwText.body(size: 14, weight: FontWeight.w600),
+                ),
+                const SizedBox(height: 2),
+                const Icon(Icons.chevron_right, size: 16, color: SwColors.text3),
+              ],
+            ),
           ],
         ),
       ),
@@ -45,52 +69,16 @@ class OrderCard extends StatelessWidget {
     final today = DateTime(now.year, now.month, now.day);
     final dtDay = DateTime(dt.year, dt.month, dt.day);
     final diff = today.difference(dtDay).inDays;
-    final time =
-        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-    if (diff == 0) return 'Today, $time';
-    if (diff == 1) return 'Yesterday, $time';
-    return '${dt.day}/${dt.month}/${dt.year}';
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
-
-  final OrderStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: _bgColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        _label,
-        style: SwText.body(size: 12, color: _textColor, weight: FontWeight.w500),
-      ),
-    );
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Yesterday';
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[dt.month - 1]} ${dt.day}';
   }
 
-  String get _label => switch (status) {
+  String _statusLabel(OrderStatus status) => switch (status) {
         OrderStatus.pending => 'Pending',
         OrderStatus.inProgress => 'In progress',
         OrderStatus.completed => 'Completed',
         OrderStatus.cancelled => 'Cancelled',
-      };
-
-  Color get _bgColor => switch (status) {
-        OrderStatus.pending => SwColors.yellowSoft,
-        OrderStatus.inProgress => const Color(0xFFEBF3FF),
-        OrderStatus.completed => const Color(0xFFE6F4EA),
-        OrderStatus.cancelled => SwColors.surface,
-      };
-
-  Color get _textColor => switch (status) {
-        OrderStatus.pending => SwColors.yellowDark,
-        OrderStatus.inProgress => SwColors.link,
-        OrderStatus.completed => SwColors.stockIn,
-        OrderStatus.cancelled => SwColors.text3,
       };
 }

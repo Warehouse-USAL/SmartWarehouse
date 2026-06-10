@@ -7,71 +7,104 @@ class OrderStatusTimeline extends StatelessWidget {
 
   final OrderStatus status;
 
-  static const _steps = [
-    (value: OrderStatus.pending, label: 'Pending'),
-    (value: OrderStatus.inProgress, label: 'In progress'),
-    (value: OrderStatus.completed, label: 'Completed'),
-  ];
+  static const _stepLabels = ['Received', 'Packed', 'Shipped', 'Delivered'];
+
+  int get _currentStep => switch (status) {
+        OrderStatus.pending => 0,
+        OrderStatus.inProgress => 2,
+        OrderStatus.completed => _stepLabels.length,
+        OrderStatus.cancelled => -1,
+      };
 
   @override
   Widget build(BuildContext context) {
-    if (status == OrderStatus.cancelled) {
-      return const _CancelledBanner();
-    }
-    final currentIndex = _indexFor(status);
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (int i = 0; i < _steps.length; i++) ...[
-            _TimelineNode(
-              label: _steps[i].label,
-              nodeState: i < currentIndex
-                  ? _NodeState.done
-                  : i == currentIndex
-                      ? _NodeState.active
-                      : _NodeState.upcoming,
-            ),
-            if (i < _steps.length - 1)
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 14),
-                  child: Container(
-                    height: 2,
-                    color: i < currentIndex ? SwColors.stockIn : SwColors.border,
+    if (status == OrderStatus.cancelled) return const _CancelledBanner();
+
+    final current = _currentStep;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Horizontal stepper
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (int i = 0; i < _stepLabels.length; i++) ...[
+              // Connector before each step except the first.
+              // Yellow when current >= i (path to this step is complete).
+              if (i > 0)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 13),
+                    child: Container(
+                      height: 2,
+                      color: current >= i ? SwColors.yellow : SwColors.border,
+                    ),
                   ),
                 ),
+              _StepBubble(
+                number: i + 1,
+                label: _stepLabels[i],
+                state: i < current
+                    ? _NodeState.done
+                    : i == current
+                        ? _NodeState.current
+                        : _NodeState.todo,
               ),
+            ],
           ],
+        ),
+        const SizedBox(height: 14),
+        // Vertical step list with status dots
+        for (int i = 0; i < _stepLabels.length; i++) ...[
+          _StepRow(
+            label: _stepLabels[i],
+            state: i < current
+                ? _NodeState.done
+                : i == current
+                    ? _NodeState.current
+                    : _NodeState.todo,
+          ),
+          if (i < _stepLabels.length - 1) const SizedBox(height: 10),
         ],
-      ),
+      ],
     );
   }
-
-  int _indexFor(OrderStatus s) => switch (s) {
-        OrderStatus.pending => 0,
-        OrderStatus.inProgress => 1,
-        OrderStatus.completed || OrderStatus.cancelled => 2,
-      };
 }
 
-enum _NodeState { done, active, upcoming }
+enum _NodeState { done, current, todo }
 
-class _TimelineNode extends StatelessWidget {
-  const _TimelineNode({required this.label, required this.nodeState});
+class _StepBubble extends StatelessWidget {
+  const _StepBubble({
+    required this.number,
+    required this.label,
+    required this.state,
+  });
 
+  final int number;
   final String label;
-  final _NodeState nodeState;
+  final _NodeState state;
 
   @override
   Widget build(BuildContext context) {
-    final circleColor = switch (nodeState) {
-      _NodeState.done => SwColors.stockIn,
-      _NodeState.active => SwColors.yellow,
-      _NodeState.upcoming => SwColors.border,
-    };
-    final textColor =
-        nodeState == _NodeState.upcoming ? SwColors.text3 : SwColors.text;
+    final Color bg;
+    final Color borderColor;
+    final Color numColor;
+
+    switch (state) {
+      case _NodeState.done:
+        bg = SwColors.yellow;
+        borderColor = SwColors.yellow;
+        numColor = SwColors.text;
+      case _NodeState.current:
+        bg = SwColors.text;
+        borderColor = SwColors.text;
+        numColor = SwColors.yellow;
+      case _NodeState.todo:
+        bg = SwColors.white;
+        borderColor = SwColors.border;
+        numColor = SwColors.text3;
+    }
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -79,16 +112,71 @@ class _TimelineNode extends StatelessWidget {
         Container(
           width: 28,
           height: 28,
-          decoration: BoxDecoration(color: circleColor, shape: BoxShape.circle),
-          child: nodeState == _NodeState.done
-              ? const Icon(Icons.check, color: Colors.white, size: 16)
-              : null,
+          decoration: BoxDecoration(
+            color: bg,
+            shape: BoxShape.circle,
+            border: Border.all(color: borderColor, width: 2),
+          ),
+          child: Center(
+            child: state == _NodeState.done
+                ? const Icon(Icons.check, size: 14, color: SwColors.text)
+                : Text(
+                    '$number',
+                    style: SwText.body(
+                      size: 12,
+                      weight: FontWeight.w700,
+                      color: numColor,
+                    ),
+                  ),
+          ),
         ),
         const SizedBox(height: 6),
-        Text(
-          label,
-          style: SwText.body(size: 10, color: textColor),
-          textAlign: TextAlign.center,
+        SizedBox(
+          width: 56,
+          child: Text(
+            label,
+            style: SwText.body(
+              size: 11,
+              weight: FontWeight.w600,
+              color: state == _NodeState.todo ? SwColors.text3 : SwColors.text2,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StepRow extends StatelessWidget {
+  const _StepRow({required this.label, required this.state});
+
+  final String label;
+  final _NodeState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: state == _NodeState.todo ? SwColors.border : SwColors.yellow,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: SwText.body(
+              size: 13,
+              color: state == _NodeState.todo ? SwColors.text3 : SwColors.text,
+              weight: state == _NodeState.current ? FontWeight.w600 : FontWeight.w500,
+            ),
+          ),
         ),
       ],
     );
@@ -110,7 +198,7 @@ class _CancelledBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.cancel_outlined, size: 20, color: SwColors.text3),
+          const Icon(Icons.cancel_outlined, size: 20, color: SwColors.text3),
           const SizedBox(width: 8),
           Text(
             'Order cancelled',

@@ -18,8 +18,8 @@ class OrderListPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: SwColors.white,
         elevation: 0,
-        title: Text('My orders', style: SwText.body(size: 18, weight: FontWeight.w600)),
         automaticallyImplyLeading: false,
+        title: Text('Orders', style: SwText.display(size: 26)),
       ),
       child: BlocBuilder<OrderListCubit, OrderListState>(
         bloc: cubit,
@@ -35,17 +35,30 @@ class OrderListPage extends StatelessWidget {
                   message: 'Your orders will appear here once you place one.',
                   icon: Icons.receipt_long_outlined,
                 )
-              : ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: orders.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (_, i) => OrderCard(
-                    order: orders[i],
-                    onTap: () => Injector.i.resolve<NavigationHelper>().pushNamed(
-                          context,
-                          routeName: Routes.orderDetail(orders[i].id),
-                        ),
-                  ),
+              : ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  children: [
+                    SwCard(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (int i = 0; i < orders.length; i++) ...[
+                            OrderCard(
+                              order: orders[i],
+                              onTap: () =>
+                                  Injector.i.resolve<NavigationHelper>().pushNamed(
+                                        context,
+                                        routeName: Routes.orderDetail(orders[i].id),
+                                      ),
+                            ),
+                            if (i < orders.length - 1)
+                              const Divider(height: 1, color: SwColors.border),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
         },
       ),
