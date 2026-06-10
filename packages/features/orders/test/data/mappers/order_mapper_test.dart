@@ -83,6 +83,9 @@ void main() {
       expect(entity.id, 'order-1');
       expect(entity.status, OrderStatus.pending);
       expect(entity.total.amount, 2500000);
+      expect(entity.items.length, 1);
+      expect(entity.items.first.productName, 'Casco');
+      expect(entity.createdAt.toIso8601String(), startsWith('2026-06-03'));
     });
 
     test('uses now() when timestamps.created_at is missing', () {
