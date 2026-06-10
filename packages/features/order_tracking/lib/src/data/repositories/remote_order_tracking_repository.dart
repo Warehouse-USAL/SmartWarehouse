@@ -146,7 +146,7 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
                 jsonDecode(message as String) as Map<String, dynamic>;
             final event = WsOrderEventDto.fromJson(json);
             if (event.event == 'order.updated' &&
-                event.payload.orderId == id) {
+                event.payload.id == id) {
               final updated = await getOrderById(id);
               updated.fold((_) {}, (order) {
                 if (!controller.isClosed) controller.add(order);
@@ -218,7 +218,7 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
                 jsonDecode(message as String) as Map<String, dynamic>;
             final event = WsOrderEventDto.fromJson(json);
             if (event.event == 'order.updated') {
-              final orderId = event.payload.orderId;
+              final orderId = event.payload.id;
               final newStatus = parseOrderStatus(event.payload.status);
               final oldStatus = cache[orderId];
               if (oldStatus != null && oldStatus != newStatus) {
