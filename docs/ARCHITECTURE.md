@@ -216,7 +216,7 @@ class Product {
 - Constructores `factory` para casos especiales (`Cart.empty()`, `Stock.empty`).
 
 **Qué NO va acá**:
-- ❌ `fromJson` / `toJson` — eso es serialización, va en `data/models/`.
+- ❌ `fromJson` / `toJson` — eso es serialización, va en `data/dtos/`.
 - ❌ Llamadas a la red ni a `SharedPreferences`.
 - ❌ Imports de `flutter/material.dart`, `dio`, `freezed_annotation` (a menos que esté justificado).
 - ❌ Referencias a `BuildContext`.
@@ -260,64 +260,121 @@ data/repositories/
 └── remote_catalog_repository.dart    ← HTTP contra el backend
 ```
 
+**Patrón canónico**: un repo remoto reduce el HTTP a tres pasos — request, `Dto.fromJson(...)`, `dto.toEntity()`. Cero parseo manual.
+
 ```dart
-// data/repositories/remote_catalog_repository.dart
-class RemoteCatalogRepository implements CatalogRepository {
-  RemoteCatalogRepository({required this.httpHelper});
-  final HttpHelper httpHelper;
-
-  @override
-  Future<Either<CatalogFailure, ProductsPage>> getProducts({ ... }) async {
-    final result = await httpHelper.get('/products', queryParameters: { ... });
-    return result.fold(
-      (error) => Left(CatalogFailure(error.message ?? '...')),
-      (response) => Right(_parsePage(response.data)),
-    );
-  }
-
-  // Parsers privados, específicos del shape del backend
-  Product _parseProduct(Map<String, dynamic> json) { ... }
-  Money _parseMoney(dynamic raw) { ... }
+@override
+Future<Either<CatalogFailure, ProductsPage>> getProducts(...) async {
+  final result = await httpHelper.get('/products', queryParameters: query);
+  return result.fold(
+    (error) => Left(CatalogFailure(error.message ?? 'Error obteniendo productos')),
+    (response) {
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        return const Left(CatalogFailure('Respuesta inválida'));
+      }
+      final dto = ProductsPageDto.fromJson(data);
+      return Right(dto.toEntity());
+    },
+  );
 }
 ```
 
+Cualquier default, fallback, o derivación va en el mapper (ver `data/mappers/`). Si encontrás un `as String?`, `as num?`, o un `?? 0` dentro de un repo, está mal ubicado — pertenece al DTO o al mapper.
+
 **Qué SÍ va acá**:
 - I/O: HTTP, persistencia, cache, mocks.
-- Parsing de JSON crudo → entities.
+- Orquestación del flujo `request → DTO.fromJson → mapper.toEntity`.
 - Manejo de errores HTTP → `Failure` del dominio.
-- Lógica de fallback (ej: si el backend no manda `pagination`, asumir página única).
+- Validación mínima del shape de respuesta (ej. asegurar que `data` es un `Map`).
 
 **Qué NO va acá**:
+- ❌ Parsing de JSON a mano (`as String?`, `?? 0`, casts manuales) — eso va en el DTO o el mapper.
 - ❌ Lógica de negocio (`if user.isAdmin then ...`) — eso va en cubit.
 - ❌ Decisión de cuándo llamar al endpoint — eso lo decide el cubit.
 - ❌ Estado UI (`isLoading`) — eso vive en el state del cubit.
 
-#### `data/models/`
-DTOs cuando el parsing es lo suficientemente pesado como para sacarlo del repo. Acá vive **Freezed + json_serializable**:
+#### `data/dtos/` — modelos de wire format
+
+Cada DTO matchea **el JSON tal cual lo emite el backend**, no la forma ideal de la entity del dominio. Son Freezed (`@freezed`), sin lógica, sin defaults derivados — eso lo hace el mapper.
+
+**Regla**: en `data/dtos/` solo viven Freezed classes con `factory fromJson`. Nada más.
+
+Ejemplo (`packages/features/catalog/lib/src/data/dtos/product_dto.dart`):
 
 ```dart
-// data/models/refresh_token_model.dart
-@freezed
-class RefreshTokenModel with _$RefreshTokenModel {
-  const factory RefreshTokenModel({
-    required String token,
-    required String refreshToken,
-  }) = _RefreshTokenModel;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  factory RefreshTokenModel.fromJson(Map<String, dynamic> json) =>
-      _$RefreshTokenModelFromJson(json);
+part 'product_dto.freezed.dart';
+part 'product_dto.g.dart';
+
+@freezed
+sealed class ProductDto with _$ProductDto {
+  const factory ProductDto({
+    required String id,
+    required String sku,
+    required String name,
+    String? imageUrl,
+    @Default([]) List<ProductImageDto> images,
+    PriceDto? price,
+    StockDto? stock,
+    OrderConstraintsDto? orderConstraints,
+    String? createdAt,
+  }) = _ProductDto;
+
+  factory ProductDto.fromJson(Map<String, dynamic> json) =>
+      _$ProductDtoFromJson(json);
 }
 ```
 
-**Cuándo crear un model en `data/models/`**:
-- El JSON tiene **muchos campos** anidados y el parser inline ensucia el repo.
-- Necesitamos `toJson` para persistir (no solo `fromJson`).
-- Vamos a reusar el modelo entre varios repos.
+**snake_case ↔ camelCase**: cada feature tiene un `build.yaml` que configura `json_serializable` para hacer la traducción automáticamente.
 
-**Cuándo NO**:
-- Si el parsing son 3 campos planos → parser privado en el `Remote*Repository`.
+```yaml
+# packages/features/<feature>/build.yaml
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          field_rename: snake
+          explicit_to_json: true
+```
 
-> La regla: los modelos de `data/` son **DTOs internos**. La presentation y el cubit nunca los ven — el repo los mapea a entities de `domain/` antes de devolverlos.
+Con eso, un campo `String? imageUrl` mapea a la JSON key `"image_url"` sin que ningún `@JsonKey` haga falta. Si un campo del back NO sigue snake_case (raro), poné `@JsonKey(name: 'foo')` puntual.
+
+**Importante**: NO uses `@JsonSerializable(fieldRename: ...)` en la clase Freezed — falla con campos `required` y duplica la generación. Siempre `build.yaml` a nivel package.
+
+#### `data/mappers/` — DTO → Entity
+
+Un mapper traduce un DTO a una entity del dominio. Vive como **extension method** sobre el DTO, en `data/mappers/`. Absorbe defaults, fallbacks, derivaciones, y cualquier conversión de tipo (ej. `String` → `DateTime`, slug → `Category`, computar `imageUrl` desde `images[]`).
+
+**Regla**: el mapper nunca toca el dominio (no llama use cases ni repositories). Solo lee del DTO y construye la entity.
+
+Ejemplo (`packages/features/catalog/lib/src/data/mappers/product_mapper.dart`):
+
+```dart
+extension ProductDtoMapper on ProductDto {
+  Product toEntity() {
+    final imgs = images.map((i) => i.toEntity()).toList();
+    return Product(
+      id: id,
+      sku: sku,
+      name: name,
+      category: _categoryFromSlug(category),
+      price: price?.toEntity() ?? Money.zero('ARS'),
+      stock: stock?.toEntity() ?? Stock.empty,
+      orderConstraints: orderConstraints?.toEntity() ?? OrderConstraints.defaults,
+      imageUrl: _pickThumbUrl(imgs, imageUrl),
+      createdAt: createdAt == null ? null : DateTime.tryParse(createdAt!),
+      images: imgs.isEmpty ? null : imgs,
+    );
+  }
+}
+```
+
+Los helpers privados (`_pickThumbUrl`, `_categoryFromSlug`) viven junto al mapper.
+
+**Por qué separamos DTOs y entities**: si el backend cambia un campo, solo se toca el DTO + mapper. El dominio (entities + repos abstractos + cubits + UI) queda intacto. Y al revés: si el dominio crece, no tenés que tocar nada del wire format.
 
 ### `presentation/` — el "cómo se muestra y se interactúa"
 
@@ -339,14 +396,66 @@ Convenciones:
 #### `presentation/pages/`
 Una página **por ruta del router**. Es el widget root que recibe el cubit por constructor y renderiza el state.
 
+**Regla de oro**: TODA widget en `presentation/` (pages y widgets) extiende `StatelessWidget`. Sin excepciones nuestras. (Solo widgets de terceros con builders internos quedan afuera.)
+
+Si una widget necesita un controller (`TextEditingController`, `PageController`, `ScrollController`, `FocusNode`, `AnimationController`, etc.), **el cubit es dueño del controller**:
+
 ```dart
-// presentation/pages/catalog_page.dart
-class CatalogPage extends StatefulWidget {
-  const CatalogPage({required this.cubit, super.key});
-  final CatalogCubit cubit;
-  // ...
+class CatalogCubit extends Cubit<CatalogState> {
+  CatalogCubit(this._repository) : super(const CatalogLoading()) {
+    scrollController = ScrollController()..addListener(_onScroll);
+    searchController = TextEditingController();
+    load();
+  }
+
+  late final ScrollController scrollController;
+  late final TextEditingController searchController;
+
+  @override
+  Future<void> close() {
+    scrollController.dispose();
+    searchController.dispose();
+    return super.close();
+  }
 }
 ```
+
+La page lee el controller del cubit:
+
+```dart
+class CatalogPage extends StatelessWidget {
+  const CatalogPage({required this.cubit, super.key});
+  final CatalogCubit cubit;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: CatalogSearchBar(
+      controller: cubit.searchController,
+      onChanged: cubit.setQuery,
+      onSubmit: cubit.submitSearch,
+    ),
+  );
+}
+```
+
+Sin `initState`, sin `dispose`, sin `late final` controllers en la widget. El **kick-off** del primer fetch se hace en el constructor del cubit (no en `initState` que ya no existe). Como los cubits están registrados como `lazy singleton` en el IoC, su constructor corre una sola vez — equivalente a un `initState` que disparase solo una vez en la vida de la app.
+
+**Estado ephemeral** (qty de un stepper, tab activo, índice de imagen del carousel, `obscurePassword` de un input de password, etc.) también vive en el cubit y se expone vía el state. Patrón:
+
+```dart
+@freezed
+sealed class ProductDetailState with _$ProductDetailState {
+  const factory ProductDetailState.ready({
+    required Product product,
+    @Default(1) int qty,
+    @Default(0) int activeTab,
+    @Default(0) int activeImage,
+  }) = ProductDetailReady;
+  // …
+}
+```
+
+Con métodos `setQty`, `setActiveTab`, etc. que hacen `emit(state.copyWith(...))`.
 
 **Regla**: si una page tiene más de ~300 líneas, sacar subcomponentes a `presentation/widgets/`.
 
@@ -455,7 +564,7 @@ return switch (state) {
 Usamos **Freezed** cuando:
 
 1. El state tiene **muchos campos** (más de ~6) y el `copyWith` manual se vuelve verboso.
-2. Necesitamos **serialización JSON** (`fromJson` / `toJson`) — el ejemplo actual es `RefreshTokenModel` en `auth/data/models/`.
+2. Necesitamos **serialización JSON** (`fromJson` / `toJson`) — todos los DTOs viven en `data/dtos/` y usan Freezed + `json_serializable` (ver sección `data/dtos/` arriba).
 3. Queremos `when` / `maybeWhen` exhaustivo automático (sin escribir el switch a mano).
 
 Ejemplo con Freezed (`AuthState` ya existe):
@@ -529,7 +638,7 @@ class MockCatalogRepository implements CatalogRepository { /* ... */ }
 class RemoteCatalogRepository implements CatalogRepository {
   RemoteCatalogRepository({required this.httpHelper});
   final HttpHelper httpHelper;
-  // parsers privados _parseProduct, _parseMoney, etc.
+  // request → ProductsPageDto.fromJson(...) → dto.toEntity()
 }
 ```
 
@@ -547,8 +656,15 @@ Se activa al correr la app con `--dart-define=APP_DATA_SOURCE=mock`.
 
 ### Parsing de JSON
 
-- **Caso simple**: parsers privados dentro del `Remote<Feature>Repository` (`_parseProduct`, `_parseMoney`, etc.). Es lo que hace catalog hoy.
-- **Caso complejo** (muchos campos anidados, serialización bidireccional, persistencia local): mover el modelo a `data/models/` con Freezed + `json_serializable`. Ejemplo: `auth/data/models/refresh_token_model.dart`.
+Se hace con **Freezed DTOs + `build_runner` + `json_serializable`** (ver `data/dtos/` arriba). Nunca a mano. Si encontrás un `as String?`, un cast manual, o un `if (json[...] is...)` en un repo, está mal — mové eso a un DTO o al mapper.
+
+Para regenerar después de cambiar un DTO:
+
+```bash
+melos run generate
+```
+
+(O `dart run build_runner build --delete-conflicting-outputs` desde la raíz del package.)
 
 ### Tests de repos
 
@@ -785,25 +901,22 @@ Si dos features tenían copias diferentes del mismo widget (ej. `SwLogo` que est
 
 ## 9. Checklist: agregar una feature completa de cero
 
-Ejemplo: agregar **"mis pedidos"** (`/orders/mine`).
-
-- [ ] Crear `packages/features/order_history/` con la estructura de la sección 2.
-- [ ] `domain/entities/order_summary.dart` con el shape que necesita la pantalla.
-- [ ] `domain/repositories/order_history_repository.dart` (interfaz).
-- [ ] `data/repositories/mock_order_history_repository.dart` con datos hardcoded.
-- [ ] `data/repositories/remote_order_history_repository.dart` con el parsing del endpoint.
-- [ ] `presentation/bloc/order_history_cubit.dart` + state (sealed).
-- [ ] `presentation/pages/order_history_page.dart` que renderiza el state.
-- [ ] `order_history_feature_builder.dart` con `injectDependencies()` + `buildPage()`.
-- [ ] `lib/order_history.dart` (barrel) exportando lo público.
-- [ ] `pubspec.yaml` del feature, declarando deps a `core`, `commons`, `design_system`.
-- [ ] Agregar el feature como path-dep en `packages/core/pubspec.yaml` para que se reexporte (si aplica).
-- [ ] Declarar la ruta en `core/navigation/routes.dart`.
-- [ ] Registrar en `IocManager`: `OrderHistoryFeatureBuilder.injectDependencies()`.
-- [ ] Mapear la ruta en `BeamerConfigHelper`.
-- [ ] (Si aplica) listar la ruta en `AuthenticatedGuard`.
-- [ ] Tests del repo mock + tests del cubit (load, error, paginación si corresponde).
-- [ ] `dart analyze` limpio + `flutter test` pasa.
+1. Crear el package en `packages/features/<feature>/` con `pubspec.yaml` que incluya:
+   - `dependencies`: `flutter_bloc`, `freezed_annotation`, `json_annotation`, `dartz`, `commons` (path), `core` (path), `design_system` (path).
+   - `dev_dependencies`: `build_runner`, `freezed`, `json_serializable`, `flutter_test` (sdk: flutter).
+2. Crear `build.yaml` en la raíz del package con `field_rename: snake` (ver "data/dtos/" arriba).
+3. Crear `domain/entities/` con entities Freezed (o plain) **SIN** `fromJson`.
+4. Crear `domain/repositories/<feature>_repository.dart` con `abstract class` + `<Feature>Failure`.
+5. Crear `data/dtos/` con un DTO por cada shape del back. `@freezed` solo, NO `@JsonSerializable`.
+6. Crear `data/mappers/` con extension methods `dto.toEntity()`. Defaults y derivaciones van acá.
+7. Crear `data/repositories/remote_<feature>_repository.dart` que implementa el contrato del dominio. Pasos: HTTP → `Dto.fromJson(...)` → `dto.toEntity()`. Cero parsing handwritten.
+8. Crear `presentation/bloc/<feature>_cubit.dart` + `<feature>_state.dart` (state Freezed sealed). El cubit es dueño de cualquier controller que la UI necesite; dispose en `close()`.
+9. Crear `presentation/pages/` y `presentation/widgets/` — **TODAS** extienden `StatelessWidget`. Leen controllers del cubit, no instancian propios.
+10. Crear `<feature>_feature_builder.dart` con `injectDependencies()` que registra repo + cubit en el IoC.
+11. Registrar el feature en `IocManager.register(...)`.
+12. Agregar al menos un test en `test/data/mappers/<name>_mapper_test.dart` con golden JSON real del backend.
+13. Correr `melos run generate` para regenerar Freezed/JSON.
+14. `dart analyze` clean en el package.
 
 ---
 
@@ -1137,7 +1250,7 @@ BlocListener<CreateOrderCubit, CreateOrderState>(
 | Clase | `PascalCase` | `CatalogCubit`, `Product`, `SwButton` |
 | Variable / método / param | `lowerCamelCase` | `productId`, `onAddToCart`, `imageUrl` |
 | Constante top-level | `lowerCamelCase` (idiomático Dart) | `defaultPageSize` |
-| Private | prefix `_` | `_parseProduct`, `_StripePainter` |
+| Private | prefix `_` | `_pickThumbUrl`, `_StripePainter` |
 | Cubit | `<Feature>Cubit` | `CatalogCubit`, `CartCubit`, `LoginCubit` |
 | State | `<Feature>State` (sealed) o variantes | `CatalogLoading`, `CatalogReady` |
 | Repository interface | `<Feature>Repository` | `CatalogRepository` |
@@ -1538,7 +1651,7 @@ class CatalogFeatureBuilder {
 └─────────────────────────────────────────┘
 ```
 
-Las **entities** atraviesan todas las capas sin transformarse. Los **DTOs** (cuando hay) viven en `data/models/` y solo existen entre Remote repo y el backend.
+Las **entities** atraviesan todas las capas sin transformarse. Los **DTOs** viven en `data/dtos/` y solo existen entre el Remote repo y el backend; los **mappers** (en `data/mappers/`) los convierten en entities antes de cruzar a `domain/`.
 
 ---
 

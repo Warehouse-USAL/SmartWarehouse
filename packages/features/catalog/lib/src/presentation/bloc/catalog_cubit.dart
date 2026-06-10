@@ -9,6 +9,7 @@ export 'catalog_state.dart';
 class CatalogCubit extends Cubit<CatalogState> {
   CatalogCubit(this._repository) : super(const CatalogLoading()) {
     scrollController = ScrollController()..addListener(_onScroll);
+    searchController = TextEditingController();
   }
 
   static const _pageSize = 20;
@@ -16,22 +17,29 @@ class CatalogCubit extends Cubit<CatalogState> {
 
   final CatalogRepository _repository;
   late final ScrollController scrollController;
+  late final TextEditingController searchController;
   int _requestSeq = 0;
 
   String _query = '';
   String? _categoryId;
-  final List<Category> _categoriesCache = const [];
+  List<Category> _categoriesCache = const [];
+
+  /// Cache de categorías. Sobrevive a re-loads para que la barra de filtros
+  /// siga visible aunque `state` esté en `CatalogLoading`.
+  List<Category> get categories => _categoriesCache;
+  String? get selectedCategoryId => _categoryId;
 
   Future<void> load() async {
     final seq = ++_requestSeq;
     emit(const CatalogLoading());
 
-    // /categories no está implementado en el backend todavía. Cuando esté,
-    // restaurar la llamada para popular el filtro de categorías.
-    // if (_categoriesCache.isEmpty) {
-    //   final categoriesResult = await _repository.getCategories();
-    //   categoriesResult.fold((_) {}, (c) => _categoriesCache = c);
-    // }
+    // El back todavía no expone /categories; el repo devuelve una lista
+    // mockeada con los slugs del seed. Cuando exista, esto se queda igual y
+    // solo cambia el repo.
+    if (_categoriesCache.isEmpty) {
+      final categoriesResult = await _repository.getCategories();
+      categoriesResult.fold((_) {}, (c) => _categoriesCache = c);
+    }
 
     final productsResult = await _repository.getProducts(
       page: 1,
@@ -122,6 +130,7 @@ class CatalogCubit extends Cubit<CatalogState> {
   Future<void> close() {
     scrollController.removeListener(_onScroll);
     scrollController.dispose();
+    searchController.dispose();
     return super.close();
   }
 }

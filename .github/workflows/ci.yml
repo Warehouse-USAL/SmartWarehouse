@@ -1,0 +1,127 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - master
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  skip-drafts:
+    name: Skip draft PRs
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Not a draft
+        run: echo "PR is ready for review — proceeding with CI"
+
+  validate-branch:
+    name: Validate branch model
+    needs: skip-drafts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch naming convention
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          echo "Branch: $BRANCH"
+          if ! echo "$BRANCH" | grep -qE '^(feature|fix|enhancement|refactor|hotfix|beta|backport|dependabot)/'; then
+            echo "ERROR: Branch '$BRANCH' does not match naming conventions."
+            echo "Expected prefix: feature/, fix/, enhancement/, refactor/, hotfix/, beta/, backport/, dependabot/"
+            exit 1
+          fi
+          echo "Branch name is valid."
+
+  analyze:
+    name: Flutter Analyze
+    needs: [skip-drafts, validate-branch]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Activate melos
+        run: dart pub global activate melos
+
+      - name: Bootstrap packages
+        run: melos bootstrap
+
+      - name: Run flutter analyze
+        run: melos exec -- flutter analyze
+
+  test:
+    name: Tests
+    needs: [skip-drafts, validate-branch]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Activate melos
+        run: dart pub global activate melos
+
+      - name: Bootstrap packages
+        run: melos bootstrap
+
+      - name: Run tests
+        run: melos run test
+
+  build-web:
+    name: Build Web (sanity check)
+    needs: [analyze, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Activate melos
+        run: dart pub global activate melos
+
+      - name: Bootstrap packages
+        run: melos bootstrap
+
+      - name: Build web
+        run: flutter build web --release
+
+  build-android:
+    name: Build Android (sanity check)
+    needs: [analyze, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Activate melos
+        run: dart pub global activate melos
+
+      - name: Bootstrap packages
+        run: melos bootstrap
+
+      - name: Build APK
+        run: flutter build apk --release

@@ -6,34 +6,20 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class CatalogPage extends StatefulWidget {
+import '../widgets/catalog_search_bar.dart';
+import '../widgets/category_filter_bar.dart';
+
+class CatalogPage extends StatelessWidget {
   const CatalogPage({required this.cubit, super.key});
   final CatalogCubit cubit;
 
   @override
-  State<CatalogPage> createState() => _CatalogPageState();
-}
-
-class _CatalogPageState extends State<CatalogPage> {
-  late final TextEditingController _searchController;
-
-  @override
-  void initState() {
-    super.initState();
-    _searchController = TextEditingController();
-    if (widget.cubit.state is! CatalogReady) {
-      widget.cubit.load();
-    }
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    // Kick-off del primer fetch si el cubit aún no cargó.
+    if (cubit.state is! CatalogReady) {
+      // Microtask para no llamar emit durante build.
+      Future.microtask(cubit.load);
+    }
     return Scaffold(
       backgroundColor: SwColors.white,
       bottomNavigationBar:
@@ -41,22 +27,29 @@ class _CatalogPageState extends State<CatalogPage> {
       body: SafeArea(
         bottom: false,
         child: BlocBuilder<CatalogCubit, CatalogState>(
-          bloc: widget.cubit,
+          bloc: cubit,
           builder: (context, state) {
             return Column(
               children: [
                 _CatalogAppBar(state: state),
-                // Search bar oculto: el backend todavía no soporta `search` ni
-                // `category` filtering. Cuando esté listo, restaurar:
-                // Padding(
-                //   padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                //   child: CatalogSearchBar(
-                //     controller: _searchController,
-                //     onChanged: widget.cubit.setQuery,
-                //     onSubmit: widget.cubit.submitSearch,
-                //   ),
-                // ),
-                Expanded(child: _Results(cubit: widget.cubit, state: state, onProductTap: _onProductTap)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                  child: CatalogSearchBar(
+                    controller: cubit.searchController,
+                    onChanged: cubit.setQuery,
+                    onSubmit: cubit.submitSearch,
+                  ),
+                ),
+                if (cubit.categories.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: CategoryFilterBar(
+                      categories: cubit.categories,
+                      selectedCategoryId: cubit.selectedCategoryId,
+                      onSelected: cubit.selectCategory,
+                    ),
+                  ),
+                Expanded(child: _Results(cubit: cubit, state: state, onProductTap: _onProductTap)),
               ],
             );
           },
@@ -115,6 +108,7 @@ class _CatalogAppBar extends StatelessWidget {
               ],
             ),
           ),
+
           SwIconButton(
             icon: Icons.logout,
             tooltip: 'Cerrar sesión',

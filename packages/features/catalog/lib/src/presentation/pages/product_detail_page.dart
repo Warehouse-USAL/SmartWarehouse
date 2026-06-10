@@ -1,59 +1,43 @@
 import 'package:bottom_navigation_bar/bottom_navigation_bar.dart';
 import 'package:catalog/catalog.dart';
-import 'package:catalog/src/domain/repositories/catalog_repository.dart';
+import 'package:catalog/src/presentation/bloc/product_detail_cubit.dart';
 import 'package:catalog/src/presentation/widgets/qty_stepper.dart';
 import 'package:catalog/src/presentation/widgets/stock_badge.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-class ProductDetailPage extends StatefulWidget {
-  const ProductDetailPage({required this.productId, required this.repository, required this.onAddToCart, super.key});
+class ProductDetailPage extends StatelessWidget {
+  const ProductDetailPage({
+    required this.cubit,
+    required this.onAddToCart,
+    super.key,
+  });
 
-  final String productId;
-  final CatalogRepository repository;
+  final ProductDetailCubit cubit;
   final void Function(Product product) onAddToCart;
-
-  @override
-  State<ProductDetailPage> createState() => _ProductDetailPageState();
-}
-
-class _ProductDetailPageState extends State<ProductDetailPage> {
-  late Future<({Product? product, String? error})> _future;
-
-  @override
-  void initState() {
-    super.initState();
-    _future = _load();
-  }
-
-  Future<({Product? product, String? error})> _load() async {
-    final result = await widget.repository.getProductById(widget.productId);
-    return result.fold(
-      (failure) => (product: null, error: failure.message ?? 'Error'),
-      (product) => (product: product, error: null),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: SwColors.white,
-      bottomNavigationBar: BottomNavigationBarFeatureBuilder.build(context, const NavigationBarOption.products()),
+      bottomNavigationBar: BottomNavigationBarFeatureBuilder.build(
+          context, const NavigationBarOption.products()),
       body: SafeArea(
-        child: FutureBuilder<({Product? product, String? error})>(
-          future: _future,
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return const SwLoadingSpinner();
-            }
-            final data = snapshot.data!;
-            if (data.product == null) {
-              return SwErrorView(
-                message: data.error ?? 'Producto no encontrado',
-                onRetry: () => setState(() => _future = _load()),
-              );
-            }
-            return _DetailView(product: data.product!, onAddToCart: widget.onAddToCart);
+        child: BlocBuilder<ProductDetailCubit, ProductDetailState>(
+          bloc: cubit,
+          builder: (context, state) {
+            return switch (state) {
+              ProductDetailLoading() =>
+                const Center(child: CircularProgressIndicator()),
+              ProductDetailError(:final message) =>
+                Center(child: Text(message, style: SwText.body())),
+              ProductDetailReady() => _DetailView(
+                  state: state,
+                  cubit: cubit,
+                  onAddToCart: onAddToCart,
+                ),
+            };
           },
         ),
       ),
@@ -61,27 +45,23 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 }
 
-class _DetailView extends StatefulWidget {
-  const _DetailView({required this.product, required this.onAddToCart});
+class _DetailView extends StatelessWidget {
+  const _DetailView({
+    required this.state,
+    required this.cubit,
+    required this.onAddToCart,
+  });
 
-  final Product product;
+  final ProductDetailReady state;
+  final ProductDetailCubit cubit;
   final void Function(Product product) onAddToCart;
 
-  @override
-  State<_DetailView> createState() => _DetailViewState();
-}
-
-class _DetailViewState extends State<_DetailView> {
-  int _qty = 1;
-  int _activeTab = 0;
-  int _activeImage = 0;
-  late final PageController _pageController = PageController();
   static const _tabs = ['Descripción', 'Especificaciones'];
 
-  List<ProductImage> get _gallery {
-    final imgs = widget.product.images;
+  List<ProductImage> _gallery(Product p) {
+    final imgs = p.images;
     if (imgs != null && imgs.isNotEmpty) return imgs;
-    final fallback = widget.product.imageUrl;
+    final fallback = p.imageUrl;
     if (fallback != null && fallback.isNotEmpty) {
       return [ProductImage(url: fallback, isPrimary: true)];
     }
@@ -89,17 +69,11 @@ class _DetailViewState extends State<_DetailView> {
   }
 
   @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final p = widget.product;
+    final p = state.product;
     final outOfStock = p.stock.isOutOfStock;
     final maxQty = p.maxOrderableQuantity;
-    final gallery = _gallery;
+    final gallery = _gallery(p);
     return Column(
       children: [
         _AppBar(sku: p.sku, onBack: () => Navigator.of(context).maybePop()),
@@ -111,9 +85,10 @@ class _DetailViewState extends State<_DetailView> {
                 const SizedBox(height: 12),
                 _ImageCarousel(
                   gallery: gallery,
-                  activeIndex: _activeImage,
-                  controller: _pageController,
-                  onPageChanged: (i) => setState(() => _activeImage = i),
+                  activeIndex: state.activeImage,
+                  controller: cubit.pageController,
+                  onPageChanged: cubit.onPageChanged,
+                  onThumbnailTap: cubit.jumpToImage,
                 ),
                 const SizedBox(height: 16),
                 Padding(
@@ -153,10 +128,10 @@ class _DetailViewState extends State<_DetailView> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                _Tabs(active: _activeTab, onChanged: (i) => setState(() => _activeTab = i)),
+                _Tabs(active: state.activeTab, onChanged: cubit.setActiveTab),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-                  child: switch (_activeTab) {
+                  child: switch (state.activeTab) {
                     0 => Text(
                       p.description ?? 'Sin descripción disponible. Producto del catálogo SmartWarehouse.',
                       style: SwText.body(size: 14, color: SwColors.text2, height: 1.55),
@@ -169,14 +144,14 @@ class _DetailViewState extends State<_DetailView> {
           ),
         ),
         _StickyFooter(
-          qty: _qty,
+          qty: state.qty,
           maxQty: maxQty,
           unitPrice: p.price,
           disabled: outOfStock,
-          onQtyChanged: (v) => setState(() => _qty = v),
+          onQtyChanged: cubit.setQty,
           onAdd: () {
-            for (var i = 0; i < _qty; i++) {
-              widget.onAddToCart(p);
+            for (var i = 0; i < state.qty; i++) {
+              onAddToCart(p);
             }
           },
         ),
@@ -196,12 +171,14 @@ class _ImageCarousel extends StatelessWidget {
     required this.activeIndex,
     required this.controller,
     required this.onPageChanged,
+    required this.onThumbnailTap,
   });
 
   final List<ProductImage> gallery;
   final int activeIndex;
   final PageController controller;
   final ValueChanged<int> onPageChanged;
+  final ValueChanged<int> onThumbnailTap;
 
   @override
   Widget build(BuildContext context) {
@@ -254,11 +231,7 @@ class _ImageCarousel extends StatelessWidget {
                   image: gallery[i],
                   selected: selected,
                   tinted: i == 0,
-                  onTap: () => controller.animateToPage(
-                    i,
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOut,
-                  ),
+                  onTap: () => onThumbnailTap(i),
                 );
               },
             ),
@@ -350,10 +323,10 @@ class _Tabs extends StatelessWidget {
         border: Border(bottom: BorderSide(color: SwColors.border)),
       ),
       child: Row(
-        children: List.generate(_DetailViewState._tabs.length, (i) {
+        children: List.generate(_DetailView._tabs.length, (i) {
           final isActive = i == active;
           return Padding(
-            padding: EdgeInsets.only(right: i < _DetailViewState._tabs.length - 1 ? 24 : 0),
+            padding: EdgeInsets.only(right: i < _DetailView._tabs.length - 1 ? 24 : 0),
             child: GestureDetector(
               onTap: () => onChanged(i),
               child: Container(
@@ -362,7 +335,7 @@ class _Tabs extends StatelessWidget {
                   border: Border(bottom: BorderSide(color: isActive ? SwColors.yellow : Colors.transparent, width: 2)),
                 ),
                 child: Text(
-                  _DetailViewState._tabs[i],
+                  _DetailView._tabs[i],
                   style: SwText.body(
                     size: 14,
                     weight: FontWeight.w600,
