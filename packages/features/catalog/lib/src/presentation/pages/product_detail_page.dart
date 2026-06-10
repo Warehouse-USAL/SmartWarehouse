@@ -97,7 +97,7 @@ class _DetailView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        p.category.name.toUpperCase(),
+                        p.category.label.toUpperCase(),
                         style: SwText.mono(size: 12, color: SwColors.text3, letterSpacing: 0.08),
                       ),
                       const SizedBox(height: 6),
@@ -360,7 +360,7 @@ class _Specs extends StatelessWidget {
   Widget build(BuildContext context) {
     final entries = <(String, String)>[
       ('SKU', product.sku),
-      ('Categoría', product.category.name),
+      ('Categoría', product.category.label),
       ('Stock disponible', '${product.stock.available}'),
       ('Máx. por orden', '${product.orderConstraints.maxQuantityPerOrder}'),
       ('Precio unitario', product.price.formatted),

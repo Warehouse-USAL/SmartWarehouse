@@ -34,7 +34,7 @@ class ProductCard extends StatelessWidget {
             children: [
               Expanded(
                 child: SwImgPlaceholder(
-                  label: product.category.name,
+                  label: product.category.label,
                   tinted: tinted,
                   imageUrl: product.imageUrl,
                 ),
