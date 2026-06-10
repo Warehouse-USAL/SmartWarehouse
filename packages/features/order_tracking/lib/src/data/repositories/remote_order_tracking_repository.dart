@@ -28,10 +28,33 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
   /// watchOrder replaces the scheme to ws:// internally.
   final String baseUrl;
 
+  /// Decodifica el `sub` (userId) del payload del JWT. El back registra los
+  /// handlers WS bajo `/ws/v1/orders/{userId}` con un interceptor que matchea
+  /// el `userId` del JWT contra el del path — necesitamos el id, no solo el
+  /// token, para construir la URL.
+  static String? _userIdFromToken(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+      var payload = parts[1].replaceAll('-', '+').replaceAll('_', '/');
+      payload = payload.padRight((payload.length + 3) ~/ 4 * 4, '=');
+      final decoded = utf8.decode(base64.decode(payload));
+      final json = jsonDecode(decoded) as Map<String, dynamic>;
+      return json['sub'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
   Future<Either<OrderTrackingFailure, List<Order>>> getOrders() async {
     try {
-      final result = await httpHelper.get('/orders');
+      // El back devuelve paginado con default size=10; pedimos el máximo (50)
+      // para cubrir el caso común sin implementar UI de paginación todavía.
+      final result = await httpHelper.get(
+        '/orders',
+        queryParameters: const {'page': 0, 'size': 50},
+      );
       return result.fold(
         (error) => Left(OrderTrackingFailure(_mapError(error))),
         (response) {
@@ -106,10 +129,18 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
           }
           return;
         }
+        final userId = _userIdFromToken(token);
+        if (userId == null) {
+          if (!controller.isClosed) {
+            controller.addError(Exception('Token inválido'));
+          }
+          return;
+        }
 
         final wsUrl = baseUrl.replaceFirst(RegExp(r'^http'), 'ws');
-        final channel =
-            WebSocketChannel.connect(Uri.parse('$wsUrl/ws?token=$token'));
+        final channel = WebSocketChannel.connect(
+          Uri.parse('$wsUrl/ws/v1/orders/$userId?token=$token'),
+        );
         attempt = 0;
 
         await for (final message in channel.stream) {
@@ -172,10 +203,16 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
           await Future<void>.delayed(const Duration(seconds: 5));
           continue;
         }
+        final userId = _userIdFromToken(token);
+        if (userId == null) {
+          await Future<void>.delayed(const Duration(seconds: 5));
+          continue;
+        }
 
         final wsUrl = baseUrl.replaceFirst(RegExp(r'^http'), 'ws');
-        final channel =
-            WebSocketChannel.connect(Uri.parse('$wsUrl/ws?token=$token'));
+        final channel = WebSocketChannel.connect(
+          Uri.parse('$wsUrl/ws/v1/orders/$userId?token=$token'),
+        );
         attempt = 0;
 
         await for (final message in channel.stream) {
