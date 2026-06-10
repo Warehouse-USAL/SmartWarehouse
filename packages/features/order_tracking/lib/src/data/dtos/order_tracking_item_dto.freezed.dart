@@ -15,7 +15,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$OrderTrackingItemDto {
 
- String get id; String get status; List<OrderTrackingLineItemDto> get items; String? get createdAt;
+ String get id; String get status; List<OrderTrackingLineItemDto> get items;/// Algunas respuestas legacy lo mandan en root, hoy va dentro de
+/// `timestamps.createdAt`. Lo dejamos como fallback.
+ String? get createdAt; OrderTimestampsDto? get timestamps;
 /// Create a copy of OrderTrackingItemDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +30,16 @@ $OrderTrackingItemDtoCopyWith<OrderTrackingItemDto> get copyWith => _$OrderTrack
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrderTrackingItemDto&&(identical(other.id, id) || other.id == id)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrderTrackingItemDto&&(identical(other.id, id) || other.id == id)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.timestamps, timestamps) || other.timestamps == timestamps));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,status,const DeepCollectionEquality().hash(items),createdAt);
+int get hashCode => Object.hash(runtimeType,id,status,const DeepCollectionEquality().hash(items),createdAt,timestamps);
 
 @override
 String toString() {
-  return 'OrderTrackingItemDto(id: $id, status: $status, items: $items, createdAt: $createdAt)';
+  return 'OrderTrackingItemDto(id: $id, status: $status, items: $items, createdAt: $createdAt, timestamps: $timestamps)';
 }
 
 
@@ -48,11 +50,11 @@ abstract mixin class $OrderTrackingItemDtoCopyWith<$Res>  {
   factory $OrderTrackingItemDtoCopyWith(OrderTrackingItemDto value, $Res Function(OrderTrackingItemDto) _then) = _$OrderTrackingItemDtoCopyWithImpl;
 @useResult
 $Res call({
- String id, String status, List<OrderTrackingLineItemDto> items, String? createdAt
+ String id, String status, List<OrderTrackingLineItemDto> items, String? createdAt, OrderTimestampsDto? timestamps
 });
 
 
-
+$OrderTimestampsDtoCopyWith<$Res>? get timestamps;
 
 }
 /// @nodoc
@@ -65,16 +67,29 @@ class _$OrderTrackingItemDtoCopyWithImpl<$Res>
 
 /// Create a copy of OrderTrackingItemDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? status = null,Object? items = null,Object? createdAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? status = null,Object? items = null,Object? createdAt = freezed,Object? timestamps = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,items: null == items ? _self.items : items // ignore: cast_nullable_to_non_nullable
 as List<OrderTrackingLineItemDto>,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,timestamps: freezed == timestamps ? _self.timestamps : timestamps // ignore: cast_nullable_to_non_nullable
+as OrderTimestampsDto?,
   ));
 }
+/// Create a copy of OrderTrackingItemDto
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$OrderTimestampsDtoCopyWith<$Res>? get timestamps {
+    if (_self.timestamps == null) {
+    return null;
+  }
 
+  return $OrderTimestampsDtoCopyWith<$Res>(_self.timestamps!, (value) {
+    return _then(_self.copyWith(timestamps: value));
+  });
+}
 }
 
 
@@ -153,10 +168,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String status,  List<OrderTrackingLineItemDto> items,  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String status,  List<OrderTrackingLineItemDto> items,  String? createdAt,  OrderTimestampsDto? timestamps)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OrderTrackingItemDto() when $default != null:
-return $default(_that.id,_that.status,_that.items,_that.createdAt);case _:
+return $default(_that.id,_that.status,_that.items,_that.createdAt,_that.timestamps);case _:
   return orElse();
 
 }
@@ -174,10 +189,10 @@ return $default(_that.id,_that.status,_that.items,_that.createdAt);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String status,  List<OrderTrackingLineItemDto> items,  String? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String status,  List<OrderTrackingLineItemDto> items,  String? createdAt,  OrderTimestampsDto? timestamps)  $default,) {final _that = this;
 switch (_that) {
 case _OrderTrackingItemDto():
-return $default(_that.id,_that.status,_that.items,_that.createdAt);}
+return $default(_that.id,_that.status,_that.items,_that.createdAt,_that.timestamps);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -191,10 +206,10 @@ return $default(_that.id,_that.status,_that.items,_that.createdAt);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String status,  List<OrderTrackingLineItemDto> items,  String? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String status,  List<OrderTrackingLineItemDto> items,  String? createdAt,  OrderTimestampsDto? timestamps)?  $default,) {final _that = this;
 switch (_that) {
 case _OrderTrackingItemDto() when $default != null:
-return $default(_that.id,_that.status,_that.items,_that.createdAt);case _:
+return $default(_that.id,_that.status,_that.items,_that.createdAt,_that.timestamps);case _:
   return null;
 
 }
@@ -206,7 +221,7 @@ return $default(_that.id,_that.status,_that.items,_that.createdAt);case _:
 @JsonSerializable()
 
 class _OrderTrackingItemDto implements OrderTrackingItemDto {
-  const _OrderTrackingItemDto({required this.id, required this.status, final  List<OrderTrackingLineItemDto> items = const [], this.createdAt}): _items = items;
+  const _OrderTrackingItemDto({required this.id, required this.status, final  List<OrderTrackingLineItemDto> items = const [], this.createdAt, this.timestamps}): _items = items;
   factory _OrderTrackingItemDto.fromJson(Map<String, dynamic> json) => _$OrderTrackingItemDtoFromJson(json);
 
 @override final  String id;
@@ -218,7 +233,10 @@ class _OrderTrackingItemDto implements OrderTrackingItemDto {
   return EqualUnmodifiableListView(_items);
 }
 
+/// Algunas respuestas legacy lo mandan en root, hoy va dentro de
+/// `timestamps.createdAt`. Lo dejamos como fallback.
 @override final  String? createdAt;
+@override final  OrderTimestampsDto? timestamps;
 
 /// Create a copy of OrderTrackingItemDto
 /// with the given fields replaced by the non-null parameter values.
@@ -233,16 +251,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OrderTrackingItemDto&&(identical(other.id, id) || other.id == id)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OrderTrackingItemDto&&(identical(other.id, id) || other.id == id)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.timestamps, timestamps) || other.timestamps == timestamps));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,status,const DeepCollectionEquality().hash(_items),createdAt);
+int get hashCode => Object.hash(runtimeType,id,status,const DeepCollectionEquality().hash(_items),createdAt,timestamps);
 
 @override
 String toString() {
-  return 'OrderTrackingItemDto(id: $id, status: $status, items: $items, createdAt: $createdAt)';
+  return 'OrderTrackingItemDto(id: $id, status: $status, items: $items, createdAt: $createdAt, timestamps: $timestamps)';
 }
 
 
@@ -253,11 +271,11 @@ abstract mixin class _$OrderTrackingItemDtoCopyWith<$Res> implements $OrderTrack
   factory _$OrderTrackingItemDtoCopyWith(_OrderTrackingItemDto value, $Res Function(_OrderTrackingItemDto) _then) = __$OrderTrackingItemDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String status, List<OrderTrackingLineItemDto> items, String? createdAt
+ String id, String status, List<OrderTrackingLineItemDto> items, String? createdAt, OrderTimestampsDto? timestamps
 });
 
 
-
+@override $OrderTimestampsDtoCopyWith<$Res>? get timestamps;
 
 }
 /// @nodoc
@@ -270,17 +288,30 @@ class __$OrderTrackingItemDtoCopyWithImpl<$Res>
 
 /// Create a copy of OrderTrackingItemDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? status = null,Object? items = null,Object? createdAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? status = null,Object? items = null,Object? createdAt = freezed,Object? timestamps = freezed,}) {
   return _then(_OrderTrackingItemDto(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,items: null == items ? _self._items : items // ignore: cast_nullable_to_non_nullable
 as List<OrderTrackingLineItemDto>,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,timestamps: freezed == timestamps ? _self.timestamps : timestamps // ignore: cast_nullable_to_non_nullable
+as OrderTimestampsDto?,
   ));
 }
 
+/// Create a copy of OrderTrackingItemDto
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$OrderTimestampsDtoCopyWith<$Res>? get timestamps {
+    if (_self.timestamps == null) {
+    return null;
+  }
 
+  return $OrderTimestampsDtoCopyWith<$Res>(_self.timestamps!, (value) {
+    return _then(_self.copyWith(timestamps: value));
+  });
+}
 }
 
 // dart format on
