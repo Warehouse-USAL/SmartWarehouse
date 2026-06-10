@@ -6,7 +6,7 @@ import 'package:order_tracking/src/presentation/pages/order_detail_page.dart';
 import 'package:order_tracking/src/presentation/pages/order_list_page.dart';
 
 class OrderTrackingFeatureBuilder {
-  static void injectDependencies({required String wsBaseUrl}) {
+  static void injectDependencies({required String baseUrl}) {
     Injector.i
       ..registerLazySingleton<OrderTrackingRepository>(
         () => Injector.i.resolve<AppDataSource>().isMock
@@ -14,7 +14,7 @@ class OrderTrackingFeatureBuilder {
             : RemoteOrderTrackingRepository(
                 httpHelper: Injector.i.resolve<HttpHelper>(),
                 getToken: OnGetTokenUseCase.call,
-                baseUrl: wsBaseUrl,
+                baseUrl: baseUrl,
               ),
       )
       ..registerLazySingleton<OrderListCubit>(
