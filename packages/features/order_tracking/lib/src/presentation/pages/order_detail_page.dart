@@ -6,9 +6,10 @@ import 'package:order_tracking/src/presentation/bloc/order_detail_cubit.dart';
 import 'package:order_tracking/src/presentation/widgets/order_status_timeline.dart';
 
 class OrderDetailPage extends StatelessWidget {
-  const OrderDetailPage({required this.cubit, super.key});
+  const OrderDetailPage({required this.cubit, required this.orderId, super.key});
 
   final OrderDetailCubit cubit;
+  final String orderId;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +28,7 @@ class OrderDetailPage extends StatelessWidget {
           OrderDetailLoading() => const Center(child: SwLoadingSpinner()),
           OrderDetailError(:final message) => SwErrorView(
               message: message,
-              onRetry: () {},
+              onRetry: () => cubit.load(orderId),
             ),
           OrderDetailReady(:final order) => _DetailContent(order: order),
         },
@@ -114,7 +115,7 @@ class _DetailContent extends StatelessWidget {
     final time =
         '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     if (diff == 0) return 'Today, $time';
-    if (diff == 1) return 'Yesterday';
+    if (diff == 1) return 'Yesterday, $time';
     return '${dt.day}/${dt.month}/${dt.year}';
   }
 }

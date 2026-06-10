@@ -33,6 +33,6 @@ class OrderTrackingFeatureBuilder {
   static Widget buildOrderDetailPage(String orderId) {
     final cubit = OrderDetailCubit(Injector.i.resolve<OrderTrackingRepository>())
       ..load(orderId);
-    return OrderDetailPage(cubit: cubit);
+    return OrderDetailPage(cubit: cubit, orderId: orderId);
   }
 }

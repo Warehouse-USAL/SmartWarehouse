@@ -10,5 +10,8 @@ class Routes {
 
   static String orderSuccess(String orderId) => '/order/$orderId/success';
 
+  static const String orders = '/orders';
+  static const String orderDetailPattern = '/orders/:id';
+
   static String orderDetail(String id) => '/orders/$id';
 }
