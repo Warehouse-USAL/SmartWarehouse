@@ -10,10 +10,16 @@ export 'presentation/bloc/create_order_cubit.dart';
 class OrdersFeatureBuilder {
   static void injectDependencies() {
     Injector.i
+      ..registerLazySingleton<OrderHistoryStore>(
+        () => HiveOrderHistoryStore(Injector.i.resolve<PersistenceHelper>()),
+      )
       ..registerLazySingleton<OrderRepository>(
         () => Injector.i.resolve<AppDataSource>().isMock
             ? MockOrderRepository()
-            : RemoteOrderRepository(httpHelper: Injector.i.resolve<HttpHelper>()),
+            : RemoteOrderRepository(
+                httpHelper: Injector.i.resolve<HttpHelper>(),
+                historyStore: Injector.i.resolve<OrderHistoryStore>(),
+              ),
       )
       ..registerLazySingleton<CreateOrderCubit>(
         () => CreateOrderCubit(Injector.i.resolve<OrderRepository>()),

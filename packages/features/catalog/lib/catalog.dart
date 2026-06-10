@@ -2,6 +2,7 @@ library catalog;
 
 export 'src/catalog_feature_builder.dart';
 export 'src/domain/entities/money.dart';
+export 'src/domain/repositories/catalog_repository.dart';
 export 'src/domain/entities/order_constraints.dart';
 export 'src/domain/entities/product.dart';
 export 'src/domain/entities/product_category.dart';

@@ -5,7 +5,6 @@ import 'package:catalog/src/data/dtos/product_dto.dart';
 import 'package:catalog/src/data/dtos/products_page_dto.dart';
 import 'package:catalog/src/data/mappers/product_mapper.dart';
 import 'package:catalog/src/data/mappers/products_page_mapper.dart';
-import 'package:catalog/src/domain/repositories/catalog_repository.dart';
 import 'package:commons/commons.dart';
 import 'package:dartz/dartz.dart';
 

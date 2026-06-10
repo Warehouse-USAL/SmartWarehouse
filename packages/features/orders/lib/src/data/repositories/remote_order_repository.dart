@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:commons/commons.dart';
@@ -6,6 +7,7 @@ import 'package:dartz/dartz.dart' hide Order;
 import 'package:orders/src/data/dtos/create_order_request_dto.dart';
 import 'package:orders/src/data/dtos/order_response_dto.dart';
 import 'package:orders/src/data/mappers/order_mapper.dart';
+import 'package:orders/src/data/storage/order_history_store.dart';
 import 'package:orders/src/domain/entities/order.dart';
 import 'package:orders/src/domain/entities/order_destination.dart';
 import 'package:orders/src/domain/entities/order_item.dart';
@@ -21,9 +23,13 @@ import 'package:orders/src/domain/repositories/order_repository.dart';
 /// }
 /// ```
 class RemoteOrderRepository implements OrderRepository {
-  RemoteOrderRepository({required this.httpHelper});
+  RemoteOrderRepository({
+    required this.httpHelper,
+    required this.historyStore,
+  });
 
   final HttpHelper httpHelper;
+  final OrderHistoryStore historyStore;
 
   @override
   Future<Either<OrderFailure, Order>> create({
@@ -31,12 +37,20 @@ class RemoteOrderRepository implements OrderRepository {
     required OrderDestination destination,
   }) async {
     try {
+      // TODO(checkout): reemplazar por un formulario de dirección en el cart.
+      // Por ahora hardcodeado para satisfacer el contrato del back (PR #55):
+      // street + postal_code son requeridos.
+      const placeholderAddress = AddressDto(
+        street: 'Av. Siempre Viva 742',
+        postalCode: '1414',
+      );
       final body = CreateOrderRequestDto(
         items: items
             .map((i) =>
                 CreateOrderItemDto(productId: i.productId, quantity: i.quantity))
             .toList(growable: false),
         destinationArea: destination.area,
+        address: placeholderAddress,
       ).toJson();
 
       final result = await httpHelper.post('/orders', data: body);
@@ -48,7 +62,11 @@ class RemoteOrderRepository implements OrderRepository {
             return const Left(OrderFailure('Respuesta inválida'));
           }
           final dto = OrderResponseDto.fromJson(data);
-          return Right(dto.order.toEntity(fallbackItems: items));
+          final order = dto.order.toEntity(fallbackItems: items);
+          // Persistimos el ID en local: el order_tracking lo va a usar para
+          // listar las órdenes propias sin depender de GET /orders global.
+          unawaited(historyStore.addOrderId(order.id));
+          return Right(order);
         },
       );
     } catch (e, st) {

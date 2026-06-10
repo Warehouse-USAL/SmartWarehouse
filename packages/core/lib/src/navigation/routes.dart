@@ -14,4 +14,6 @@ class Routes {
   static const String orderDetailPattern = '/orders/:id';
 
   static String orderDetail(String id) => '/orders/$id';
+
+  static const String notifications = '/notifications';
 }

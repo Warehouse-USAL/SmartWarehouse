@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:order_tracking/src/data/repositories/mock_order_tracking_repository.dart';
 import 'package:order_tracking/src/data/repositories/remote_order_tracking_repository.dart';
+import 'package:order_tracking/src/presentation/pages/notifications_page.dart';
 import 'package:order_tracking/src/presentation/pages/order_detail_page.dart';
 import 'package:order_tracking/src/presentation/pages/order_list_page.dart';
+import 'package:order_tracking/src/presentation/widgets/notification_bell.dart';
 
 class OrderTrackingFeatureBuilder {
   static void injectDependencies({required String baseUrl}) {
@@ -17,6 +19,7 @@ class OrderTrackingFeatureBuilder {
                 httpHelper: Injector.i.resolve<HttpHelper>(),
                 getToken: OnGetTokenUseCase.call,
                 baseUrl: baseUrl,
+                historyStore: Injector.i.resolve<OrderHistoryStore>(),
               ),
       )
       ..registerLazySingleton<OrderListCubit>(
@@ -37,14 +40,42 @@ class OrderTrackingFeatureBuilder {
   static Widget buildNotificationListener({required Widget child}) {
     return BlocListener<OrderNotificationCubit, OrderNotificationState>(
       bloc: Injector.i.resolve<OrderNotificationCubit>(),
+      // Solo disparar SnackBar cuando llega una notificación nueva
+      // (lastReceived cambia), no cuando se marcan como leídas.
+      listenWhen: (prev, curr) =>
+          curr.lastReceived != null && prev.lastReceived != curr.lastReceived,
       listener: (ctx, state) {
-        if (state is OrderNotificationReceived) {
-          _showOrderNotification(ctx, state.change);
-        }
+        final received = state.lastReceived;
+        if (received == null) return;
+        // Diferir al siguiente frame: el listener puede dispararse mientras
+        // el Navigator está flusheando rutas (DialogRoute cerrándose, beamTo
+        // en curso, etc). Tocar el messenger ahí rompe asserts internos del
+        // navigator (_RouteEntry.markForComplete / _flushHistoryUpdates).
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!ctx.mounted) return;
+          // Defensa final: si alguna assertion del framework igual se mete
+          // en el medio (típico con UpgradeAlert + NoAnimationTransitionDelegate
+          // de Beamer cerrando un DialogRoute), no queremos crashear la app
+          // — la notificación queda registrada igual en el cubit y se ve en
+          // la campana / página /notifications.
+          try {
+            _showOrderNotification(ctx, received.change);
+          } catch (e, st) {
+            // ignore: avoid_print
+            print('SnackBar de notificación falló: $e\n$st');
+          }
+        });
       },
       child: child,
     );
   }
+
+  /// Icono de campana con badge — usar en app bars donde quiera mostrarse
+  /// el indicador de notificaciones pendientes.
+  static Widget buildNotificationBell() => const NotificationBell();
+
+  /// Página `/notifications` con el historial de notificaciones de la sesión.
+  static Widget buildNotificationsPage() => const NotificationsPage();
 
   static void _showOrderNotification(
     BuildContext context,
@@ -124,9 +155,10 @@ class OrderTrackingFeatureBuilder {
       OrderListPage(cubit: Injector.i.resolve<OrderListCubit>());
 
   static Widget buildOrderDetailPage(String orderId) {
-    final cubit =
-        OrderDetailCubit(Injector.i.resolve<OrderTrackingRepository>())
-          ..load(orderId);
+    final cubit = OrderDetailCubit(
+      Injector.i.resolve<OrderTrackingRepository>(),
+      Injector.i.resolve<CatalogRepository>(),
+    )..load(orderId);
     return OrderDetailPage(cubit: cubit, orderId: orderId);
   }
 }

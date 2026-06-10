@@ -1,11 +1,9 @@
 import 'package:beamer/beamer.dart';
 import 'package:core/core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:profile/profile.dart';
 import 'package:smart_warehouse/application/navigation/guards/auth/authenticated_guard.dart';
 import 'package:smart_warehouse/application/navigation/guards/auth/not_authenticated_guard.dart';
-import 'package:upgrader/upgrader.dart';
 
 class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
   @override
@@ -92,6 +90,11 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
           child: OrderTrackingFeatureBuilder.buildOrderDetailPage(id),
         );
       },
+      Routes.notifications: (_, __, ___) => _beamerPage(
+            title: 'Notificaciones',
+            key: 'notifications',
+            child: OrderTrackingFeatureBuilder.buildNotificationsPage(),
+          ),
     };
   }
 
@@ -100,18 +103,18 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
     required String key,
     required Widget child,
   }) {
+    // NOTA: antes había un UpgradeAlert envolviendo cada page acá. Lo
+    // sacamos porque colisiona con NoAnimationTransitionDelegate de Beamer:
+    // el DialogRoute<bool> del upgrade alert dispara _flushHistoryUpdates
+    // mientras el navigator está en medio de _updatePages, crasheando con
+    // 'Failed assertion: _debugLocked && !_debugUpdatingPage'.
+    // El upgrade check, si se reactivara, debería ir al root de la app
+    // (en MaterialApp.builder), NO envolviendo cada page.
     return BeamPage(
       title: title,
       key: ValueKey(key),
       name: key,
-      child: UpgradeAlert(
-        upgrader: Upgrader(
-          minAppVersion: '1.0.0',
-          debugLogging: kDebugMode,
-          countryCode: 'US',
-        ),
-        child: child,
-      ),
+      child: child,
     );
   }
 }

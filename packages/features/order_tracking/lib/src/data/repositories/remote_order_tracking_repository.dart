@@ -5,7 +5,6 @@ import 'dart:developer';
 import 'package:commons/commons.dart';
 import 'package:commons/helpers/http/entities/http_response_error.dart';
 import 'package:dartz/dartz.dart' hide Order;
-import 'package:order_tracking/src/data/dtos/order_list_response_dto.dart';
 import 'package:order_tracking/src/data/dtos/order_tracking_detail_response_dto.dart';
 import 'package:order_tracking/src/data/dtos/ws_order_event_dto.dart';
 import 'package:order_tracking/src/data/mappers/order_tracking_mapper.dart';
@@ -19,32 +18,52 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
     required this.httpHelper,
     required this.getToken,
     required this.baseUrl,
+    required this.historyStore,
   });
 
   final HttpHelper httpHelper;
   final String? Function() getToken;
+  final OrderHistoryStore historyStore;
 
   /// HTTP base URL (e.g. `http://10.0.2.2:8080`).
   /// watchOrder replaces the scheme to ws:// internally.
   final String baseUrl;
 
+  /// Decodifica el `sub` (userId) del payload del JWT. El back registra los
+  /// handlers WS bajo `/ws/v1/orders/{userId}` con un interceptor que matchea
+  /// el `userId` del JWT contra el del path — necesitamos el id, no solo el
+  /// token, para construir la URL.
+  static String? _userIdFromToken(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+      var payload = parts[1].replaceAll('-', '+').replaceAll('_', '/');
+      payload = payload.padRight((payload.length + 3) ~/ 4 * 4, '=');
+      final decoded = utf8.decode(base64.decode(payload));
+      final json = jsonDecode(decoded) as Map<String, dynamic>;
+      return json['sub'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
   Future<Either<OrderTrackingFailure, List<Order>>> getOrders() async {
     try {
-      final result = await httpHelper.get('/orders');
-      return result.fold(
-        (error) => Left(OrderTrackingFailure(_mapError(error))),
-        (response) {
-          final data = response.data;
-          if (data is! Map<String, dynamic>) {
-            return const Left(OrderTrackingFailure('Respuesta inválida'));
-          }
-          final dto = OrderListResponseDto.fromJson(data);
-          final orders = dto.orders.map((o) => o.toEntity()).toList()
-            ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          return Right(orders);
-        },
-      );
+      // No usamos GET /orders global: en su lugar, leemos los IDs de las
+      // órdenes que el usuario creó en este device (persisted via
+      // OrderHistoryStore) y hacemos GET /orders/{id} por cada uno en
+      // paralelo. Las que fallen (404, etc.) las filtramos.
+      final ids = await historyStore.getOrderIds();
+      if (ids.isEmpty) return const Right([]);
+
+      final results = await Future.wait(ids.map(getOrderById));
+      final orders = <Order>[];
+      for (final r in results) {
+        r.fold((_) {}, orders.add);
+      }
+      orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return Right(orders);
     } catch (e, st) {
       log('getOrders error', error: e, stackTrace: st);
       return const Left(OrderTrackingFailure('Error de red'));
@@ -106,10 +125,18 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
           }
           return;
         }
+        final userId = _userIdFromToken(token);
+        if (userId == null) {
+          if (!controller.isClosed) {
+            controller.addError(Exception('Token inválido'));
+          }
+          return;
+        }
 
         final wsUrl = baseUrl.replaceFirst(RegExp(r'^http'), 'ws');
-        final channel =
-            WebSocketChannel.connect(Uri.parse('$wsUrl/ws?token=$token'));
+        final channel = WebSocketChannel.connect(
+          Uri.parse('$wsUrl/ws/v1/orders/$userId?token=$token'),
+        );
         attempt = 0;
 
         await for (final message in channel.stream) {
@@ -119,7 +146,7 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
                 jsonDecode(message as String) as Map<String, dynamic>;
             final event = WsOrderEventDto.fromJson(json);
             if (event.event == 'order.updated' &&
-                event.payload.orderId == id) {
+                event.payload.id == id) {
               final updated = await getOrderById(id);
               updated.fold((_) {}, (order) {
                 if (!controller.isClosed) controller.add(order);
@@ -172,10 +199,16 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
           await Future<void>.delayed(const Duration(seconds: 5));
           continue;
         }
+        final userId = _userIdFromToken(token);
+        if (userId == null) {
+          await Future<void>.delayed(const Duration(seconds: 5));
+          continue;
+        }
 
         final wsUrl = baseUrl.replaceFirst(RegExp(r'^http'), 'ws');
-        final channel =
-            WebSocketChannel.connect(Uri.parse('$wsUrl/ws?token=$token'));
+        final channel = WebSocketChannel.connect(
+          Uri.parse('$wsUrl/ws/v1/orders/$userId?token=$token'),
+        );
         attempt = 0;
 
         await for (final message in channel.stream) {
@@ -185,7 +218,7 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
                 jsonDecode(message as String) as Map<String, dynamic>;
             final event = WsOrderEventDto.fromJson(json);
             if (event.event == 'order.updated') {
-              final orderId = event.payload.orderId;
+              final orderId = event.payload.id;
               final newStatus = parseOrderStatus(event.payload.status);
               final oldStatus = cache[orderId];
               if (oldStatus != null && oldStatus != newStatus) {

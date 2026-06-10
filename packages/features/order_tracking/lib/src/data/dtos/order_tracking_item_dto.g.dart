@@ -19,6 +19,9 @@ _OrderTrackingItemDto _$OrderTrackingItemDtoFromJson(
           .toList() ??
       const [],
   createdAt: json['created_at'] as String?,
+  timestamps: json['timestamps'] == null
+      ? null
+      : OrderTimestampsDto.fromJson(json['timestamps'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$OrderTrackingItemDtoToJson(
@@ -28,4 +31,5 @@ Map<String, dynamic> _$OrderTrackingItemDtoToJson(
   'status': instance.status,
   'items': instance.items.map((e) => e.toJson()).toList(),
   'created_at': instance.createdAt,
+  'timestamps': instance.timestamps?.toJson(),
 };
