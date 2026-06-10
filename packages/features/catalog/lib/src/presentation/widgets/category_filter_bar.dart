@@ -1,18 +1,18 @@
-import 'package:catalog/src/domain/entities/category.dart';
+import 'package:catalog/src/domain/entities/product_category.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
 class CategoryFilterBar extends StatelessWidget {
   const CategoryFilterBar({
     required this.categories,
-    required this.selectedCategoryId,
+    required this.selectedCategory,
     required this.onSelected,
     super.key,
   });
 
-  final List<Category> categories;
-  final String? selectedCategoryId;
-  final ValueChanged<String?> onSelected;
+  final List<ProductCategory> categories;
+  final ProductCategory? selectedCategory;
+  final ValueChanged<ProductCategory?> onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -27,15 +27,15 @@ class CategoryFilterBar extends StatelessWidget {
           if (index == 0) {
             return _Chip(
               label: 'Todos',
-              isActive: selectedCategoryId == null,
+              isActive: selectedCategory == null,
               onTap: () => onSelected(null),
             );
           }
           final category = categories[index - 1];
           return _Chip(
-            label: category.name,
-            isActive: selectedCategoryId == category.id,
-            onTap: () => onSelected(category.id),
+            label: category.label,
+            isActive: selectedCategory == category,
+            onTap: () => onSelected(category),
           );
         },
       ),

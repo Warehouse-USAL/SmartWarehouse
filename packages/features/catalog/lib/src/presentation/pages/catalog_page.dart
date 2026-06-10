@@ -45,7 +45,7 @@ class CatalogPage extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                     child: CategoryFilterBar(
                       categories: cubit.categories,
-                      selectedCategoryId: cubit.selectedCategoryId,
+                      selectedCategory: cubit.selectedCategory,
                       onSelected: cubit.selectCategory,
                     ),
                   ),

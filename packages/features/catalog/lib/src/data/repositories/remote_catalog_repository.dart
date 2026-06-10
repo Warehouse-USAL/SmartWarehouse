@@ -13,7 +13,7 @@ import 'package:dartz/dartz.dart';
 ///
 ///   GET    /products?category=&search=&isActive=&page=&size=
 ///   GET    /products/{id}
-///   GET    /categories      ← NO IMPLEMENTADO en el backend; devolvemos mock.
+///   GET    /categories   ← devuelve los keys del enum (ingles, lowercase).
 class RemoteCatalogRepository implements CatalogRepository {
   RemoteCatalogRepository({required this.httpHelper});
 
@@ -24,7 +24,7 @@ class RemoteCatalogRepository implements CatalogRepository {
     int page = 1,
     int pageSize = 20,
     String? search,
-    String? categoryId,
+    ProductCategory? category,
   }) async {
     try {
       final backendPage = (page - 1).clamp(0, 1 << 30);
@@ -32,7 +32,7 @@ class RemoteCatalogRepository implements CatalogRepository {
         'page': backendPage,
         'size': pageSize,
         if (search != null && search.isNotEmpty) 'search': search,
-        if (categoryId != null && categoryId.isNotEmpty) 'category': categoryId,
+        if (category != null) 'category': category.key,
       };
       final result = await httpHelper.get('/products', queryParameters: query);
       return result.fold(
@@ -52,19 +52,13 @@ class RemoteCatalogRepository implements CatalogRepository {
     }
   }
 
+  /// Hasta que exista `GET /categories` en el back devolvemos los valores
+  /// locales del enum. Cuando exista, parsear cada string recibido con
+  /// `ProductCategory.tryParse` y filtrar los `null`.
   @override
-  Future<Either<CatalogFailure, List<Category>>> getCategories() async {
-    // El backend todavía no tiene `/categories`. Devolvemos una lista hardcoded
-    // con los slugs que existen en los products seedeados, para que el filtro
-    // de la UI funcione. Cuando el endpoint exista, reemplazar por HTTP real.
-    return const Right(_mockCategories);
+  Future<Either<CatalogFailure, List<ProductCategory>>> getCategories() async {
+    return Right(ProductCategory.values);
   }
-
-  static const _mockCategories = [
-    Category(id: 'seguridad', name: 'Seguridad'),
-    Category(id: 'herramientas', name: 'Herramientas'),
-    Category(id: 'almacenamiento', name: 'Almacenamiento'),
-  ];
 
   @override
   Future<Either<CatalogFailure, Product>> getProductById(String id) async {

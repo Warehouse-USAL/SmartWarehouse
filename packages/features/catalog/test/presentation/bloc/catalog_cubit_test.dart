@@ -7,25 +7,26 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _FakeRepo implements CatalogRepository {
-  final List<({int page, int pageSize, String? search, String? categoryId})> calls = [];
-  Future<Either<CatalogFailure, ProductsPage>> Function(int page, String? search, String? categoryId) handler =
+  final List<({int page, int pageSize, String? search, ProductCategory? category})> calls = [];
+  Future<Either<CatalogFailure, ProductsPage>> Function(
+          int page, String? search, ProductCategory? category) handler =
       (page, _, __) async => Right(_emptyPage(page));
-  Future<Either<CatalogFailure, List<Category>>> Function() categoriesHandler =
-      () async => const Right([Category(id: 'home', name: 'Hogar')]);
+  Future<Either<CatalogFailure, List<ProductCategory>>> Function() categoriesHandler =
+      () async => Right(ProductCategory.values);
 
   @override
   Future<Either<CatalogFailure, ProductsPage>> getProducts({
     int page = 1,
     int pageSize = 20,
     String? search,
-    String? categoryId,
+    ProductCategory? category,
   }) async {
-    calls.add((page: page, pageSize: pageSize, search: search, categoryId: categoryId));
-    return handler(page, search, categoryId);
+    calls.add((page: page, pageSize: pageSize, search: search, category: category));
+    return handler(page, search, category);
   }
 
   @override
-  Future<Either<CatalogFailure, List<Category>>> getCategories() => categoriesHandler();
+  Future<Either<CatalogFailure, List<ProductCategory>>> getCategories() => categoriesHandler();
 
   @override
   Future<Either<CatalogFailure, Product>> getProductById(String id) =>
@@ -35,11 +36,11 @@ class _FakeRepo implements CatalogRepository {
 ProductsPage _emptyPage(int page) =>
     ProductsPage(items: const [], page: page, pageSize: 20, total: 0, hasNext: false);
 
-Product _p(String id, {String category = 'home'}) => Product(
+Product _p(String id, {ProductCategory category = ProductCategory.other}) => Product(
       id: id,
       sku: 'SKU-$id',
       name: 'Name $id',
-      category: Category(id: category, name: category),
+      category: category,
       price: const Money(amount: 1000, currency: 'ARS'),
       stock: const Stock(available: 10),
       orderConstraints: const OrderConstraints(maxQuantityPerOrder: 5),
@@ -185,9 +186,9 @@ void main() {
   group('CatalogCubit filter changes', () {
     test('selectCategory resets pagination to page 1', () async {
       final repo = _FakeRepo()
-        ..handler = (page, _, categoryId) async => Right(_page(
+        ..handler = (page, _, category) async => Right(_page(
               page,
-              [_p('$page', category: categoryId ?? 'home')],
+              [_p('$page', category: category ?? ProductCategory.other)],
               total: 5,
               hasNext: false,
             ));
@@ -195,12 +196,12 @@ void main() {
       await cubit.load();
       repo.calls.clear();
 
-      cubit.selectCategory('home');
+      cubit.selectCategory(ProductCategory.technology);
       await Future<void>.delayed(Duration.zero);
       await Future<void>.delayed(Duration.zero);
 
       expect(repo.calls.last.page, 1);
-      expect(repo.calls.last.categoryId, 'home');
+      expect(repo.calls.last.category, ProductCategory.technology);
     });
 
     test('setQuery alone does not trigger a fetch', () async {

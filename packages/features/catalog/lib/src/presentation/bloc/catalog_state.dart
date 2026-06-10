@@ -1,5 +1,5 @@
-import 'package:catalog/src/domain/entities/category.dart';
 import 'package:catalog/src/domain/entities/product.dart';
+import 'package:catalog/src/domain/entities/product_category.dart';
 
 sealed class CatalogState {
   const CatalogState();
@@ -19,7 +19,7 @@ class CatalogReady extends CatalogState {
     required this.products,
     required this.categories,
     required this.query,
-    required this.selectedCategoryId,
+    required this.selectedCategory,
     required this.page,
     required this.pageSize,
     required this.total,
@@ -29,9 +29,9 @@ class CatalogReady extends CatalogState {
   });
 
   final List<Product> products;
-  final List<Category> categories;
+  final List<ProductCategory> categories;
   final String query;
-  final String? selectedCategoryId;
+  final ProductCategory? selectedCategory;
   final int page;
   final int pageSize;
   final int total;
@@ -43,9 +43,9 @@ class CatalogReady extends CatalogState {
 
   CatalogReady copyWith({
     List<Product>? products,
-    List<Category>? categories,
+    List<ProductCategory>? categories,
     String? query,
-    Object? selectedCategoryId = _sentinel,
+    Object? selectedCategory = _sentinel,
     int? page,
     int? pageSize,
     int? total,
@@ -57,9 +57,9 @@ class CatalogReady extends CatalogState {
       products: products ?? this.products,
       categories: categories ?? this.categories,
       query: query ?? this.query,
-      selectedCategoryId: identical(selectedCategoryId, _sentinel)
-          ? this.selectedCategoryId
-          : selectedCategoryId as String?,
+      selectedCategory: identical(selectedCategory, _sentinel)
+          ? this.selectedCategory
+          : selectedCategory as ProductCategory?,
       page: page ?? this.page,
       pageSize: pageSize ?? this.pageSize,
       total: total ?? this.total,
