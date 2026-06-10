@@ -24,14 +24,14 @@ class CategoryFilterBar extends StatelessWidget {
         itemCount: categories.length + 1,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          if (index == 0) {
+          if (index == categories.length) {
             return _Chip(
               label: 'Todos',
               isActive: selectedCategory == null,
               onTap: () => onSelected(null),
             );
           }
-          final category = categories[index - 1];
+          final category = categories[index];
           return _Chip(
             label: category.label,
             isActive: selectedCategory == category,
@@ -58,13 +58,19 @@ class _Chip extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(SwRadii.pill),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Text(
-            label,
-            style: SwText.body(
-              size: 13,
-              weight: FontWeight.w500,
-              color: isActive ? SwColors.white : SwColors.text2,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: SizedBox(
+            height: 36,
+            child: Center(
+              child: Text(
+                label,
+                style: SwText.body(
+                  size: 13,
+                  weight: FontWeight.w500,
+                  color: isActive ? SwColors.white : SwColors.text2,
+                  height: 1.0,
+                ),
+              ),
             ),
           ),
         ),
