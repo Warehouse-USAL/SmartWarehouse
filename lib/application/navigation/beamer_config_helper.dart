@@ -92,6 +92,11 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
           child: OrderTrackingFeatureBuilder.buildOrderDetailPage(id),
         );
       },
+      Routes.notifications: (_, __, ___) => _beamerPage(
+            title: 'Notificaciones',
+            key: 'notifications',
+            child: OrderTrackingFeatureBuilder.buildNotificationsPage(),
+          ),
     };
   }
 

@@ -31,12 +31,20 @@ class RemoteOrderRepository implements OrderRepository {
     required OrderDestination destination,
   }) async {
     try {
+      // TODO(checkout): reemplazar por un formulario de dirección en el cart.
+      // Por ahora hardcodeado para satisfacer el contrato del back (PR #55):
+      // street + postal_code son requeridos.
+      const placeholderAddress = AddressDto(
+        street: 'Av. Siempre Viva 742',
+        postalCode: '1414',
+      );
       final body = CreateOrderRequestDto(
         items: items
             .map((i) =>
                 CreateOrderItemDto(productId: i.productId, quantity: i.quantity))
             .toList(growable: false),
         destinationArea: destination.area,
+        address: placeholderAddress,
       ).toJson();
 
       final result = await httpHelper.post('/orders', data: body);
