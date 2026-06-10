@@ -12,14 +12,8 @@ class OrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: SwCard(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: SwColors.white,
-          border: Border.all(color: SwColors.border),
-          borderRadius: BorderRadius.circular(SwRadii.card),
-          boxShadow: SwShadows.card,
-        ),
         child: Row(
           children: [
             Expanded(
@@ -48,11 +42,13 @@ class OrderCard extends StatelessWidget {
 
   String _formatDate(DateTime dt) {
     final now = DateTime.now();
-    final diff = now.difference(dt);
+    final today = DateTime(now.year, now.month, now.day);
+    final dtDay = DateTime(dt.year, dt.month, dt.day);
+    final diff = today.difference(dtDay).inDays;
     final time =
         '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-    if (diff.inDays == 0) return 'Today, $time';
-    if (diff.inDays == 1) return 'Yesterday, $time';
+    if (diff == 0) return 'Today, $time';
+    if (diff == 1) return 'Yesterday, $time';
     return '${dt.day}/${dt.month}/${dt.year}';
   }
 }

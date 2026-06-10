@@ -16,7 +16,7 @@ class OrderStatusTimeline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (status == OrderStatus.cancelled) {
-      return _CancelledBanner();
+      return const _CancelledBanner();
     }
     final currentIndex = _indexFor(status);
     return IntrinsicHeight(
@@ -51,8 +51,7 @@ class OrderStatusTimeline extends StatelessWidget {
   int _indexFor(OrderStatus s) => switch (s) {
         OrderStatus.pending => 0,
         OrderStatus.inProgress => 1,
-        OrderStatus.completed => 2,
-        OrderStatus.cancelled => 0,
+        OrderStatus.completed || OrderStatus.cancelled => 2,
       };
 }
 
@@ -97,6 +96,8 @@ class _TimelineNode extends StatelessWidget {
 }
 
 class _CancelledBanner extends StatelessWidget {
+  const _CancelledBanner();
+
   @override
   Widget build(BuildContext context) {
     return Container(
