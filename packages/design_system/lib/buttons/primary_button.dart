@@ -1,3 +1,4 @@
+import 'package:design_system/indicators/sw_loading_spinner.dart';
 import 'package:design_system/icon/custom_icon.dart';
 import 'package:design_system/theme/extensions/custom_theme_extension.dart';
 import 'package:design_system/theme/theme_data/custom_text_styles.dart';
@@ -73,13 +74,7 @@ class PrimaryButton extends StatelessWidget {
                 const Spacer(),
               ],
               isLoading
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: Center(
-                        child: CircularProgressIndicator.adaptive(),
-                      ),
-                    )
+                  ? const SwLoadingSpinner(size: 24, strokeWidth: 2)
                   : CustomText(
                       text,
                       style: styleBuilder == null ? baseButtonTheme?.textButtonStyle : null,

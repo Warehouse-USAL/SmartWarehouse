@@ -32,38 +32,32 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
 
   Map<Pattern, dynamic Function(BuildContext, BeamState, Object?)> _buildRoutes() {
     return {
-      Routes.login: (_, __, ___) {
-        return _beamerPage(
-          title: 'Login',
-          key: 'login',
-          child: LoginFeatureBuilder.buildPage(
-            onLoginSuccess: (context, tokens) async {
-              await AuthFeatureBuilder.login(
-                token: tokens.accessToken,
-                refreshToken: tokens.refreshToken,
-              );
-            },
-          ),
-        );
-      },
-      Routes.profile: (_, __, ___) {
-        return _beamerPage(
-          title: 'Profile',
-          key: 'profile',
-          child: const Scaffold(
-            body: Center(
-              child: Text('Profile - TODO: Implement profile feature'),
+      Routes.login: (_, __, ___) => _beamerPage(
+            title: 'Login',
+            key: 'login',
+            child: LoginFeatureBuilder.buildPage(
+              onLoginSuccess: (context, tokens) async {
+                await AuthFeatureBuilder.login(
+                  token: tokens.accessToken,
+                  refreshToken: tokens.refreshToken,
+                );
+              },
             ),
           ),
-        );
-      },
-      Routes.catalog: (_, __, ___) {
-        return _beamerPage(
-          title: 'Catálogo',
-          key: 'catalog',
-          child: CatalogFeatureBuilder.buildCatalogPage(),
-        );
-      },
+      Routes.profile: (_, __, ___) => _beamerPage(
+            title: 'Perfil',
+            key: 'profile',
+            child: const Scaffold(
+              body: Center(
+                child: Text('Perfil - TODO: Implementar perfil'),
+              ),
+            ),
+          ),
+      Routes.catalog: (_, __, ___) => _beamerPage(
+            title: 'Catálogo',
+            key: 'catalog',
+            child: CatalogFeatureBuilder.buildCatalogPage(),
+          ),
       Routes.catalogDetailPattern: (_, state, __) {
         final id = state.pathParameters['id'] ?? '';
         return _beamerPage(
@@ -75,13 +69,11 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
           ),
         );
       },
-      Routes.cart: (_, __, ___) {
-        return _beamerPage(
-          title: 'Carrito',
-          key: 'cart',
-          child: CartFeatureBuilder.buildCartPage(),
-        );
-      },
+      Routes.cart: (_, __, ___) => _beamerPage(
+            title: 'Carrito',
+            key: 'cart',
+            child: CartFeatureBuilder.buildCartPage(),
+          ),
       Routes.orderSuccessPattern: (_, state, __) {
         final id = state.pathParameters['id'] ?? '';
         return _beamerPage(
