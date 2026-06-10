@@ -18,7 +18,13 @@ class NotificationsPage extends StatelessWidget {
         backgroundColor: SwColors.white,
         elevation: 0,
         title: Text('Notificaciones', style: SwText.display(size: 22)),
-        leading: const BackButton(color: SwColors.text),
+        // Beamer no respeta Navigator.pop por default — usamos el
+        // NavigationHelper que llama Beamer.beamBack() internamente.
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: SwColors.text),
+          onPressed: () =>
+              Injector.i.resolve<NavigationHelper>().pop(context),
+        ),
       ),
       body: BlocBuilder<OrderNotificationCubit, OrderNotificationState>(
         bloc: cubit,
