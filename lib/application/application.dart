@@ -57,9 +57,19 @@ class _SmartWarehouseAppState extends State<SmartWarehouseApp> {
             alwaysBeamBack: true,
           ),
           title: 'SmartWarehouse',
-          builder: (_, child) => OrderTrackingFeatureBuilder.buildNotificationListener(
-            child: child ?? const SizedBox.shrink(),
-          ),
+          // NOTA: antes acá envolvíamos child con
+          // OrderTrackingFeatureBuilder.buildNotificationListener para
+          // mostrar una SnackBar in-app por cada notificación.
+          // Pero ese BlocListener estaba arriba del Navigator → al rebuildear
+          // el padre, el Navigator ejecutaba didUpdateWidget → _updatePages
+          // con el NoAnimationTransitionDelegate cacheado de Beamer, que
+          // tiene un bug en markForRemove ("This route cannot be marked for
+          // complete"). Se eliminó. Las notificaciones siguen llegando al
+          // cubit, el badge de la campana se actualiza y la página
+          // /notifications las lista. Si querés re-habilitar la SnackBar,
+          // hay que reimplementarla con un GlobalKey<ScaffoldMessengerState>
+          // afuera del árbol del Navigator.
+          builder: (_, child) => child ?? const SizedBox.shrink(),
         ),
       ),
     );
