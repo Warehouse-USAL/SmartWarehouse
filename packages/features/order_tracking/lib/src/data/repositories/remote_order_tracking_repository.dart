@@ -128,7 +128,11 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
           }
         }
       } catch (_) {
-        if (controller.isClosed) break;
+        // Error path falls through to the shared backoff below
+      }
+
+      // Apply backoff on both clean server-close and error to prevent busy-loop
+      if (!controller.isClosed) {
         final delay = delays[attempt.clamp(0, delays.length - 1)];
         attempt++;
         await Future<void>.delayed(Duration(seconds: delay));
