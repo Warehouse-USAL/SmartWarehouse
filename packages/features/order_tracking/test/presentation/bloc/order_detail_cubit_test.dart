@@ -1,12 +1,31 @@
 import 'dart:async';
 
-import 'package:catalog/catalog.dart' show Money;
+import 'package:catalog/catalog.dart';
 import 'package:dartz/dartz.dart' hide Order;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:order_tracking/src/domain/entities/order_status_change.dart';
 import 'package:order_tracking/src/domain/repositories/order_tracking_repository.dart';
 import 'package:order_tracking/src/presentation/bloc/order_detail_cubit.dart';
 import 'package:orders/orders.dart';
+
+class _FakeCatalogRepo implements CatalogRepository {
+  @override
+  Future<Either<CatalogFailure, Product>> getProductById(String id) async =>
+      const Left(CatalogFailure('not used'));
+
+  @override
+  Future<Either<CatalogFailure, ProductsPage>> getProducts({
+    int page = 1,
+    int pageSize = 20,
+    String? search,
+    ProductCategory? category,
+  }) async =>
+      const Left(CatalogFailure('not used'));
+
+  @override
+  Future<Either<CatalogFailure, List<ProductCategory>>> getCategories() async =>
+      const Right([]);
+}
 
 class _FakeRepo implements OrderTrackingRepository {
   final Map<String, StreamController<Order>> controllers = {};
@@ -48,7 +67,7 @@ void main() {
 
   setUp(() {
     repo = _FakeRepo();
-    cubit = OrderDetailCubit(repo);
+    cubit = OrderDetailCubit(repo, _FakeCatalogRepo());
   });
 
   tearDown(() => cubit.close());

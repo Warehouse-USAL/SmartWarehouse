@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:catalog/catalog.dart';
-import 'package:catalog/src/domain/repositories/catalog_repository.dart';
 import 'package:catalog/src/presentation/bloc/catalog_cubit.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
