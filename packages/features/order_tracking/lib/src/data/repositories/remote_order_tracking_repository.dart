@@ -5,7 +5,6 @@ import 'dart:developer';
 import 'package:commons/commons.dart';
 import 'package:commons/helpers/http/entities/http_response_error.dart';
 import 'package:dartz/dartz.dart' hide Order;
-import 'package:order_tracking/src/data/dtos/order_list_response_dto.dart';
 import 'package:order_tracking/src/data/dtos/order_tracking_detail_response_dto.dart';
 import 'package:order_tracking/src/data/dtos/ws_order_event_dto.dart';
 import 'package:order_tracking/src/data/mappers/order_tracking_mapper.dart';
@@ -19,10 +18,12 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
     required this.httpHelper,
     required this.getToken,
     required this.baseUrl,
+    required this.historyStore,
   });
 
   final HttpHelper httpHelper;
   final String? Function() getToken;
+  final OrderHistoryStore historyStore;
 
   /// HTTP base URL (e.g. `http://10.0.2.2:8080`).
   /// watchOrder replaces the scheme to ws:// internally.
@@ -49,25 +50,20 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
   @override
   Future<Either<OrderTrackingFailure, List<Order>>> getOrders() async {
     try {
-      // El back devuelve paginado con default size=10; pedimos el máximo (50)
-      // para cubrir el caso común sin implementar UI de paginación todavía.
-      final result = await httpHelper.get(
-        '/orders',
-        queryParameters: const {'page': 0, 'size': 50},
-      );
-      return result.fold(
-        (error) => Left(OrderTrackingFailure(_mapError(error))),
-        (response) {
-          final data = response.data;
-          if (data is! Map<String, dynamic>) {
-            return const Left(OrderTrackingFailure('Respuesta inválida'));
-          }
-          final dto = OrderListResponseDto.fromJson(data);
-          final orders = dto.orders.map((o) => o.toEntity()).toList()
-            ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          return Right(orders);
-        },
-      );
+      // No usamos GET /orders global: en su lugar, leemos los IDs de las
+      // órdenes que el usuario creó en este device (persisted via
+      // OrderHistoryStore) y hacemos GET /orders/{id} por cada uno en
+      // paralelo. Las que fallen (404, etc.) las filtramos.
+      final ids = await historyStore.getOrderIds();
+      if (ids.isEmpty) return const Right([]);
+
+      final results = await Future.wait(ids.map(getOrderById));
+      final orders = <Order>[];
+      for (final r in results) {
+        r.fold((_) {}, orders.add);
+      }
+      orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return Right(orders);
     } catch (e, st) {
       log('getOrders error', error: e, stackTrace: st);
       return const Left(OrderTrackingFailure('Error de red'));

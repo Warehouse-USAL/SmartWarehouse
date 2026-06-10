@@ -19,6 +19,7 @@ class OrderTrackingFeatureBuilder {
                 httpHelper: Injector.i.resolve<HttpHelper>(),
                 getToken: OnGetTokenUseCase.call,
                 baseUrl: baseUrl,
+                historyStore: Injector.i.resolve<OrderHistoryStore>(),
               ),
       )
       ..registerLazySingleton<OrderListCubit>(
