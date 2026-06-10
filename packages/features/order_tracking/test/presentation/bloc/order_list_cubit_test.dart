@@ -5,7 +5,6 @@ import 'package:dartz/dartz.dart' hide Order;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:order_tracking/src/domain/repositories/order_tracking_repository.dart';
 import 'package:order_tracking/src/presentation/bloc/order_list_cubit.dart';
-import 'package:order_tracking/src/presentation/bloc/order_list_state.dart';
 import 'package:orders/orders.dart';
 
 class _FakeRepo implements OrderTrackingRepository {

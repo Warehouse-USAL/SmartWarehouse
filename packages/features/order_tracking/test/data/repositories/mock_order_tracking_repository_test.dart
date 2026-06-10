@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:order_tracking/src/data/repositories/mock_order_tracking_repository.dart';
-import 'package:order_tracking/src/domain/repositories/order_tracking_repository.dart';
 import 'package:orders/orders.dart';
 
 void main() {

@@ -2,9 +2,6 @@ import 'package:core/core.dart';
 import 'package:flutter/widgets.dart';
 import 'package:order_tracking/src/data/repositories/mock_order_tracking_repository.dart';
 import 'package:order_tracking/src/data/repositories/remote_order_tracking_repository.dart';
-import 'package:order_tracking/src/domain/repositories/order_tracking_repository.dart';
-import 'package:order_tracking/src/presentation/bloc/order_detail_cubit.dart';
-import 'package:order_tracking/src/presentation/bloc/order_list_cubit.dart';
 import 'package:order_tracking/src/presentation/pages/order_detail_page.dart';
 import 'package:order_tracking/src/presentation/pages/order_list_page.dart';
 

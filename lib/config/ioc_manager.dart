@@ -57,6 +57,13 @@ class IocManager {
     CatalogFeatureBuilder.injectDependencies();
     OrdersFeatureBuilder.injectDependencies();
     CartFeatureBuilder.injectDependencies();
+    OrderTrackingFeatureBuilder.injectDependencies(
+      wsBaseUrl: config.environment.when(
+        dev: _toWsUrl,
+        qa: _toWsUrl,
+        prod: _toWsUrl,
+      ),
+    );
   }
 }
 
@@ -79,3 +86,6 @@ String _localBackendUrl() {
   final host = Platform.isAndroid ? '10.0.2.2' : 'localhost';
   return 'http://$host:$overridePort';
 }
+
+String _toWsUrl() =>
+    _localBackendUrl().replaceFirst(RegExp(r'^http'), 'ws');

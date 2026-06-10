@@ -82,6 +82,19 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
           child: OrdersFeatureBuilder.buildOrderSuccessPage(id),
         );
       },
+      Routes.orders: (_, __, ___) => _beamerPage(
+            title: 'Mis órdenes',
+            key: 'orders',
+            child: OrderTrackingFeatureBuilder.buildOrderListPage(),
+          ),
+      Routes.orderDetailPattern: (_, state, __) {
+        final id = state.pathParameters['id'] ?? '';
+        return _beamerPage(
+          title: 'Detalle de orden',
+          key: 'order-detail-$id',
+          child: OrderTrackingFeatureBuilder.buildOrderDetailPage(id),
+        );
+      },
     };
   }
 
