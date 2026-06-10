@@ -41,7 +41,7 @@ void main() {
       final result = await repo.getProducts(
         page: 1,
         pageSize: 20,
-        category: ProductCategory.technology,
+        category: ProductCategory.tecnologia,
       );
       result.fold(
         (_) => fail('expected Right'),
@@ -50,7 +50,7 @@ void main() {
           expect(page.total, 14);
           expect(page.hasNext, isFalse);
           expect(
-            page.items.every((p) => p.category == ProductCategory.technology),
+            page.items.every((p) => p.category == ProductCategory.tecnologia),
             isTrue,
           );
         },

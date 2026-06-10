@@ -22,7 +22,7 @@ extension ProductDtoMapper on ProductDto {
       sku: sku,
       name: name,
       description: description,
-      category: ProductCategory.tryParse(category) ?? ProductCategory.other,
+      category: ProductCategory.tryParse(category) ?? ProductCategory.otros,
       price: price?.toEntity() ?? Money.zero('ARS'),
       stock: stock?.toEntity() ?? Stock.empty,
       orderConstraints:

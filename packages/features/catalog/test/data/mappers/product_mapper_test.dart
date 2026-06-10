@@ -13,7 +13,7 @@ void main() {
         'sku': 'SEG-001',
         'name': 'Casco de seguridad',
         'description': 'Casco industrial.',
-        'category': 'technology',
+        'category': 'TECNOLOGIA',
         'images': [
           {'url': 'https://example.com/a.jpg', 'alt': 'Casco', 'is_primary': true},
         ],
@@ -31,8 +31,8 @@ void main() {
       expect(product.id, '6a20992630a2fa66d223d5d4');
       expect(product.sku, 'SEG-001');
       expect(product.name, 'Casco de seguridad');
-      expect(product.category, ProductCategory.technology);
-      expect(product.category.key, 'technology');
+      expect(product.category, ProductCategory.tecnologia);
+      expect(product.category.key, 'TECNOLOGIA');
       expect(product.category.label, 'Tecnología');
       expect(product.price.amount, 1250000);
       expect(product.price.currency, 'ARS');

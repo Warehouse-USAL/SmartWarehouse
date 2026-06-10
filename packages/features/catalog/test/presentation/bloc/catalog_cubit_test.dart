@@ -36,7 +36,7 @@ class _FakeRepo implements CatalogRepository {
 ProductsPage _emptyPage(int page) =>
     ProductsPage(items: const [], page: page, pageSize: 20, total: 0, hasNext: false);
 
-Product _p(String id, {ProductCategory category = ProductCategory.other}) => Product(
+Product _p(String id, {ProductCategory category = ProductCategory.otros}) => Product(
       id: id,
       sku: 'SKU-$id',
       name: 'Name $id',
@@ -188,7 +188,7 @@ void main() {
       final repo = _FakeRepo()
         ..handler = (page, _, category) async => Right(_page(
               page,
-              [_p('$page', category: category ?? ProductCategory.other)],
+              [_p('$page', category: category ?? ProductCategory.otros)],
               total: 5,
               hasNext: false,
             ));
@@ -196,12 +196,12 @@ void main() {
       await cubit.load();
       repo.calls.clear();
 
-      cubit.selectCategory(ProductCategory.technology);
+      cubit.selectCategory(ProductCategory.tecnologia);
       await Future<void>.delayed(Duration.zero);
       await Future<void>.delayed(Duration.zero);
 
       expect(repo.calls.last.page, 1);
-      expect(repo.calls.last.category, ProductCategory.technology);
+      expect(repo.calls.last.category, ProductCategory.tecnologia);
     });
 
     test('setQuery alone does not trigger a fetch', () async {
