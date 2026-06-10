@@ -52,8 +52,17 @@ class OrderTrackingFeatureBuilder {
         // en curso, etc). Tocar el messenger ahí rompe asserts internos del
         // navigator (_RouteEntry.markForComplete / _flushHistoryUpdates).
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (ctx.mounted) {
+          if (!ctx.mounted) return;
+          // Defensa final: si alguna assertion del framework igual se mete
+          // en el medio (típico con UpgradeAlert + NoAnimationTransitionDelegate
+          // de Beamer cerrando un DialogRoute), no queremos crashear la app
+          // — la notificación queda registrada igual en el cubit y se ve en
+          // la campana / página /notifications.
+          try {
             _showOrderNotification(ctx, received.change);
+          } catch (e, st) {
+            // ignore: avoid_print
+            print('SnackBar de notificación falló: $e\n$st');
           }
         });
       },

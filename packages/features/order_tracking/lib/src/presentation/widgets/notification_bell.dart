@@ -19,9 +19,15 @@ class NotificationBell extends StatelessWidget {
             SwIconButton(
               icon: Icons.notifications_none_rounded,
               tooltip: 'Notificaciones',
-              onPressed: () => Injector.i
-                  .resolve<NavigationHelper>()
-                  .pushNamed(context, routeName: Routes.notifications),
+              // disableAnimation: false → evita el NoAnimationTransitionDelegate
+              // de Beamer, que tiene un bug interactuando con DialogRoutes
+              // (UpgradeAlert) y dispara asserts del navigator.
+              onPressed: () =>
+                  Injector.i.resolve<NavigationHelper>().pushNamed(
+                        context,
+                        routeName: Routes.notifications,
+                        disableAnimation: false,
+                      ),
             ),
             if (unread > 0)
               Positioned(
