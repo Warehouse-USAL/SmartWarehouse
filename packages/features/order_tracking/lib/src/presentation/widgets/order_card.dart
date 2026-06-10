@@ -69,16 +69,15 @@ class OrderCard extends StatelessWidget {
     final today = DateTime(now.year, now.month, now.day);
     final dtDay = DateTime(dt.year, dt.month, dt.day);
     final diff = today.difference(dtDay).inDays;
-    if (diff == 0) return 'Today';
-    if (diff == 1) return 'Yesterday';
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return '${months[dt.month - 1]} ${dt.day}';
+    if (diff == 0) return 'Hoy';
+    if (diff == 1) return 'Ayer';
+    return '${dt.day}/${dt.month}/${dt.year}';
   }
 
   String _statusLabel(OrderStatus status) => switch (status) {
-        OrderStatus.pending => 'Pending',
-        OrderStatus.inProgress => 'In progress',
-        OrderStatus.completed => 'Completed',
-        OrderStatus.cancelled => 'Cancelled',
+        OrderStatus.pending => 'Pendiente',
+        OrderStatus.inProgress => 'En progreso',
+        OrderStatus.completed => 'Completado',
+        OrderStatus.cancelled => 'Cancelado',
       };
 }

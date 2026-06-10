@@ -7,11 +7,11 @@ class OrderStatusTimeline extends StatelessWidget {
 
   final OrderStatus status;
 
-  static const _stepLabels = ['Received', 'Packed', 'Shipped', 'Delivered'];
+  static const _stepLabels = ['Pendiente', 'En progreso', 'Completado'];
 
   int get _currentStep => switch (status) {
         OrderStatus.pending => 0,
-        OrderStatus.inProgress => 2,
+        OrderStatus.inProgress => 1,
         OrderStatus.completed => _stepLabels.length,
         OrderStatus.cancelled => -1,
       };
@@ -201,7 +201,7 @@ class _CancelledBanner extends StatelessWidget {
           const Icon(Icons.cancel_outlined, size: 20, color: SwColors.text3),
           const SizedBox(width: 8),
           Text(
-            'Order cancelled',
+            'Orden cancelada',
             style: SwText.body(size: 14, color: SwColors.text3),
           ),
         ],

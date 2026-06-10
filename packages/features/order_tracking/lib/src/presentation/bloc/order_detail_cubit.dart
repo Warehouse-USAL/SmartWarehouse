@@ -18,7 +18,14 @@ class OrderDetailCubit extends Cubit<OrderDetailState> {
     emit(const OrderDetailLoading());
     _subscription = _repository.watchOrder(orderId).listen(
       (order) {
-        if (!isClosed) emit(OrderDetailReady(order: order));
+        if (!isClosed) {
+          emit(OrderDetailReady(order: order));
+          if (order.status == OrderStatus.completed ||
+              order.status == OrderStatus.cancelled) {
+            _subscription?.cancel();
+            _subscription = null;
+          }
+        }
       },
       onError: (Object e) {
         if (!isClosed) emit(OrderDetailError(e.toString()));

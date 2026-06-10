@@ -19,7 +19,7 @@ class OrderListPage extends StatelessWidget {
         backgroundColor: SwColors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: Text('Orders', style: SwText.display(size: 26)),
+        title: Text('Órdenes', style: SwText.display(size: 26)),
       ),
       child: BlocBuilder<OrderListCubit, OrderListState>(
         bloc: cubit,
@@ -29,37 +29,51 @@ class OrderListPage extends StatelessWidget {
               message: message,
               onRetry: cubit.refresh,
             ),
-          OrderListReady(:final orders) => orders.isEmpty
-              ? const SwEmptyView(
-                  title: 'No orders yet',
-                  message: 'Your orders will appear here once you place one.',
-                  icon: Icons.receipt_long_outlined,
-                )
-              : ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  children: [
-                    SwCard(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          for (int i = 0; i < orders.length; i++) ...[
-                            OrderCard(
-                              order: orders[i],
-                              onTap: () =>
-                                  Injector.i.resolve<NavigationHelper>().pushNamed(
-                                        context,
-                                        routeName: Routes.orderDetail(orders[i].id),
-                                      ),
-                            ),
-                            if (i < orders.length - 1)
-                              const Divider(height: 1, color: SwColors.border),
-                          ],
-                        ],
+          OrderListReady(:final orders) => RefreshIndicator(
+              color: SwColors.yellow,
+              onRefresh: cubit.refresh,
+              child: orders.isEmpty
+                  ? const SingleChildScrollView(
+                      physics: AlwaysScrollableScrollPhysics(),
+                      child: SizedBox(
+                        height: 400,
+                        child: SwEmptyView(
+                          title: 'Sin órdenes',
+                          message:
+                              'Tus pedidos aparecerán aquí una vez que realices uno.',
+                          icon: Icons.receipt_long_outlined,
+                        ),
                       ),
+                    )
+                  : ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      children: [
+                        SwCard(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              for (int i = 0; i < orders.length; i++) ...[
+                                OrderCard(
+                                  order: orders[i],
+                                  onTap: () => Injector.i
+                                      .resolve<NavigationHelper>()
+                                      .pushNamed(
+                                        context,
+                                        routeName:
+                                            Routes.orderDetail(orders[i].id),
+                                      ),
+                                ),
+                                if (i < orders.length - 1)
+                                  const Divider(height: 1, color: SwColors.border),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+            ),
         },
       ),
     );

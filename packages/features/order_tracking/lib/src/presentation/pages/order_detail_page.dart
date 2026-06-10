@@ -29,11 +29,11 @@ class OrderDetailPage extends StatelessWidget {
             title: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Order $orderId', style: SwText.display(size: 18)),
+                Text('Orden $orderId', style: SwText.display(size: 18)),
                 if (placedDate != null) ...[
                   const SizedBox(height: 1),
                   Text(
-                    'Placed $placedDate',
+                    'Realizado $placedDate',
                     style: SwText.body(size: 11, color: SwColors.text3),
                   ),
                 ],
@@ -84,7 +84,7 @@ class _DetailContent extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 8, bottom: 10),
-          child: Text('Status', style: SwText.display(size: 18)),
+          child: Text('Estado', style: SwText.display(size: 18)),
         ),
         SwCard(
           padding: const EdgeInsets.fromLTRB(14, 16, 14, 18),
@@ -92,7 +92,7 @@ class _DetailContent extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.only(top: 18, bottom: 10),
-          child: Text('Order details', style: SwText.display(size: 18)),
+          child: Text('Detalles del pedido', style: SwText.display(size: 18)),
         ),
         SwCard(
           padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -100,7 +100,7 @@ class _DetailContent extends StatelessWidget {
               ? Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Text(
-                    'No items',
+                    'Sin ítems',
                     style: SwText.body(size: 14, color: SwColors.text3),
                   ),
                 )
@@ -132,18 +132,11 @@ class _ItemRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: SwColors.surface,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: SwColors.border),
-            ),
-            child: const Icon(
-              Icons.inventory_2_outlined,
-              size: 20,
-              color: SwColors.text3,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: CustomPaint(
+              size: const Size(48, 48),
+              painter: _StripedPlaceholderPainter(),
             ),
           ),
           const SizedBox(width: 12),
@@ -159,7 +152,7 @@ class _ItemRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${item.productId} · qty ${item.quantity}',
+                  '${item.productId} · cant. ${item.quantity}',
                   style: SwText.body(size: 12, color: SwColors.text3),
                 ),
               ],
@@ -176,6 +169,27 @@ class _ItemRow extends StatelessWidget {
   }
 }
 
+class _StripedPlaceholderPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bg = Paint()..color = SwColors.surfaceAlt;
+    canvas.drawRect(Offset.zero & size, bg);
+
+    final stripe = Paint()
+      ..color = SwColors.border
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    const step = 8.0;
+    for (double i = -size.height; i < size.width + size.height; i += step) {
+      canvas.drawLine(Offset(i, 0), Offset(i + size.height, size.height), stripe);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_StripedPlaceholderPainter oldDelegate) => false;
+}
+
 String _formatDate(DateTime dt) {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
@@ -183,7 +197,7 @@ String _formatDate(DateTime dt) {
   final diff = today.difference(dtDay).inDays;
   final time =
       '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-  if (diff == 0) return 'Today, $time';
-  if (diff == 1) return 'Yesterday, $time';
+  if (diff == 0) return 'Hoy, $time';
+  if (diff == 1) return 'Ayer, $time';
   return '${dt.day}/${dt.month}/${dt.year}';
 }

@@ -22,7 +22,6 @@ class OrderListCubit extends Cubit<OrderListState> {
       (failure) => emit(OrderListError(failure.message ?? 'Error desconocido')),
       (orders) => emit(OrderListReady(orders: orders)),
     );
-    await Future<void>.value();
   }
 
   Future<void> refresh() => load();

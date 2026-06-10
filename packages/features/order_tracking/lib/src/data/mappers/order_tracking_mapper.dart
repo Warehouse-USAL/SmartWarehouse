@@ -8,7 +8,7 @@ extension OrderTrackingItemDtoMapper on OrderTrackingItemDto {
     final mappedItems = items.map((i) => i.toEntity()).toList();
     return Order(
       id: id,
-      status: _parseStatus(status),
+      status: parseOrderStatus(status),
       items: mappedItems,
       createdAt: createdAt != null
           ? (DateTime.tryParse(createdAt!) ?? DateTime.now())
@@ -27,7 +27,7 @@ extension OrderTrackingLineItemDtoMapper on OrderTrackingLineItemDto {
       );
 }
 
-OrderStatus _parseStatus(String raw) {
+OrderStatus parseOrderStatus(String raw) {
   switch (raw.toLowerCase()) {
     case 'pending':
       return OrderStatus.pending;

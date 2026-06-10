@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:catalog/catalog.dart';
 import 'package:dartz/dartz.dart' hide Order;
+import 'package:order_tracking/src/domain/entities/order_status_change.dart';
 import 'package:order_tracking/src/domain/repositories/order_tracking_repository.dart';
 import 'package:orders/orders.dart';
 
@@ -45,6 +46,8 @@ class MockOrderTrackingRepository implements OrderTrackingRepository {
   ];
 
   final Map<String, StreamController<Order>> _controllers = {};
+  final StreamController<OrderStatusChange> _statusChangeController =
+      StreamController<OrderStatusChange>.broadcast();
 
   @override
   Future<Either<OrderTrackingFailure, List<Order>>> getOrders() async {
@@ -77,8 +80,16 @@ class MockOrderTrackingRepository implements OrderTrackingRepository {
     return controller.stream;
   }
 
+  @override
+  Stream<OrderStatusChange> watchOrderStatusChanges() =>
+      _statusChangeController.stream;
+
   void emitUpdate(String id, Order updated) {
     _controllers[id]?.add(updated);
+  }
+
+  void emitStatusChange(OrderStatusChange change) {
+    _statusChangeController.add(change);
   }
 
   void dispose() {
@@ -86,5 +97,6 @@ class MockOrderTrackingRepository implements OrderTrackingRepository {
       c.close();
     }
     _controllers.clear();
+    _statusChangeController.close();
   }
 }

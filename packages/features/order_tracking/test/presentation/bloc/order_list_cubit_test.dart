@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:catalog/catalog.dart' show Money;
 import 'package:dartz/dartz.dart' hide Order;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:order_tracking/src/domain/entities/order_status_change.dart';
 import 'package:order_tracking/src/domain/repositories/order_tracking_repository.dart';
 import 'package:order_tracking/src/presentation/bloc/order_list_cubit.dart';
 import 'package:orders/orders.dart';
@@ -20,6 +21,9 @@ class _FakeRepo implements OrderTrackingRepository {
 
   @override
   Stream<Order> watchOrder(String id) => const Stream.empty();
+
+  @override
+  Stream<OrderStatusChange> watchOrderStatusChanges() => const Stream.empty();
 }
 
 Order _order(String id) => Order(

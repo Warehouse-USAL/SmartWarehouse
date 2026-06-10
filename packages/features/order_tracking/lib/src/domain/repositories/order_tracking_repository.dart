@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart' hide Order;
+import 'package:order_tracking/src/domain/entities/order_status_change.dart';
 import 'package:orders/orders.dart';
 
 class OrderTrackingFailure {
@@ -18,4 +19,9 @@ abstract class OrderTrackingRepository {
   /// evento WS `order.updated` para el orderId dado.
   /// Reconexión con backoff exponencial ante pérdida de señal.
   Stream<Order> watchOrder(String id);
+
+  /// Stream de cambios de estado en CUALQUIER orden del usuario autenticado.
+  /// Emite [OrderStatusChange] sólo cuando el estado de una orden cambia
+  /// respecto al último valor conocido. Siembra el caché vía REST al inicio.
+  Stream<OrderStatusChange> watchOrderStatusChanges();
 }
