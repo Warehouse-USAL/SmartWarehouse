@@ -32,10 +32,12 @@ class CategoryFilterBar extends StatelessWidget {
             );
           }
           final category = categories[index];
+          final isActive = selectedCategory == category;
           return _Chip(
             label: category.label,
-            isActive: selectedCategory == category,
-            onTap: () => onSelected(category),
+            isActive: isActive,
+            // Toggle: tap en chip activo deselecciona (vuelve a "Todos").
+            onTap: () => onSelected(isActive ? null : category),
           );
         },
       ),
