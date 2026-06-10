@@ -85,6 +85,7 @@ void main() {
     final states = <OrderListState>[];
     final sub = cubit.stream.listen(states.add);
     await cubit.refresh();
+    await Future<void>.delayed(Duration.zero);
     await sub.cancel();
     await cubit.close();
 
