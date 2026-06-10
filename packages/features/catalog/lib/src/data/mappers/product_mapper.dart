@@ -5,10 +5,10 @@ import 'package:catalog/src/data/dtos/product_image_dto.dart';
 import 'package:catalog/src/data/dtos/product_location_dto.dart';
 import 'package:catalog/src/data/dtos/spec_dto.dart';
 import 'package:catalog/src/data/dtos/stock_dto.dart';
-import 'package:catalog/src/domain/entities/category.dart';
 import 'package:catalog/src/domain/entities/money.dart';
 import 'package:catalog/src/domain/entities/order_constraints.dart';
 import 'package:catalog/src/domain/entities/product.dart';
+import 'package:catalog/src/domain/entities/product_category.dart';
 import 'package:catalog/src/domain/entities/product_image.dart';
 import 'package:catalog/src/domain/entities/product_location.dart';
 import 'package:catalog/src/domain/entities/spec.dart';
@@ -22,7 +22,7 @@ extension ProductDtoMapper on ProductDto {
       sku: sku,
       name: name,
       description: description,
-      category: _categoryFromSlug(category),
+      category: ProductCategory.tryParse(category) ?? ProductCategory.otros,
       price: price?.toEntity() ?? Money.zero('ARS'),
       stock: stock?.toEntity() ?? Stock.empty,
       orderConstraints:
@@ -77,12 +77,6 @@ extension ProductLocationDtoMapper on ProductLocationDto {
       height: height!,
     );
   }
-}
-
-Category _categoryFromSlug(String slug) {
-  if (slug.isEmpty) return const Category(id: 'other', name: 'Otros');
-  final name = slug[0].toUpperCase() + slug.substring(1).replaceAll('_', ' ');
-  return Category(id: slug, name: name);
 }
 
 String? _pickThumbUrl(List<ProductImage> imgs, String? flat) {

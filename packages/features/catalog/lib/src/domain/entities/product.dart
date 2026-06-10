@@ -1,5 +1,5 @@
-import 'package:catalog/src/domain/entities/category.dart';
 import 'package:catalog/src/domain/entities/money.dart';
+import 'package:catalog/src/domain/entities/product_category.dart';
 import 'package:catalog/src/domain/entities/order_constraints.dart';
 import 'package:catalog/src/domain/entities/product_image.dart';
 import 'package:catalog/src/domain/entities/product_location.dart';
@@ -32,7 +32,7 @@ class Product {
   final String id;
   final String sku;
   final String name;
-  final Category category;
+  final ProductCategory category;
   final Money price;
   final Stock stock;
   final OrderConstraints orderConstraints;

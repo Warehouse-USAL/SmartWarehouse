@@ -1,5 +1,5 @@
-import 'package:catalog/src/domain/entities/category.dart';
 import 'package:catalog/src/domain/entities/product.dart';
+import 'package:catalog/src/domain/entities/product_category.dart';
 import 'package:catalog/src/domain/entities/products_page.dart';
 import 'package:dartz/dartz.dart';
 
@@ -13,10 +13,10 @@ abstract class CatalogRepository {
     int page = 1,
     int pageSize = 20,
     String? search,
-    String? categoryId,
+    ProductCategory? category,
   });
 
-  Future<Either<CatalogFailure, List<Category>>> getCategories();
+  Future<Either<CatalogFailure, List<ProductCategory>>> getCategories();
 
   Future<Either<CatalogFailure, Product>> getProductById(String id);
 }
