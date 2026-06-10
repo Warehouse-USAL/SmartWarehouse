@@ -1,7 +1,7 @@
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:design_system/indicators/custom_loading_indicator.dart';
+import 'package:design_system/indicators/sw_loading_spinner.dart';
 import 'package:design_system/theme/extensions/custom_theme_extension.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +39,7 @@ class FileImageSource implements CircularImageSource {
       file,
       fit: BoxFit.cover,
       frameBuilder: (context, child, frame, _) {
-        if (frame == null) return const CustomLoadingIndicator();
+        if (frame == null) return const SwLoadingSpinner(size: 20, strokeWidth: 2);
         return child;
       },
     );
@@ -57,7 +57,7 @@ class MemoryImageSource implements CircularImageSource {
       data,
       fit: BoxFit.cover,
       frameBuilder: (context, child, frame, _) {
-        if (frame == null) return const CustomLoadingIndicator();
+        if (frame == null) return const SwLoadingSpinner(size: 20, strokeWidth: 2);
         return child;
       },
     );
@@ -75,7 +75,7 @@ class NetworkImageSource implements CircularImageSource {
       url,
       fit: BoxFit.cover,
       frameBuilder: (context, child, frame, _) {
-        if (frame == null) return const CustomLoadingIndicator();
+        if (frame == null) return const SwLoadingSpinner(size: 20, strokeWidth: 2);
         return child;
       },
       errorBuilder: (_, __, ___) {

@@ -4,6 +4,7 @@ import 'package:commons/helpers/persistence_helper/persistable_object.dart';
 import 'package:commons/helpers/persistence_helper/persistence_failure.dart';
 import 'package:commons/helpers/persistence_helper/persistence_helper.dart';
 import 'package:dartz/dartz.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -14,9 +15,13 @@ class HivePersistenceHelper implements PersistenceHelper {
   Box? hiveBox;
 
   Future<void> initHiveBox() async {
-    final dir = await getApplicationDocumentsDirectory();
-    Hive.init(dir.path);
-    hiveBox = await Hive.openBox('storage');
+    if (kIsWeb) {
+      hiveBox = await Hive.openBox('storage');
+    } else {
+      final dir = await getApplicationDocumentsDirectory();
+      Hive.init(dir.path);
+      hiveBox = await Hive.openBox('storage');
+    }
   }
 
   @override
