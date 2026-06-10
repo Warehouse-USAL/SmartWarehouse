@@ -46,9 +46,16 @@ class OrderTrackingFeatureBuilder {
           curr.lastReceived != null && prev.lastReceived != curr.lastReceived,
       listener: (ctx, state) {
         final received = state.lastReceived;
-        if (received != null) {
-          _showOrderNotification(ctx, received.change);
-        }
+        if (received == null) return;
+        // Diferir al siguiente frame: el listener puede dispararse mientras
+        // el Navigator está flusheando rutas (DialogRoute cerrándose, beamTo
+        // en curso, etc). Tocar el messenger ahí rompe asserts internos del
+        // navigator (_RouteEntry.markForComplete / _flushHistoryUpdates).
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (ctx.mounted) {
+            _showOrderNotification(ctx, received.change);
+          }
+        });
       },
       child: child,
     );
