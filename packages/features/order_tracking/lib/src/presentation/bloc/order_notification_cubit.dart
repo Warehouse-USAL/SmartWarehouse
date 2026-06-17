@@ -9,9 +9,16 @@ import 'package:order_tracking/src/presentation/bloc/order_notification_state.da
 export 'order_notification_state.dart';
 
 class OrderNotificationCubit extends Cubit<OrderNotificationState> {
-  OrderNotificationCubit(this._repository) : super(const OrderNotificationState());
+  OrderNotificationCubit(this._repository, {this.onEvent})
+      : super(const OrderNotificationState());
 
   final OrderTrackingRepository _repository;
+
+  /// Callback opcional invocado en cada nuevo evento del WS — el feature
+  /// builder lo usa para mostrar SnackBar via GlobalKey&lt;ScaffoldMessengerState&gt;
+  /// (afuera del árbol del Navigator, así evitamos los asserts del WS+Beamer).
+  final void Function(OrderStatusChange)? onEvent;
+
   StreamSubscription<OrderStatusChange>? _subscription;
 
   void start() {
@@ -29,6 +36,7 @@ class OrderNotificationCubit extends Cubit<OrderNotificationState> {
           notifications: [notification, ...state.notifications],
           lastReceived: notification,
         ));
+        onEvent?.call(change);
       },
     );
   }

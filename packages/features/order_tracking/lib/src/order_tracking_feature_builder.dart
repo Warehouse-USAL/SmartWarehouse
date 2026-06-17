@@ -1,7 +1,6 @@
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:order_tracking/src/data/repositories/mock_order_tracking_repository.dart';
 import 'package:order_tracking/src/data/repositories/remote_order_tracking_repository.dart';
 import 'package:order_tracking/src/presentation/pages/notifications_page.dart';
@@ -10,6 +9,13 @@ import 'package:order_tracking/src/presentation/pages/order_list_page.dart';
 import 'package:order_tracking/src/presentation/widgets/notification_bell.dart';
 
 class OrderTrackingFeatureBuilder {
+  /// Key global del ScaffoldMessenger — `application.dart` la pasa a
+  /// `MaterialApp.router(scaffoldMessengerKey: ...)`. La usamos para mostrar
+  /// SnackBars de notificaciones de WS desde afuera del árbol del Navigator
+  /// (lo que evita los asserts de `_RouteEntry.markForComplete` que pasaban
+  /// con un BlocListener envolviendo el Navigator).
+  static final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
   static void injectDependencies({required String baseUrl}) {
     Injector.i
       ..registerLazySingleton<OrderTrackingRepository>(
@@ -26,49 +32,16 @@ class OrderTrackingFeatureBuilder {
         () => OrderListCubit(Injector.i.resolve<OrderTrackingRepository>()),
       )
       ..registerSingleton<OrderNotificationCubit>(
-        OrderNotificationCubit(Injector.i.resolve<OrderTrackingRepository>()),
+        OrderNotificationCubit(
+          Injector.i.resolve<OrderTrackingRepository>(),
+          onEvent: _showOrderSnackBar,
+        ),
       );
   }
 
   /// Call once after the user authenticates to start the global WS listener.
   static void startNotifications() =>
       Injector.i.resolve<OrderNotificationCubit>().start();
-
-  /// Wrap the app's navigator child (inside MaterialApp builder:) with the
-  /// in-app notification listener. Must be inside MaterialApp so
-  /// ScaffoldMessenger is available.
-  static Widget buildNotificationListener({required Widget child}) {
-    return BlocListener<OrderNotificationCubit, OrderNotificationState>(
-      bloc: Injector.i.resolve<OrderNotificationCubit>(),
-      // Solo disparar SnackBar cuando llega una notificación nueva
-      // (lastReceived cambia), no cuando se marcan como leídas.
-      listenWhen: (prev, curr) =>
-          curr.lastReceived != null && prev.lastReceived != curr.lastReceived,
-      listener: (ctx, state) {
-        final received = state.lastReceived;
-        if (received == null) return;
-        // Diferir al siguiente frame: el listener puede dispararse mientras
-        // el Navigator está flusheando rutas (DialogRoute cerrándose, beamTo
-        // en curso, etc). Tocar el messenger ahí rompe asserts internos del
-        // navigator (_RouteEntry.markForComplete / _flushHistoryUpdates).
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!ctx.mounted) return;
-          // Defensa final: si alguna assertion del framework igual se mete
-          // en el medio (típico con UpgradeAlert + NoAnimationTransitionDelegate
-          // de Beamer cerrando un DialogRoute), no queremos crashear la app
-          // — la notificación queda registrada igual en el cubit y se ve en
-          // la campana / página /notifications.
-          try {
-            _showOrderNotification(ctx, received.change);
-          } catch (e, st) {
-            // ignore: avoid_print
-            print('SnackBar de notificación falló: $e\n$st');
-          }
-        });
-      },
-      child: child,
-    );
-  }
 
   /// Icono de campana con badge — usar en app bars donde quiera mostrarse
   /// el indicador de notificaciones pendientes.
@@ -77,14 +50,15 @@ class OrderTrackingFeatureBuilder {
   /// Página `/notifications` con el historial de notificaciones de la sesión.
   static Widget buildNotificationsPage() => const NotificationsPage();
 
-  static void _showOrderNotification(
-    BuildContext context,
-    OrderStatusChange change,
-  ) {
+  /// Llamada por el OrderNotificationCubit cuando llega un order.updated
+  /// del WS. Muestra una SnackBar a través del scaffoldMessengerKey global —
+  /// no depende del árbol de widgets, así que se puede llamar de cualquier
+  /// rincón sin tocar el navigator.
+  static void _showOrderSnackBar(OrderStatusChange change) {
+    final messenger = scaffoldMessengerKey.currentState;
+    if (messenger == null) return;
     final orderId = change.orderId;
     final newStatus = change.newStatus;
-
-    final messenger = ScaffoldMessenger.of(context);
     messenger.clearSnackBars();
     messenger.showSnackBar(
       SnackBar(
@@ -136,9 +110,14 @@ class OrderTrackingFeatureBuilder {
         action: SnackBarAction(
           label: 'Ver',
           textColor: SwColors.yellow,
-          onPressed: () => Injector.i
-              .resolve<NavigationHelper>()
-              .pushNamed(context, routeName: Routes.orderDetail(orderId)),
+          onPressed: () {
+            final ctx = scaffoldMessengerKey.currentContext;
+            if (ctx == null) return;
+            Injector.i.resolve<NavigationHelper>().pushNamed(
+                  ctx,
+                  routeName: Routes.orderDetail(orderId),
+                );
+          },
         ),
       ),
     );
