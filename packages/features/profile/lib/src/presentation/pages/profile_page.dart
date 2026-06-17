@@ -3,6 +3,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:profile/src/presentation/bloc/profile_cubit.dart';
+import 'package:profile/src/presentation/widgets/location_section.dart';
 import 'package:profile/src/presentation/widgets/order_history_section.dart';
 import 'package:profile/src/presentation/widgets/profile_header_card.dart';
 import 'package:profile/src/presentation/widgets/profile_stats_row.dart';
@@ -35,7 +36,7 @@ class ProfilePage extends StatelessWidget {
               return _ErrorView(message: state.message, onRetry: cubit.load);
             }
             final ready = state as ProfileReady;
-            return _ProfileContent(state: ready);
+            return _ProfileContent(state: ready, cubit: cubit);
           },
         ),
       ),
@@ -44,9 +45,10 @@ class ProfilePage extends StatelessWidget {
 }
 
 class _ProfileContent extends StatelessWidget {
-  const _ProfileContent({required this.state});
+  const _ProfileContent({required this.state, required this.cubit});
 
   final ProfileReady state;
+  final ProfileCubit cubit;
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +64,15 @@ class _ProfileContent extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: ProfileHeaderCard(user: state.user),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: LocationSection(
+              location: state.location,
+              onSave: cubit.saveLocation,
+            ),
           ),
         ),
         SliverToBoxAdapter(

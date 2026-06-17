@@ -17,6 +17,8 @@ dependencies:
     path: ../catalog
   orders:
     path: ../orders
+  profile:
+    path: ../profile
   bottom_navigation_bar:
     path: ../bottom_navigation_bar
   design_system:

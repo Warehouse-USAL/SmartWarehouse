@@ -32,6 +32,25 @@ class ProfileUser {
     return '\$$dollars.${remainder.toString().padLeft(2, '0')}';
   }
 
+  ProfileUser copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? role,
+    String? bay,
+    int? openOrdersCount,
+    double? spentThisMonth,
+  }) =>
+      ProfileUser(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        email: email ?? this.email,
+        role: role ?? this.role,
+        bay: bay ?? this.bay,
+        openOrdersCount: openOrdersCount ?? this.openOrdersCount,
+        spentThisMonth: spentThisMonth ?? this.spentThisMonth,
+      );
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) || other is ProfileUser && id == other.id;

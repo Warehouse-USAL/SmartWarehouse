@@ -4,6 +4,7 @@ import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:profile/profile.dart';
 
 class CartPage extends StatelessWidget {
   const CartPage({required this.cartCubit, required this.createOrderCubit, super.key});
@@ -65,9 +66,22 @@ class CartPage extends StatelessWidget {
     }
     final confirmed = await CreateOrderConfirmationDialog.show(context, cart);
     if (!confirmed) return;
+    if (!context.mounted) return;
+    // Si el usuario ya tiene ubicación guardada en el perfil, la usamos.
+    // Si no, getOrPromptLocation abre el sheet y la persiste al guardar.
+    // Si cancela el sheet, abortamos la creación.
+    final location =
+        await ProfileFeatureBuilder.getOrPromptLocation(context);
+    if (location == null) return;
     await createOrderCubit.submit(
       items: _toOrderItems(cart),
-      destination: OrderDestination.defaults,
+      destination: OrderDestination(
+        area: location.destinationArea,
+        street: location.street,
+        postalCode: location.postalCode,
+        department: location.department,
+        floor: location.floor,
+      ),
     );
   }
 
@@ -87,10 +101,7 @@ class CartPage extends StatelessWidget {
             content: Text(message),
             action: SnackBarAction(
               label: 'Reintentar',
-              onPressed: () => createOrderCubit.submit(
-                items: _toOrderItems(cartCubit.state),
-                destination: OrderDestination.defaults,
-              ),
+              onPressed: () => _onCreateOrderPressed(context, cartCubit.state),
             ),
           ),
         );

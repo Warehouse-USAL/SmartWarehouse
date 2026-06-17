@@ -1,27 +1,32 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:profile/src/data/storage/user_location_store.dart';
 import 'package:profile/src/domain/entities/order_summary.dart';
 import 'package:profile/src/domain/entities/profile_user.dart';
+import 'package:profile/src/domain/entities/user_location.dart';
 import 'package:profile/src/domain/repositories/profile_repository.dart';
 import 'package:profile/src/presentation/bloc/profile_state.dart';
 
 export 'profile_state.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
-  ProfileCubit(this._repository) : super(const ProfileLoading());
+  ProfileCubit(this._repository, this._locationStore)
+      : super(const ProfileLoading());
 
   final ProfileRepository _repository;
+  final UserLocationStore _locationStore;
 
   Future<void> load() async {
     emit(const ProfileLoading());
 
-    // En paralelo para latencia.
     final results = await Future.wait([
       _repository.getProfile(),
       _repository.getOrderHistory(),
+      _locationStore.get(),
     ]);
 
     final profileResult = results[0] as dynamic;
     final ordersResult = results[1] as dynamic;
+    final location = results[2] as UserLocation?;
 
     profileResult.fold(
       (failure) =>
@@ -31,37 +36,44 @@ class ProfileCubit extends Cubit<ProfileState> {
             emit(ProfileError(failure.message ?? 'Error al cargar los pedidos')),
         (orders) {
           final list = orders as List<OrderSummary>;
-          // Componemos el ProfileUser final con los stats derivados de las
-          // órdenes (el back no los expone) en vez de los defaults del DTO.
-          final composed = _composeStats(user as ProfileUser, list);
-          emit(ProfileReady(user: composed, orders: list));
+          final composed = _composeStats(user as ProfileUser, list, location);
+          emit(ProfileReady(user: composed, orders: list, location: location));
         },
       ),
     );
   }
 
-  /// Sobrescribe `openOrdersCount` y `spentThisMonth` con valores derivados
-  /// de la lista de órdenes que ya tenemos. El back no expone agregados por
-  /// usuario, así que los calculamos client-side.
-  ProfileUser _composeStats(ProfileUser user, List<OrderSummary> orders) {
+  /// Persiste la ubicación y re-emite el ready con el nuevo valor.
+  Future<void> saveLocation(UserLocation location) async {
+    await _locationStore.save(location);
+    final current = state;
+    if (current is ProfileReady) {
+      final updatedUser = current.user.copyWith(bay: location.destinationArea);
+      emit(current.copyWith(user: updatedUser, location: location));
+    }
+  }
+
+  /// Compone stats derivados de la lista de órdenes + la ubicación guardada
+  /// (para el badge del role). El back no expone bay/openOrdersCount/spent.
+  ProfileUser _composeStats(
+    ProfileUser user,
+    List<OrderSummary> orders,
+    UserLocation? location,
+  ) {
     final open = orders
         .where((o) =>
             o.status != OrderStatus.delivered &&
             o.status != OrderStatus.cancelled)
         .length;
-    // OrderSummary.dateLabel es "Mes Día" sin año. Como el total ya viene
-    // como 0 mientras el item no tenga precio del back, sumar siempre da 0.
-    // Lo dejamos preparado para cuando el back exponga precios.
     final spent = orders.fold<double>(0, (s, o) => s + o.totalAmount);
     return ProfileUser(
       id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
-      bay: user.bay,
+      bay: location?.destinationArea ?? user.bay,
       openOrdersCount: open,
       spentThisMonth: spent > 0 ? spent : user.spentThisMonth,
     );
-    // ignore: dead_code
   }
 }
