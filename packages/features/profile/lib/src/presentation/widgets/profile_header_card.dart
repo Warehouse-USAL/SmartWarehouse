@@ -91,7 +91,7 @@ class _RoleBadge extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            '${role.toUpperCase()} · ${bay.toUpperCase()}',
+            _label,
             style: SwText.label(
               size: 11,
               color: SwColors.yellowDark,
@@ -101,5 +101,14 @@ class _RoleBadge extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Si no hay bay del back (default '—' o vacío) muestra solo el rol — evita
+  /// que el badge se vea cortado/basurita como "SUPERADMIN · —".
+  String get _label {
+    final hasBay = bay.trim().isNotEmpty && bay != '—';
+    return hasBay
+        ? '${role.toUpperCase()} · ${bay.toUpperCase()}'
+        : role.toUpperCase();
   }
 }
