@@ -6,6 +6,11 @@ import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 
 abstract class HttpHelper {
+  /// URL base que se usa para todas las requests. Útil para resolver URLs
+  /// relativas devueltas por el back (ej. imágenes uploadeadas a MinIO
+  /// que vuelven como `/api/v1/files/...`).
+  String get baseUrl;
+
   void init();
 
   Future<Either<HttpResponseError, HttpResponse>> get(

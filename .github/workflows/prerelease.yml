@@ -5,10 +5,23 @@ on:
     branches:
       - 'beta/**'
       - 'hotfix/**'
+  workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: 'API base URL para inyectar en el build (sobreescribe el secret).'
+        required: false
+        type: string
 
 concurrency:
   group: prerelease-${{ github.ref }}
   cancel-in-progress: true
+
+# La URL del backend a la que apunta el build se resuelve así:
+#  1. input api_base_url del workflow_dispatch (si se ejecuta manualmente)
+#  2. secret API_BASE_URL del repo
+#  3. vacío → defaults locales del código (10.0.2.2:8080 / localhost:8080)
+env:
+  API_BASE_URL: ${{ inputs.api_base_url || secrets.API_BASE_URL }}
 
 jobs:
   build-web:
@@ -31,7 +44,15 @@ jobs:
         run: melos bootstrap
 
       - name: Build web
-        run: flutter build web --release
+        run: |
+          ARGS=""
+          if [ -n "${API_BASE_URL}" ]; then
+            ARGS="--dart-define=API_BASE_URL=${API_BASE_URL}"
+            echo "Building with API_BASE_URL=${API_BASE_URL}"
+          else
+            echo "No API_BASE_URL set — using compile-time defaults."
+          fi
+          flutter build web --release $ARGS
 
       - name: Zip web build
         run: zip -r smart-warehouse-web.zip build/web
@@ -67,7 +88,15 @@ jobs:
         run: melos bootstrap
 
       - name: Build APK
-        run: flutter build apk --release
+        run: |
+          ARGS=""
+          if [ -n "${API_BASE_URL}" ]; then
+            ARGS="--dart-define=API_BASE_URL=${API_BASE_URL}"
+            echo "Building APK with API_BASE_URL=${API_BASE_URL}"
+          else
+            echo "No API_BASE_URL set — using compile-time defaults."
+          fi
+          flutter build apk --release $ARGS
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
