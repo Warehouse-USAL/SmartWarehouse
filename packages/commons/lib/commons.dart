@@ -7,3 +7,4 @@ export 'helpers/injector/injector_exporter.dart';
 export 'helpers/navigation_helper/navigation_helper_exporter.dart';
 export 'helpers/persistence_helper/persistence_helper_exporter.dart';
 export 'utils/date_time_utils.dart';
+export 'utils/image_url_resolver.dart';

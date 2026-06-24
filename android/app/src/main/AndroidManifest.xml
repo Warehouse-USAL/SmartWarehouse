@@ -1,5 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- INTERNET: REST + WebSocket al backend. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- ACCESS_NETWORK_STATE: detectar si hay conectividad antes de hacer
+         requests / reconectar al WS al recuperar red. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- ACCESS_WIFI_STATE: opcional, mejora la calidad de los reportes de
+         conectividad cuando el device cambia entre WiFi y datos móviles. -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <application
         android:label="smart_warehouse"
         android:name="${applicationName}"

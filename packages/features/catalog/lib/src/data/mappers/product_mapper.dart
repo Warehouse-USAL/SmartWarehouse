@@ -1,3 +1,4 @@
+import 'package:commons/commons.dart';
 import 'package:catalog/src/data/dtos/order_constraints_dto.dart';
 import 'package:catalog/src/data/dtos/price_dto.dart';
 import 'package:catalog/src/data/dtos/product_dto.dart';
@@ -37,7 +38,13 @@ extension ProductDtoMapper on ProductDto {
 }
 
 extension ProductImageDtoMapper on ProductImageDto {
-  ProductImage toEntity() => ProductImage(url: url, alt: alt, isPrimary: isPrimary);
+  ProductImage toEntity() => ProductImage(
+        // Resolvemos cualquier URL relativa del back (MinIO devuelve
+        // `/api/v1/files/...`). Las absolutas (picsum/seed) pasan tal cual.
+        url: ImageUrlResolver.resolve(url) ?? url,
+        alt: alt,
+        isPrimary: isPrimary,
+      );
 }
 
 extension SpecDtoMapper on SpecDto {
@@ -80,7 +87,7 @@ extension ProductLocationDtoMapper on ProductLocationDto {
 }
 
 String? _pickThumbUrl(List<ProductImage> imgs, String? flat) {
-  if (flat != null && flat.isNotEmpty) return flat;
+  if (flat != null && flat.isNotEmpty) return ImageUrlResolver.resolve(flat);
   if (imgs.isEmpty) return null;
   final primary = imgs.firstWhere(
     (i) => i.isPrimary,
