@@ -19,6 +19,7 @@ class ProfileFeatureBuilder {
                 getToken: OnGetTokenUseCase.call,
                 orderTrackingRepository:
                     Injector.i.resolve<OrderTrackingRepository>(),
+                catalogRepository: Injector.i.resolve<CatalogRepository>(),
               ),
       )
       ..registerLazySingleton<ProfileCubit>(
