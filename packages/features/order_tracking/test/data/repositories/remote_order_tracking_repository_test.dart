@@ -14,6 +14,9 @@ class _FakeHttpHelper implements HttpHelper {
       (_) => Right(HttpResponse(data: <String, dynamic>{'orders': []}));
 
   @override
+  String get baseUrl => 'http://localhost:8080';
+
+  @override
   void init() {}
 
   @override
