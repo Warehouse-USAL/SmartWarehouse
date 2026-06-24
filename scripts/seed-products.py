@@ -113,6 +113,12 @@ def make_product(
         "specs": [{"label": k, "value": v} for k, v in (specs or [])],
         "minimum_stock": min_stock,
         "max_quantity_per_order": max_qty,
+        # Defaults razonables para demo — el back los requiere desde
+        # commit 14bde49 (validation @NotNull).
+        "height": 10.0,
+        "width": 10.0,
+        "length": 10.0,
+        "weight": 1.0,
     }
 
 

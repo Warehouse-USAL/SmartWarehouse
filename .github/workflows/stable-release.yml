@@ -6,6 +6,13 @@ on:
     branches:
       - master
 
+# URL del backend a la que apunta el build estable. Configurar el secret
+# API_BASE_URL en el repo. Si está vacío, los builds usan los defaults
+# locales hardcoded en el código (10.0.2.2:8080 / localhost:8080) — útil
+# solo para builds de desarrollo, NO para release público.
+env:
+  API_BASE_URL: ${{ secrets.API_BASE_URL }}
+
 jobs:
   gate:
     name: Verify release conditions
@@ -37,7 +44,13 @@ jobs:
         run: melos bootstrap
 
       - name: Build web
-        run: flutter build web --release
+        run: |
+          ARGS=""
+          if [ -n "${API_BASE_URL}" ]; then
+            ARGS="--dart-define=API_BASE_URL=${API_BASE_URL}"
+            echo "Building with API_BASE_URL=${API_BASE_URL}"
+          fi
+          flutter build web --release $ARGS
 
       - name: Zip web build
         run: zip -r smart-warehouse-web.zip build/web
@@ -72,7 +85,13 @@ jobs:
         run: melos bootstrap
 
       - name: Build APK
-        run: flutter build apk --release
+        run: |
+          ARGS=""
+          if [ -n "${API_BASE_URL}" ]; then
+            ARGS="--dart-define=API_BASE_URL=${API_BASE_URL}"
+            echo "Building APK with API_BASE_URL=${API_BASE_URL}"
+          fi
+          flutter build apk --release $ARGS
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
