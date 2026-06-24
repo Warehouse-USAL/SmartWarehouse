@@ -9,6 +9,7 @@ import 'package:profile/src/data/dtos/user_dto.dart';
 import 'package:profile/src/data/mappers/profile_mapper.dart';
 import 'package:profile/src/domain/entities/order_summary.dart';
 import 'package:profile/src/domain/entities/profile_user.dart';
+import 'package:profile/src/domain/entities/user_address.dart';
 import 'package:profile/src/domain/repositories/profile_repository.dart';
 
 /// Hits `GET /users/{id}` para los datos del perfil. El id sale del `sub`
@@ -67,6 +68,43 @@ class RemoteProfileRepository implements ProfileRepository {
       );
     } catch (e, st) {
       log('getOrderHistory error', error: e, stackTrace: st);
+      return const Left(ProfileFailure('Error de red'));
+    }
+  }
+
+  @override
+  Future<Either<ProfileFailure, ProfileUser>> updateProfile({
+    String? name,
+    UserAddress? address,
+  }) async {
+    try {
+      final body = <String, dynamic>{};
+      if (name != null) body['name'] = name;
+      if (address != null) {
+        body['address'] = {
+          'street': address.street,
+          'postal_code': address.postalCode,
+          if (address.department != null && address.department!.trim().isNotEmpty)
+            'department': address.department,
+          if (address.floor != null && address.floor!.trim().isNotEmpty)
+            'floor': address.floor,
+        };
+      }
+      final result = await httpHelper.patch('/users/me', data: body);
+      return result.fold(
+        (error) =>
+            Left(ProfileFailure(error.message ?? 'Error actualizando perfil')),
+        (response) {
+          final data = response.data;
+          if (data is! Map<String, dynamic>) {
+            return const Left(ProfileFailure('Respuesta inválida'));
+          }
+          final dto = UserDto.fromJson(data);
+          return Right(dto.toProfileUser());
+        },
+      );
+    } catch (e, st) {
+      log('updateProfile error', error: e, stackTrace: st);
       return const Left(ProfileFailure('Error de red'));
     }
   }

@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:profile/src/domain/entities/order_summary.dart';
 import 'package:profile/src/domain/entities/profile_user.dart';
+import 'package:profile/src/domain/entities/user_address.dart';
 import 'package:profile/src/domain/repositories/profile_repository.dart';
 
 class MockProfileRepository implements ProfileRepository {
@@ -9,9 +10,14 @@ class MockProfileRepository implements ProfileRepository {
     name: 'Andrea Diaz',
     email: 'andrea.diaz@warehouse.co',
     role: 'Operador',
-    bay: 'Bahía 14',
     openOrdersCount: 3,
     spentThisMonth: 522.00,
+    address: UserAddress(
+      street: 'Av. Corrientes 1234',
+      postalCode: 'C1043',
+      department: '4A',
+      floor: '4',
+    ),
   );
 
   static const _orders = [
@@ -55,5 +61,14 @@ class MockProfileRepository implements ProfileRepository {
   Future<Either<ProfileFailure, List<OrderSummary>>> getOrderHistory() async {
     await Future.delayed(const Duration(milliseconds: 400));
     return const Right(_orders);
+  }
+
+  @override
+  Future<Either<ProfileFailure, ProfileUser>> updateProfile({
+    String? name,
+    UserAddress? address,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 400));
+    return Right(_user.copyWith(name: name, address: address));
   }
 }

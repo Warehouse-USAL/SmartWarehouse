@@ -1,21 +1,26 @@
+import 'package:profile/src/domain/entities/user_address.dart';
+
 class ProfileUser {
   const ProfileUser({
     required this.id,
     required this.name,
     required this.email,
     required this.role,
-    required this.bay,
     required this.openOrdersCount,
     required this.spentThisMonth,
+    this.address,
   });
 
   final String id;
   final String name;
   final String email;
   final String role;
-  final String bay;
   final int openOrdersCount;
   final double spentThisMonth;
+
+  /// Dirección guardada en el back (PATCH /users/me). null si el usuario
+  /// no la configuró todavía.
+  final UserAddress? address;
 
   String get avatarInitials {
     final parts = name.trim().split(RegExp(r'\s+'));
@@ -37,18 +42,19 @@ class ProfileUser {
     String? name,
     String? email,
     String? role,
-    String? bay,
     int? openOrdersCount,
     double? spentThisMonth,
+    UserAddress? address,
+    bool clearAddress = false,
   }) =>
       ProfileUser(
         id: id ?? this.id,
         name: name ?? this.name,
         email: email ?? this.email,
         role: role ?? this.role,
-        bay: bay ?? this.bay,
         openOrdersCount: openOrdersCount ?? this.openOrdersCount,
         spentThisMonth: spentThisMonth ?? this.spentThisMonth,
+        address: clearAddress ? null : (address ?? this.address),
       );
 
   @override

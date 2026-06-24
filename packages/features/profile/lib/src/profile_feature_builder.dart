@@ -2,19 +2,15 @@ import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:profile/src/data/repositories/mock_profile_repository.dart';
 import 'package:profile/src/data/repositories/remote_profile_repository.dart';
-import 'package:profile/src/data/storage/user_location_store.dart';
-import 'package:profile/src/domain/entities/user_location.dart';
 import 'package:profile/src/domain/repositories/profile_repository.dart';
 import 'package:profile/src/presentation/bloc/profile_cubit.dart';
+import 'package:profile/src/presentation/pages/edit_address_page.dart';
 import 'package:profile/src/presentation/pages/profile_page.dart';
-import 'package:profile/src/presentation/widgets/location_form_sheet.dart';
+import 'package:profile/src/presentation/widgets/checkout_address_sheet.dart';
 
 class ProfileFeatureBuilder {
   static void injectDependencies() {
     Injector.i
-      ..registerLazySingleton<UserLocationStore>(
-        () => HiveUserLocationStore(Injector.i.resolve<PersistenceHelper>()),
-      )
       ..registerLazySingleton<ProfileRepository>(
         () => Injector.i.resolve<AppDataSource>().isMock
             ? MockProfileRepository()
@@ -26,10 +22,7 @@ class ProfileFeatureBuilder {
               ),
       )
       ..registerLazySingleton<ProfileCubit>(
-        () => ProfileCubit(
-          Injector.i.resolve<ProfileRepository>(),
-          Injector.i.resolve<UserLocationStore>(),
-        ),
+        () => ProfileCubit(Injector.i.resolve<ProfileRepository>()),
       );
   }
 
@@ -37,31 +30,37 @@ class ProfileFeatureBuilder {
     return ProfilePage(cubit: Injector.i.resolve<ProfileCubit>());
   }
 
-  /// Devuelve la ubicación guardada del usuario; si no hay, abre el form
-  /// sheet para que la configure (al guardar también la persiste). Si el
-  /// usuario cancela el sheet, devuelve null.
-  ///
-  /// Usado en el cart checkout para no tener que crear UI de address ahí
-  /// y mantener la lógica de persistencia en un solo lado.
-  static Future<UserLocation?> getOrPromptLocation(BuildContext context) async {
-    final store = Injector.i.resolve<UserLocationStore>();
-    final saved = await store.get();
-    if (saved != null) return saved;
-    if (!context.mounted) return null;
-    final result = await showModalBottomSheet<UserLocation>(
+  /// Página dedicada a editar (o agregar por primera vez) la dirección de
+  /// entrega. Wireada al route `Routes.profileEditAddress`.
+  static Widget buildEditAddressPage() {
+    return EditAddressPage(cubit: Injector.i.resolve<ProfileCubit>());
+  }
+
+  /// Abre el sheet de confirmación de entrega (usado en el cart checkout).
+  /// Pre-popula con el address del perfil si existe. Si el usuario tickea
+  /// "Guardar en mi perfil", llama internamente `PATCH /users/me` antes de
+  /// devolver. Devuelve `null` si el usuario cancela.
+  static Future<CheckoutAddressResult?> collectCheckoutAddress(
+    BuildContext context,
+  ) async {
+    final cubit = Injector.i.resolve<ProfileCubit>();
+    final state = cubit.state;
+    final initial = state is ProfileReady ? state.user.address : null;
+    final result = await showModalBottomSheet<CheckoutAddressResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
-      builder: (_) => const LocationFormSheet(initial: null),
+      builder: (_) => CheckoutAddressSheet(initialAddress: initial),
     );
     if (result == null) return null;
-    await store.save(result);
-    // Si la pantalla de perfil está abierta, refresca su estado al volver.
-    final profileCubit = Injector.i.resolve<ProfileCubit>();
-    await profileCubit.saveLocation(result);
+    if (result.saveToProfile) {
+      // Fire and await — si falla, no abortamos la orden: igual la creamos
+      // con el address del form, solo no quedó persistido al perfil.
+      await cubit.updateProfile(address: result.address);
+    }
     return result;
   }
 }

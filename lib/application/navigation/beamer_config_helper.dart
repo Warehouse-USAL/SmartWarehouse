@@ -48,6 +48,11 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
             key: 'profile',
             child: ProfileFeatureBuilder.buildProfilePage(),
           ),
+      Routes.profileEditAddress: (_, __, ___) => _beamerPage(
+            title: 'Dirección',
+            key: 'profile-edit-address',
+            child: ProfileFeatureBuilder.buildEditAddressPage(),
+          ),
       Routes.catalog: (_, __, ___) => _beamerPage(
             title: 'Catálogo',
             key: 'catalog',

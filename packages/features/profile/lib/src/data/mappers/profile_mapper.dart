@@ -2,21 +2,21 @@ import 'package:orders/orders.dart' as orders;
 import 'package:profile/src/data/dtos/user_dto.dart';
 import 'package:profile/src/domain/entities/order_summary.dart';
 import 'package:profile/src/domain/entities/profile_user.dart';
+import 'package:profile/src/domain/entities/user_address.dart';
 
 extension UserDtoMapper on UserDto {
   ProfileUser toProfileUser({
     int openOrdersCount = 0,
     double spentThisMonth = 0,
-    String bay = '—',
   }) =>
       ProfileUser(
         id: id,
         name: name,
         email: email,
         role: _readableRole(role),
-        bay: bay,
         openOrdersCount: openOrdersCount,
         spentThisMonth: spentThisMonth,
+        address: address?.toEntity(),
       );
 
   String _readableRole(String raw) {
@@ -37,6 +37,33 @@ extension UserDtoMapper on UserDto {
   }
 }
 
+extension AddressDtoMapper on AddressDto {
+  /// Si los campos requeridos no están presentes, devolvemos null — el front
+  /// trata el address como "no configurado".
+  UserAddress? toEntity() {
+    final s = street;
+    final p = postalCode;
+    if (s == null || s.trim().isEmpty || p == null || p.trim().isEmpty) {
+      return null;
+    }
+    return UserAddress(
+      street: s,
+      postalCode: p,
+      department: department,
+      floor: floor,
+    );
+  }
+}
+
+extension UserAddressMapper on UserAddress {
+  AddressDto toDto() => AddressDto(
+        street: street,
+        postalCode: postalCode,
+        department: department,
+        floor: floor,
+      );
+}
+
 extension OrderToSummary on orders.Order {
   OrderSummary toSummary() {
     final itemsCount = items.fold<int>(0, (sum, i) => sum + i.quantity);
@@ -51,8 +78,6 @@ extension OrderToSummary on orders.Order {
   }
 
   OrderStatus _mapStatus(dynamic raw) {
-    // El status acá es OrderStatus de orders package (pending/inProgress/
-    // completed/cancelled). Lo mapeo al enum de profile.
     final s = raw.toString().toLowerCase();
     if (s.contains('completed')) return OrderStatus.delivered;
     if (s.contains('inprogress')) return OrderStatus.shipped;

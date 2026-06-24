@@ -33,7 +33,7 @@ class ProfileHeaderCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 8),
-                _RoleBadge(role: user.role, bay: user.bay),
+                _RoleBadge(role: user.role),
               ],
             ),
           ),
@@ -67,10 +67,9 @@ class _Avatar extends StatelessWidget {
 }
 
 class _RoleBadge extends StatelessWidget {
-  const _RoleBadge({required this.role, required this.bay});
+  const _RoleBadge({required this.role});
 
   final String role;
-  final String bay;
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +90,7 @@ class _RoleBadge extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            _label,
+            role.toUpperCase(),
             style: SwText.label(
               size: 11,
               color: SwColors.yellowDark,
@@ -101,14 +100,5 @@ class _RoleBadge extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  /// Si no hay bay del back (default '—' o vacío) muestra solo el rol — evita
-  /// que el badge se vea cortado/basurita como "SUPERADMIN · —".
-  String get _label {
-    final hasBay = bay.trim().isNotEmpty && bay != '—';
-    return hasBay
-        ? '${role.toUpperCase()} · ${bay.toUpperCase()}'
-        : role.toUpperCase();
   }
 }

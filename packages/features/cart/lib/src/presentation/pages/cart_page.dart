@@ -67,20 +67,20 @@ class CartPage extends StatelessWidget {
     final confirmed = await CreateOrderConfirmationDialog.show(context, cart);
     if (!confirmed) return;
     if (!context.mounted) return;
-    // Si el usuario ya tiene ubicación guardada en el perfil, la usamos.
-    // Si no, getOrPromptLocation abre el sheet y la persiste al guardar.
-    // Si cancela el sheet, abortamos la creación.
-    final location =
-        await ProfileFeatureBuilder.getOrPromptLocation(context);
-    if (location == null) return;
+    // Abre el sheet de confirmación de entrega. Pre-popula con el address
+    // guardado en el perfil (si lo hay) y permite tickear "Guardar en mi
+    // perfil" para persistir vía PATCH /users/me. Si cancela, abortamos.
+    final result =
+        await ProfileFeatureBuilder.collectCheckoutAddress(context);
+    if (result == null) return;
     await createOrderCubit.submit(
       items: _toOrderItems(cart),
       destination: OrderDestination(
-        area: location.destinationArea,
-        street: location.street,
-        postalCode: location.postalCode,
-        department: location.department,
-        floor: location.floor,
+        area: result.destinationArea,
+        street: result.address.street,
+        postalCode: result.address.postalCode,
+        department: result.address.department,
+        floor: result.address.floor,
       ),
     );
   }
