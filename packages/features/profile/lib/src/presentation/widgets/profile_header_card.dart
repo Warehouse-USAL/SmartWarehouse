@@ -32,8 +32,6 @@ class ProfileHeaderCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
-                _RoleBadge(role: user.role),
               ],
             ),
           ),
@@ -66,39 +64,3 @@ class _Avatar extends StatelessWidget {
   }
 }
 
-class _RoleBadge extends StatelessWidget {
-  const _RoleBadge({required this.role});
-
-  final String role;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: SwColors.yellowSoft,
-        borderRadius: BorderRadius.circular(SwRadii.pill),
-        border: Border.all(color: SwColors.yellowSoftAlt),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.star_rounded,
-            size: 13,
-            color: SwColors.yellow,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            role.toUpperCase(),
-            style: SwText.label(
-              size: 11,
-              color: SwColors.yellowDark,
-              weight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

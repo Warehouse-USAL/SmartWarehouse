@@ -34,6 +34,21 @@ class OrderSummary {
   String get itemsLabel =>
       '$itemCount ${itemCount == 1 ? 'artículo' : 'artículos'}';
 
+  OrderSummary copyWith({
+    String? id,
+    String? dateLabel,
+    int? itemCount,
+    OrderStatus? status,
+    double? totalAmount,
+  }) =>
+      OrderSummary(
+        id: id ?? this.id,
+        dateLabel: dateLabel ?? this.dateLabel,
+        itemCount: itemCount ?? this.itemCount,
+        status: status ?? this.status,
+        totalAmount: totalAmount ?? this.totalAmount,
+      );
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) || other is OrderSummary && id == other.id;

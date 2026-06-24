@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:catalog/catalog.dart';
 import 'package:commons/commons.dart';
 import 'package:dartz/dartz.dart' hide Order;
 import 'package:order_tracking/order_tracking.dart';
@@ -23,11 +24,13 @@ class RemoteProfileRepository implements ProfileRepository {
     required this.httpHelper,
     required this.getToken,
     required this.orderTrackingRepository,
+    required this.catalogRepository,
   });
 
   final HttpHelper httpHelper;
   final String? Function() getToken;
   final OrderTrackingRepository orderTrackingRepository;
+  final CatalogRepository catalogRepository;
 
   @override
   Future<Either<ProfileFailure, ProfileUser>> getProfile() async {
@@ -62,9 +65,36 @@ class RemoteProfileRepository implements ProfileRepository {
   Future<Either<ProfileFailure, List<OrderSummary>>> getOrderHistory() async {
     try {
       final result = await orderTrackingRepository.getOrders();
-      return result.fold(
-        (failure) => Left(ProfileFailure(failure.message ?? 'Error obteniendo órdenes')),
-        (orders) => Right(orders.map((o) => o.toSummary()).toList(growable: false)),
+      return await result.fold(
+        (failure) async =>
+            Left(ProfileFailure(failure.message ?? 'Error obteniendo órdenes')),
+        (orders) async {
+          // El back no devuelve precios en /orders/{id}, los items vienen
+          // con unitPrice=0. Para que el "gastado este mes" muestre un valor
+          // real, traemos los products del catálogo en paralelo y calculamos
+          // el total con el precio real.
+          final ids = orders
+              .expand((o) => o.items.map((i) => i.productId))
+              .toSet()
+              .toList(growable: false);
+          final pairs = await Future.wait(
+            ids.map(
+              (id) async => MapEntry(id, await catalogRepository.getProductById(id)),
+            ),
+          );
+          final priceByProduct = <String, int>{};
+          for (final pair in pairs) {
+            pair.value.fold((_) {}, (p) => priceByProduct[pair.key] = p.price.amount);
+          }
+          final summaries = orders.map((o) {
+            final totalCents = o.items.fold<int>(
+              0,
+              (sum, i) => sum + (priceByProduct[i.productId] ?? 0) * i.quantity,
+            );
+            return o.toSummary().copyWith(totalAmount: totalCents / 100.0);
+          }).toList(growable: false);
+          return Right(summaries);
+        },
       );
     } catch (e, st) {
       log('getOrderHistory error', error: e, stackTrace: st);

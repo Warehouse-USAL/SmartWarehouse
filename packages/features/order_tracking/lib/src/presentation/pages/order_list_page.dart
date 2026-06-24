@@ -4,13 +4,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:order_tracking/src/presentation/widgets/order_card.dart';
 
-class OrderListPage extends StatelessWidget {
+class OrderListPage extends StatefulWidget {
   const OrderListPage({required this.cubit, super.key});
 
   final OrderListCubit cubit;
 
   @override
+  State<OrderListPage> createState() => _OrderListPageState();
+}
+
+class _OrderListPageState extends State<OrderListPage> {
+  @override
+  void initState() {
+    super.initState();
+    // El cubit es singleton — re-fetcheamos en cada entrada para que las
+    // órdenes recién creadas desde el cart se vean al volver a la lista.
+    widget.cubit.silentRefresh();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final cubit = widget.cubit;
     return BottomNavigationBarFeatureBuilder.buildScaffold(
       context,
       selectedTab: const NavigationBarOption.orders(),

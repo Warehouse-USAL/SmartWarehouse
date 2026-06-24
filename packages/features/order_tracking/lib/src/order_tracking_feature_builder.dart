@@ -29,7 +29,10 @@ class OrderTrackingFeatureBuilder {
               ),
       )
       ..registerLazySingleton<OrderListCubit>(
-        () => OrderListCubit(Injector.i.resolve<OrderTrackingRepository>()),
+        () => OrderListCubit(
+          Injector.i.resolve<OrderTrackingRepository>(),
+          Injector.i.resolve<CatalogRepository>(),
+        ),
       )
       ..registerSingleton<OrderNotificationCubit>(
         OrderNotificationCubit(

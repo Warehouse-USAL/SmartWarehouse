@@ -4,20 +4,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:profile/src/presentation/bloc/profile_cubit.dart';
 import 'package:profile/src/presentation/widgets/address_section.dart';
-import 'package:profile/src/presentation/widgets/order_history_section.dart';
 import 'package:profile/src/presentation/widgets/profile_header_card.dart';
 import 'package:profile/src/presentation/widgets/profile_stats_row.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({required this.cubit, super.key});
 
   final ProfileCubit cubit;
 
   @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  @override
+  void initState() {
+    super.initState();
+    // El cubit es singleton — siempre re-fetcheamos al entrar para que el
+    // "gastado este mes" y "órdenes abiertas" reflejen las órdenes
+    // creadas/canceladas desde el cart o WS desde la última visita.
+    widget.cubit.load();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (cubit.state is! ProfileReady) {
-      Future.microtask(cubit.load);
-    }
+    final cubit = widget.cubit;
     return Scaffold(
       backgroundColor: SwColors.surface,
       bottomNavigationBar: BottomNavigationBarFeatureBuilder.build(
@@ -76,12 +87,6 @@ class _ProfileContent extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: ProfileStatsRow(user: state.user),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-            child: OrderHistorySection(orders: state.orders),
           ),
         ),
         SliverToBoxAdapter(

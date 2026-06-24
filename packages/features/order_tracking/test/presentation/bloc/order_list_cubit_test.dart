@@ -1,12 +1,30 @@
 import 'dart:async';
 
-import 'package:catalog/catalog.dart' show Money;
+import 'package:catalog/catalog.dart';
 import 'package:dartz/dartz.dart' hide Order;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:order_tracking/src/domain/entities/order_status_change.dart';
 import 'package:order_tracking/src/domain/repositories/order_tracking_repository.dart';
 import 'package:order_tracking/src/presentation/bloc/order_list_cubit.dart';
 import 'package:orders/orders.dart';
+
+class _FakeCatalog implements CatalogRepository {
+  @override
+  Future<Either<CatalogFailure, Product>> getProductById(String id) async =>
+      const Left(CatalogFailure('not used'));
+
+  @override
+  Future<Either<CatalogFailure, ProductsPage>> getProducts({
+    int page = 1,
+    int pageSize = 20,
+    String? search,
+    ProductCategory? category,
+  }) async => const Left(CatalogFailure('not used'));
+
+  @override
+  Future<Either<CatalogFailure, List<ProductCategory>>> getCategories() async =>
+      const Left(CatalogFailure('not used'));
+}
 
 class _FakeRepo implements OrderTrackingRepository {
   Either<OrderTrackingFailure, List<Order>> result =
@@ -41,14 +59,14 @@ void main() {
 
   test('initial state is OrderListLoading', () {
     repo.result = const Right([]);
-    final cubit = OrderListCubit(repo);
+    final cubit = OrderListCubit(repo, _FakeCatalog());
     expect(cubit.state, isA<OrderListLoading>());
     cubit.close();
   });
 
   test('emits Loading then Ready with orders', () async {
     repo.result = Right([_order('o1'), _order('o2')]);
-    final cubit = OrderListCubit(repo);
+    final cubit = OrderListCubit(repo, _FakeCatalog());
     final states = <OrderListState>[];
     final sub = cubit.stream.listen(states.add);
 
@@ -65,7 +83,7 @@ void main() {
   test('emits Error when repository returns failure', () async {
     repo.result =
         const Left(OrderTrackingFailure('Error de red'));
-    final cubit = OrderListCubit(repo);
+    final cubit = OrderListCubit(repo, _FakeCatalog());
     final states = <OrderListState>[];
     final sub = cubit.stream.listen(states.add);
 
@@ -79,7 +97,7 @@ void main() {
 
   test('refresh re-emits Loading then Ready', () async {
     repo.result = Right([_order('o1')]);
-    final cubit = OrderListCubit(repo);
+    final cubit = OrderListCubit(repo, _FakeCatalog());
     await Future<void>.delayed(Duration.zero);
 
     final states = <OrderListState>[];
