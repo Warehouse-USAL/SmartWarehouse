@@ -126,13 +126,6 @@ class _CheckoutAddressSheetState extends State<CheckoutAddressSheet> {
                 ),
                 const SizedBox(height: 18),
                 _Field(
-                  label: 'Bahía / zona del depósito',
-                  controller: _area,
-                  hint: 'Ej. Bay 14',
-                  required: true,
-                ),
-                const SizedBox(height: 14),
-                _Field(
                   label: 'Calle y altura',
                   controller: _street,
                   hint: 'Ej. Av. Corrientes 1234',

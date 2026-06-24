@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:profile/src/presentation/bloc/profile_cubit.dart';
 import 'package:profile/src/presentation/widgets/address_section.dart';
-import 'package:profile/src/presentation/widgets/order_history_section.dart';
 import 'package:profile/src/presentation/widgets/profile_header_card.dart';
 import 'package:profile/src/presentation/widgets/profile_stats_row.dart';
 
@@ -88,12 +87,6 @@ class _ProfileContent extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: ProfileStatsRow(user: state.user),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-            child: OrderHistorySection(orders: state.orders),
           ),
         ),
         SliverToBoxAdapter(
