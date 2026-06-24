@@ -1,6 +1,5 @@
 import 'package:catalog/src/data/repositories/mock_catalog_repository.dart';
 import 'package:catalog/src/data/repositories/remote_catalog_repository.dart';
-import 'package:catalog/src/domain/repositories/catalog_repository.dart';
 import 'package:catalog/src/presentation/bloc/catalog_cubit.dart';
 import 'package:catalog/src/presentation/bloc/product_detail_cubit.dart';
 import 'package:catalog/src/presentation/pages/catalog_page.dart';

@@ -1,5 +1,4 @@
 import 'package:catalog/catalog.dart';
-import 'package:catalog/src/domain/repositories/catalog_repository.dart';
 import 'package:dartz/dartz.dart';
 
 /// Mock alineado al contrato `docs/superpowers/specs/2026-05-19-api-contracts-design.md`.

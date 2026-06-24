@@ -2,6 +2,7 @@ import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:order_tracking/src/domain/entities/order_item_detail.dart';
 import 'package:order_tracking/src/presentation/widgets/order_status_timeline.dart';
 
 class OrderDetailPage extends StatelessWidget {
@@ -64,7 +65,8 @@ class OrderDetailPage extends StatelessWidget {
                 message: message,
                 onRetry: () => cubit.load(orderId),
               ),
-            OrderDetailReady(:final order) => _DetailContent(order: order),
+            OrderDetailReady(:final order, :final items) =>
+              _DetailContent(order: order, items: items),
           },
         );
       },
@@ -73,9 +75,10 @@ class OrderDetailPage extends StatelessWidget {
 }
 
 class _DetailContent extends StatelessWidget {
-  const _DetailContent({required this.order});
+  const _DetailContent({required this.order, required this.items});
 
   final Order order;
+  final List<OrderItemDetail> items;
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +99,7 @@ class _DetailContent extends StatelessWidget {
         ),
         SwCard(
           padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: order.items.isEmpty
+          child: items.isEmpty
               ? Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Text(
@@ -107,9 +110,9 @@ class _DetailContent extends StatelessWidget {
               : Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    for (int i = 0; i < order.items.length; i++) ...[
-                      _ItemRow(item: order.items[i]),
-                      if (i < order.items.length - 1)
+                    for (int i = 0; i < items.length; i++) ...[
+                      _ItemRow(detail: items[i]),
+                      if (i < items.length - 1)
                         const Divider(height: 1, color: SwColors.border),
                     ],
                   ],
@@ -122,21 +125,35 @@ class _DetailContent extends StatelessWidget {
 }
 
 class _ItemRow extends StatelessWidget {
-  const _ItemRow({required this.item});
+  const _ItemRow({required this.detail});
 
-  final OrderItem item;
+  final OrderItemDetail detail;
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = detail.imageUrl;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: CustomPaint(
-              size: const Size(48, 48),
-              painter: _StripedPlaceholderPainter(),
+            child: SizedBox(
+              width: 48,
+              height: 48,
+              child: imageUrl == null || imageUrl.isEmpty
+                  ? CustomPaint(
+                      size: const Size(48, 48),
+                      painter: _StripedPlaceholderPainter(),
+                    )
+                  : Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => CustomPaint(
+                        size: const Size(48, 48),
+                        painter: _StripedPlaceholderPainter(),
+                      ),
+                    ),
             ),
           ),
           const SizedBox(width: 12),
@@ -145,14 +162,14 @@ class _ItemRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.productName,
+                  detail.name,
                   style: SwText.body(size: 14, weight: FontWeight.w600),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${item.productId} · cant. ${item.quantity}',
+                  'SKU ${detail.item.productId.substring(detail.item.productId.length > 8 ? detail.item.productId.length - 8 : 0)} · cant. ${detail.item.quantity}',
                   style: SwText.body(size: 12, color: SwColors.text3),
                 ),
               ],
@@ -160,7 +177,7 @@ class _ItemRow extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            (item.unitPrice * item.quantity).formatted,
+            detail.subtotal.formatted,
             style: SwText.body(size: 14, weight: FontWeight.w600),
           ),
         ],

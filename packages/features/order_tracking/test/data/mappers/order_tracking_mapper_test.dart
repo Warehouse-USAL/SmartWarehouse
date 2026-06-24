@@ -110,11 +110,11 @@ void main() {
     test('parses order.updated event', () {
       final json = <String, dynamic>{
         'event': 'order.updated',
-        'payload': {'order_id': 'ord-42', 'status': 'in_progress'},
+        'payload': {'id': 'ord-42', 'status': 'in_progress'},
       };
       final dto = WsOrderEventDto.fromJson(json);
       expect(dto.event, 'order.updated');
-      expect(dto.payload.orderId, 'ord-42');
+      expect(dto.payload.id, 'ord-42');
       expect(dto.payload.status, 'in_progress');
     });
   });

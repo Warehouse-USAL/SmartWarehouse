@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$WsOrderPayloadDto {
 
- String get orderId; String get status;
+ String get id; String get status;
 /// Create a copy of WsOrderPayloadDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $WsOrderPayloadDtoCopyWith<WsOrderPayloadDto> get copyWith => _$WsOrderPayloadDt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WsOrderPayloadDto&&(identical(other.orderId, orderId) || other.orderId == orderId)&&(identical(other.status, status) || other.status == status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WsOrderPayloadDto&&(identical(other.id, id) || other.id == id)&&(identical(other.status, status) || other.status == status));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,orderId,status);
+int get hashCode => Object.hash(runtimeType,id,status);
 
 @override
 String toString() {
-  return 'WsOrderPayloadDto(orderId: $orderId, status: $status)';
+  return 'WsOrderPayloadDto(id: $id, status: $status)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $WsOrderPayloadDtoCopyWith<$Res>  {
   factory $WsOrderPayloadDtoCopyWith(WsOrderPayloadDto value, $Res Function(WsOrderPayloadDto) _then) = _$WsOrderPayloadDtoCopyWithImpl;
 @useResult
 $Res call({
- String orderId, String status
+ String id, String status
 });
 
 
@@ -65,9 +65,9 @@ class _$WsOrderPayloadDtoCopyWithImpl<$Res>
 
 /// Create a copy of WsOrderPayloadDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? orderId = null,Object? status = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? status = null,}) {
   return _then(_self.copyWith(
-orderId: null == orderId ? _self.orderId : orderId // ignore: cast_nullable_to_non_nullable
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,
   ));
@@ -151,10 +151,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String orderId,  String status)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String status)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _WsOrderPayloadDto() when $default != null:
-return $default(_that.orderId,_that.status);case _:
+return $default(_that.id,_that.status);case _:
   return orElse();
 
 }
@@ -172,10 +172,10 @@ return $default(_that.orderId,_that.status);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String orderId,  String status)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String status)  $default,) {final _that = this;
 switch (_that) {
 case _WsOrderPayloadDto():
-return $default(_that.orderId,_that.status);}
+return $default(_that.id,_that.status);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -189,10 +189,10 @@ return $default(_that.orderId,_that.status);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String orderId,  String status)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String status)?  $default,) {final _that = this;
 switch (_that) {
 case _WsOrderPayloadDto() when $default != null:
-return $default(_that.orderId,_that.status);case _:
+return $default(_that.id,_that.status);case _:
   return null;
 
 }
@@ -204,10 +204,10 @@ return $default(_that.orderId,_that.status);case _:
 @JsonSerializable()
 
 class _WsOrderPayloadDto implements WsOrderPayloadDto {
-  const _WsOrderPayloadDto({required this.orderId, required this.status});
+  const _WsOrderPayloadDto({required this.id, required this.status});
   factory _WsOrderPayloadDto.fromJson(Map<String, dynamic> json) => _$WsOrderPayloadDtoFromJson(json);
 
-@override final  String orderId;
+@override final  String id;
 @override final  String status;
 
 /// Create a copy of WsOrderPayloadDto
@@ -223,16 +223,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WsOrderPayloadDto&&(identical(other.orderId, orderId) || other.orderId == orderId)&&(identical(other.status, status) || other.status == status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WsOrderPayloadDto&&(identical(other.id, id) || other.id == id)&&(identical(other.status, status) || other.status == status));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,orderId,status);
+int get hashCode => Object.hash(runtimeType,id,status);
 
 @override
 String toString() {
-  return 'WsOrderPayloadDto(orderId: $orderId, status: $status)';
+  return 'WsOrderPayloadDto(id: $id, status: $status)';
 }
 
 
@@ -243,7 +243,7 @@ abstract mixin class _$WsOrderPayloadDtoCopyWith<$Res> implements $WsOrderPayloa
   factory _$WsOrderPayloadDtoCopyWith(_WsOrderPayloadDto value, $Res Function(_WsOrderPayloadDto) _then) = __$WsOrderPayloadDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String orderId, String status
+ String id, String status
 });
 
 
@@ -260,9 +260,9 @@ class __$WsOrderPayloadDtoCopyWithImpl<$Res>
 
 /// Create a copy of WsOrderPayloadDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? orderId = null,Object? status = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? status = null,}) {
   return _then(_WsOrderPayloadDto(
-orderId: null == orderId ? _self.orderId : orderId // ignore: cast_nullable_to_non_nullable
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,
   ));

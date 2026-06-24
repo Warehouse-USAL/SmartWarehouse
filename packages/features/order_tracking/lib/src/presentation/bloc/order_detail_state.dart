@@ -1,3 +1,4 @@
+import 'package:order_tracking/src/domain/entities/order_item_detail.dart';
 import 'package:orders/orders.dart';
 
 sealed class OrderDetailState {
@@ -14,6 +15,8 @@ class OrderDetailError extends OrderDetailState {
 }
 
 class OrderDetailReady extends OrderDetailState {
-  const OrderDetailReady({required this.order});
+  const OrderDetailReady({required this.order, required this.items});
+
   final Order order;
+  final List<OrderItemDetail> items;
 }

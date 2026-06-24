@@ -109,6 +109,8 @@ class _CatalogAppBar extends StatelessWidget {
             ),
           ),
 
+          OrderTrackingFeatureBuilder.buildNotificationBell(),
+          const SizedBox(width: 4),
           SwIconButton(
             icon: Icons.logout,
             tooltip: 'Cerrar sesión',

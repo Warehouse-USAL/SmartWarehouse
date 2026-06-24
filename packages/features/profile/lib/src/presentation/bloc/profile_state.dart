@@ -22,4 +22,13 @@ class ProfileReady extends ProfileState {
 
   final ProfileUser user;
   final List<OrderSummary> orders;
+
+  ProfileReady copyWith({
+    ProfileUser? user,
+    List<OrderSummary>? orders,
+  }) =>
+      ProfileReady(
+        user: user ?? this.user,
+        orders: orders ?? this.orders,
+      );
 }

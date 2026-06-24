@@ -57,9 +57,13 @@ class _SmartWarehouseAppState extends State<SmartWarehouseApp> {
             alwaysBeamBack: true,
           ),
           title: 'SmartWarehouse',
-          builder: (_, child) => OrderTrackingFeatureBuilder.buildNotificationListener(
-            child: child ?? const SizedBox.shrink(),
-          ),
+          // SnackBar de notificaciones via GlobalKey — el cubit invoca el
+          // messenger directo desde el callback `onEvent`, sin BlocListener
+          // arriba del Navigator (eso rompía con NoAnimationTransitionDelegate
+          // de Beamer cerrando DialogRoutes).
+          scaffoldMessengerKey:
+              OrderTrackingFeatureBuilder.scaffoldMessengerKey,
+          builder: (_, child) => child ?? const SizedBox.shrink(),
         ),
       ),
     );

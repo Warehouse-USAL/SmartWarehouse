@@ -6,12 +6,15 @@ import 'package:orders/orders.dart';
 extension OrderTrackingItemDtoMapper on OrderTrackingItemDto {
   Order toEntity() {
     final mappedItems = items.map((i) => i.toEntity()).toList();
+    // Preferimos timestamps.createdAt (el back nuevo lo pone ahí). Si no
+    // está, caemos al createdAt de root (legacy) y por último a now.
+    final rawCreatedAt = timestamps?.createdAt ?? createdAt;
     return Order(
       id: id,
       status: parseOrderStatus(status),
       items: mappedItems,
-      createdAt: createdAt != null
-          ? (DateTime.tryParse(createdAt!) ?? DateTime.now())
+      createdAt: rawCreatedAt != null
+          ? (DateTime.tryParse(rawCreatedAt) ?? DateTime.now())
           : DateTime.now(),
       total: Money.zero('ARS'),
     );
