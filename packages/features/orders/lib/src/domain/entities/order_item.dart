@@ -14,4 +14,17 @@ class OrderItem {
   final Money unitPrice;
 
   Money get subtotal => unitPrice * quantity;
+
+  OrderItem copyWith({
+    String? productId,
+    String? productName,
+    int? quantity,
+    Money? unitPrice,
+  }) =>
+      OrderItem(
+        productId: productId ?? this.productId,
+        productName: productName ?? this.productName,
+        quantity: quantity ?? this.quantity,
+        unitPrice: unitPrice ?? this.unitPrice,
+      );
 }
