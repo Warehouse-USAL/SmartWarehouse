@@ -45,6 +45,14 @@ class ProfileFeatureBuilder {
     BuildContext context,
   ) async {
     final cubit = Injector.i.resolve<ProfileCubit>();
+    // El cubit es singleton — si el usuario nunca abrió el tab de Perfil,
+    // sigue en Loading y `state.user.address` no existe. Forzamos load()
+    // antes de leer el address, así el form se autocompleta con lo
+    // guardado en el back.
+    if (cubit.state is! ProfileReady) {
+      await cubit.load();
+    }
+    if (!context.mounted) return null;
     final state = cubit.state;
     final initial = state is ProfileReady ? state.user.address : null;
     final result = await showModalBottomSheet<CheckoutAddressResult>(
