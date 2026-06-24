@@ -34,8 +34,16 @@ class OrderListCubit extends Cubit<OrderListState> {
   Future<void> refresh() => load();
 
   /// Re-fetcha sin pasar por loading: solo actualiza el Ready si ya estábamos
-  /// listos. Lo usamos cuando llega un event del WS — el usuario no necesita
-  /// ver el spinner por un cambio de status remoto.
+  /// listos. Si el state es Loading o Error, hace load() completo. Usado
+  /// cuando se re-entra a la pantalla de órdenes (singleton del Injector
+  /// quedaba con la lista vieja sin las nuevas órdenes creadas).
+  Future<void> silentRefresh() async {
+    if (state is! OrderListReady) {
+      return load();
+    }
+    return _silentRefresh();
+  }
+
   Future<void> _silentRefresh() async {
     if (isClosed) return;
     final result = await _repository.getOrders();
