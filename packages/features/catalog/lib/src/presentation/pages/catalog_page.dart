@@ -1,5 +1,4 @@
 import 'package:catalog/src/presentation/bloc/catalog_cubit.dart';
-import 'package:catalog/src/presentation/widgets/product_card.dart';
 import 'package:catalog/src/presentation/widgets/product_card_skeleton.dart';
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
@@ -196,6 +195,7 @@ class _Results extends StatelessWidget {
                       final product = products[index];
                       final tinted = index % 5 == 0;
                       return ProductCard(
+                        key: E2eKeys.productCard(product.id),
                         product: product,
                         tinted: tinted,
                         onTap: () => onProductTap(context, product.id),

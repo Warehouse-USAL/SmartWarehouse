@@ -203,6 +203,7 @@ class _CartBody extends StatelessWidget {
                             : null,
                       ),
                       child: CartItemTile(
+                        key: E2eKeys.cartItem(item.product.id),
                         item: item,
                         onQuantityChanged: (q) => onQty(item.product.id, q),
                         onRemove: () => onRemove(item.product.id),
@@ -229,7 +230,7 @@ class _CartBody extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('Total', style: SwText.body(size: 15, weight: FontWeight.w700)),
-                          Text(total.formatted, style: SwText.display(size: 22)),
+                          Text(total.formatted, key: E2eKeys.cartTotal, style: SwText.display(size: 22)),
                         ],
                       ),
                     ),
@@ -298,6 +299,7 @@ class _Footer extends StatelessWidget {
       child: Column(
         children: [
           SwButton(
+            key: E2eKeys.cartCheckoutButton,
             label: label,
             onPressed: onConfirm,
           ),

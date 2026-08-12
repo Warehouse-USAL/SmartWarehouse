@@ -111,7 +111,11 @@ class _DetailView extends StatelessWidget {
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               alignment: Alignment.centerLeft,
-                              child: Text(p.price.formatted, style: SwText.display(size: 30)),
+                              child: Text(
+                                p.price.formatted,
+                                key: E2eKeys.productDetailPrice,
+                                style: SwText.display(size: 30),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -426,7 +430,12 @@ class _StickyFooter extends StatelessWidget {
             QtyStepper(value: qty, onChanged: onQtyChanged, min: 1, max: maxQty, large: true),
             const SizedBox(width: 12),
             Expanded(
-              child: SwButton(label: label, icon: Icons.add, onPressed: disabled ? null : onAdd),
+              child: SwButton(
+                key: E2eKeys.productDetailAddToCart,
+                label: label,
+                icon: Icons.add,
+                onPressed: disabled ? null : onAdd,
+              ),
             ),
           ],
         ),
