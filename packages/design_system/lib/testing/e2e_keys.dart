@@ -26,6 +26,11 @@ abstract final class E2eKeys {
   static const cartTotal = Key('e2e_cart_total');
   static const cartCheckoutButton = Key('e2e_cart_checkout');
 
+  // Sheet de dirección de entrega (checkout)
+  static const checkoutAddressStreet = Key('e2e_checkout_address_street');
+  static const checkoutAddressPostalCode = Key('e2e_checkout_address_postal');
+  static const checkoutAddressSubmit = Key('e2e_checkout_address_submit');
+
   // Confirmación de orden
   static const orderConfirmDialogTotal = Key('e2e_order_confirm_total');
   static const orderConfirmAccept = Key('e2e_order_confirm_accept');
