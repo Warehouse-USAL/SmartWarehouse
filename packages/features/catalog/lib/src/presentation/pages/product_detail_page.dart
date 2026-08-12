@@ -368,8 +368,7 @@ class _Specs extends StatelessWidget {
       ('Stock disponible', '${product.stock.available}'),
       ('Máx. por orden', '${product.orderConstraints.maxQuantityPerOrder}'),
       ('Precio unitario', product.price.formatted),
-      if (product.specs != null)
-        for (final s in product.specs!) (s.label, s.value),
+      for (final s in product.specs ?? const <Spec>[]) (s.label, s.value),
     ];
     return SwCard(
       padding: const EdgeInsets.symmetric(horizontal: 14),

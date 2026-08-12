@@ -177,7 +177,8 @@ class _ItemRow extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            detail.subtotal.formatted,
+            // Subtotal en cero = precio no hidratado: "—" en vez de un $0.
+            detail.subtotal.amount > 0 ? detail.subtotal.formatted : '—',
             style: SwText.body(size: 14, weight: FontWeight.w600),
           ),
         ],
