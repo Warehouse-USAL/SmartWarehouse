@@ -1,3 +1,5 @@
+import 'package:catalog/catalog.dart';
+
 enum OrderStatus { shipped, delivered, processing, cancelled }
 
 class OrderSummary {
@@ -6,21 +8,24 @@ class OrderSummary {
     required this.dateLabel,
     required this.itemCount,
     required this.status,
-    required this.totalAmount,
+    this.total,
+    this.createdAt,
   });
 
   final String id;
   final String dateLabel;
   final int itemCount;
   final OrderStatus status;
-  final double totalAmount;
 
-  String get formattedTotal {
-    final cents = (totalAmount * 100).round();
-    final dollars = cents ~/ 100;
-    final remainder = cents % 100;
-    return '\$$dollars.${remainder.toString().padLeft(2, '0')}';
-  }
+  /// Total real de la orden. `null` cuando no se pudo calcular de forma
+  /// confiable (precio de algún producto no disponible o monedas mezcladas):
+  /// en ese caso la UI muestra "—" en vez de un monto incorrecto.
+  final Money? total;
+
+  final DateTime? createdAt;
+
+  /// Único formato de dinero de la app: `Money.formatted`.
+  String get formattedTotal => total?.formatted ?? '—';
 
   String get statusLabel {
     return switch (status) {
@@ -33,21 +38,6 @@ class OrderSummary {
 
   String get itemsLabel =>
       '$itemCount ${itemCount == 1 ? 'artículo' : 'artículos'}';
-
-  OrderSummary copyWith({
-    String? id,
-    String? dateLabel,
-    int? itemCount,
-    OrderStatus? status,
-    double? totalAmount,
-  }) =>
-      OrderSummary(
-        id: id ?? this.id,
-        dateLabel: dateLabel ?? this.dateLabel,
-        itemCount: itemCount ?? this.itemCount,
-        status: status ?? this.status,
-        totalAmount: totalAmount ?? this.totalAmount,
-      );
 
   @override
   bool operator ==(Object other) =>
