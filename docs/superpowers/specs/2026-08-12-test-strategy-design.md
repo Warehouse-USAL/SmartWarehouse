@@ -272,24 +272,55 @@ local tiene que decirlo explícitamente.
 
 **Repo**: `Warehouse-USAL/SmartWarehouse`. **Board**: proyecto `wh-mobile` del mismo repo.
 
-**E8.2 se reescribe como epic**: pasa de "Cubrir el código 100% con tests unitarios" a los
-targets escalonados, con este spec linkeado. 100% de cobertura no es un objetivo estándar de
+### 9.1 Estado actual del árbol E8
+
+Ya existe estructura; este trabajo **se integra en ella, no la duplica**:
+
+| Issue | Estado | Acción |
+|---|---|---|
+| #129 `E8.2: Cubrir el código 100% con tests unitarios` | body vacío | Reescribir como epic con targets escalonados |
+| #130 `E8.2.1: Cambiar el PR para que haga un check...` | body vacío | **Ya es la Fase 0**; se le escribe el body, no se crea un issue nuevo |
+| #126 `E8.1: Tests integrales` | body vacío, ambiguo | **Aclarar con el equipo** antes de tocarlo (§9.4) |
+| #131 + #134–139, #151, #152, #154 (`E8.3.x`) | bodies completos | Trabajo de Patrol, de otro dev. No se toca. |
+
+**E8.2 (#129) se reescribe como epic**: pasa de "100% con tests unitarios" a los targets
+escalonados, con este spec linkeado. 100% de cobertura no es un objetivo estándar de
 industria — obliga a testear código generado y glue de UI, y premia inflar el número.
 
-**14 issues hijos**:
+### 9.2 Sub-issues
 
-| # | Issue | Fase |
+Se sigue la numeración `E8.2.x` y el formato de body de la casa
+(*Contexto / Alcance / Decisiones / Criterio de aceptación*, abriendo con "Parte de la épica #129").
+
+| ID | Alcance | Fase |
 |---|---|---|
-| 1 | Infra de cobertura + `test_support` | 0 |
-| 2–4 | `core`, `commons`, `token_repository` | 1 |
-| 5–11 | `auth`, `cart`, `orders`, `order_tracking`, `login`, `catalog`, `profile` | 2 |
-| 12–13 | `bottom_navigation_bar`, `design_system` | 3 |
-| 14 | Reescribir `ARCHITECTURE.md` §18 | 0 |
+| E8.2.1 (#130, existe) | Infra de cobertura: thresholds, `check_coverage.dart`, `gen_coverage_imports.dart`, fix de melos, job de CI | 0 |
+| E8.2.2 | `packages/test_support` | 0 |
+| E8.2.3 | Reescribir `ARCHITECTURE.md` §18 | 0 |
+| E8.2.4–6 | `core`, `commons`, `token_repository` | 1 |
+| E8.2.7–13 | `auth`, `cart`, `orders`, `order_tracking`, `login`, `catalog`, `profile` | 2 |
+| E8.2.14–15 | `bottom_navigation_bar`, `design_system` | 3 |
 
-Cada issue hijo lleva: package, % actual, % target, checklist de archivos y definition of done.
+14 issues nuevos (E8.2.2–E8.2.15) más el body de #130. Cada uno lleva: package, % actual,
+% target, checklist de archivos y criterio de aceptación.
 
-**Requisito de auth**: PAT clásico con scopes `repo`, `read:org`, `project`, expuesto como
-`GH_TOKEN`. El scope `project` es obligatorio para escribir en el board.
+### 9.3 Labels
+
+Se reutiliza la taxonomía existente: `area:qa` en todos, `type:epic` en #129,
+`priority:P1` en Fases 0–1 y `priority:P2` en Fases 2–3. **No** se aplican labels `sprint:*`
+— las que existen llegan hasta `sprint:3` (27/05–17/06) y están vencidas.
+
+### 9.4 Pendiente de aclarar con el equipo
+
+`E8.1: Tests integrales` (#126) está vacío y su título es ambiguo: "integrales" puede
+significar integration tests, que se solaparían con este trabajo o con el de Patrol.
+Consultar a quien lo creó antes de escribirle un body.
+
+### 9.5 Requisito de auth
+
+`gh` corre vía `flatpak-spawn --host` (ver §12). El token actual tiene scopes
+`gist`, `read:org`, `repo`, `workflow` — alcanza para issues, **no para el board**.
+Escribir en el proyecto `wh-mobile` requiere `gh auth refresh -s project`.
 
 ---
 
@@ -306,6 +337,14 @@ Se documenta en `ARCHITECTURE.md` para que sea un contrato compartido y no un ac
 Las pages quedan deliberadamente fuera del unit testing (§4.1) justamente para no duplicar
 lo que cubre Patrol.
 
+### 10.1 Puntos de contacto concretos (leídos de los issues E8.3.x)
+
+| Issue de Patrol | Contacto | Resolución |
+|---|---|---|
+| #152 (CI e2e) | Define el e2e como **workflow separado** (docker-compose + emulador Android, PRs a develop o nightly) | Sin conflicto: agrega, no reestructura. Confirma el supuesto de §10. |
+| #135 (keys de testing en design system) | Toca `design_system`, que es nuestra Fase 3 | **Coordinar orden.** Que las keys entren antes evita reescribir widget tests después. |
+| #134 (setup de Patrol) | Agrega `patrol` + bloque `patrol:` al `pubspec.yaml` raíz | Solapamiento menor: Fase 0 también toca pubspecs. Merge trivial. |
+
 ---
 
 ## 11. Riesgos
@@ -316,3 +355,26 @@ lo que cubre Patrol.
 | `design_system` al 40% igual es mucho trabajo (3.190 LOC) | Está en Fase 3, después de que el gate ya protege las capas de lógica. |
 | El branch de Patrol mergea antes que Fase 0 | Los dueños de archivos no se solapan; solo hay que resolver `ci.yml` a mano. |
 | Los tests de widget quedan frágiles por cambios de layout | Solo se testean componentes con lógica; los de layout puro quedan fuera por convención. |
+| #135 (keys de testing) llega después de nuestra Fase 3 y hay que reescribir widget tests | Coordinar el orden con el dev de Patrol (§10.1). |
+
+---
+
+## 12. Nota de entorno: `gh` dentro del sandbox de Flatpak
+
+El entorno de desarrollo corre dentro del Flatpak de VSCodium (`com.vscodium.codium`).
+`gh` instalado *dentro* del sandbox reporta "not logged into any GitHub hosts" aunque el
+login en el host haya sido exitoso:
+
+- `~/.config/gh/hosts.yml` es visible desde el sandbox, pero **no contiene el token** — solo
+  nombra la cuenta. `gh` guarda el token real en el keyring de GNOME.
+- El proxy de D-Bus del sandbox permite hacer *ping* al secret service pero no recuperar
+  secretos, así que el `gh` del sandbox ve una cuenta sin credencial.
+
+**Solución**: prefijar los comandos con `flatpak-spawn --host`, que ejecuta el `gh` del host
+con su acceso al keyring intacto.
+
+```bash
+flatpak-spawn --host gh issue list --repo Warehouse-USAL/SmartWarehouse
+```
+
+No hace falta `GH_TOKEN` ni guardar el token en texto plano.
