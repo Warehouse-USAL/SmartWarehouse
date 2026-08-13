@@ -314,7 +314,9 @@ Se reutiliza la taxonomía existente: `area:qa` en todos, `type:epic` en #129,
 
 `E8.1: Tests integrales` (#126) está vacío y su título es ambiguo: "integrales" puede
 significar integration tests, que se solaparían con este trabajo o con el de Patrol.
-Consultar a quien lo creó antes de escribirle un body.
+**Está `In progress` en el board al 2026-08-13** — alguien lo está trabajando sin body
+escrito. Es la incógnita más grande del plan: consultar a quien lo creó **antes** de
+arrancar la Fase 0.
 
 ### 9.5 Requisito de auth
 
@@ -342,7 +344,7 @@ lo que cubre Patrol.
 | Issue de Patrol | Contacto | Resolución |
 |---|---|---|
 | #152 (CI e2e) | Define el e2e como **workflow separado** (docker-compose + emulador Android, PRs a develop o nightly) | Sin conflicto: agrega, no reestructura. Confirma el supuesto de §10. |
-| #135 (keys de testing en design system) | Toca `design_system`, que es nuestra Fase 3 | **Coordinar orden.** Que las keys entren antes evita reescribir widget tests después. |
+| #135 (keys de testing en design system) | **`In progress` al 2026-08-13.** Toca `design_system`, que es nuestra Fase 3 | **Fase 3 espera a que #135 mergee.** Escribir widget tests antes garantiza reescribirlos. |
 | #134 (setup de Patrol) | Agrega `patrol` + bloque `patrol:` al `pubspec.yaml` raíz | Solapamiento menor: Fase 0 también toca pubspecs. Merge trivial. |
 
 ---
