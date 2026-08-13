@@ -23,9 +23,10 @@ class DateTimeUtils {
   static bool isDayPartiallyFull(DateTime day, List<DateTimeRange> unavailablePeriods) {
     final fullDay = _dateToRange(day);
     return unavailablePeriods.any((period) {
-      return (period.start.isBefore(fullDay.start) && period.start.isAfter(fullDay.start)) ||
-          (period.start.isAfter(fullDay.start) && period.end.isBefore(fullDay.end)) ||
-          (period.start.isBefore(fullDay.end) && period.end.isAfter(fullDay.end)) && !fullDayOverlap(day, period);
+      if (fullDayOverlap(day, period)) return false;
+      // Se solapan sin cubrir el dia entero.
+      return period.start.isBefore(fullDay.end) &&
+          period.end.isAfter(fullDay.start);
     });
   }
 
