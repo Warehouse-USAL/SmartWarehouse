@@ -50,7 +50,7 @@ jobs:
           cache: true
 
       - name: Activate melos
-        run: dart pub global activate melos
+        run: dart pub global activate melos 6.3.3
 
       - name: Bootstrap packages
         run: melos bootstrap
@@ -71,7 +71,7 @@ jobs:
           cache: true
 
       - name: Activate melos
-        run: dart pub global activate melos
+        run: dart pub global activate melos 6.3.3
 
       - name: Bootstrap packages
         run: melos bootstrap
@@ -92,7 +92,7 @@ jobs:
           cache: true
 
       - name: Activate melos
-        run: dart pub global activate melos
+        run: dart pub global activate melos 6.3.3
 
       - name: Bootstrap packages
         run: melos bootstrap
@@ -121,7 +121,7 @@ jobs:
           cache: true
 
       - name: Activate melos
-        run: dart pub global activate melos
+        run: dart pub global activate melos 6.3.3
 
       - name: Bootstrap packages
         run: melos bootstrap
@@ -147,7 +147,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Activate melos
-        run: dart pub global activate melos
+        run: dart pub global activate melos 6.3.3
 
       - name: Bootstrap packages
         run: melos bootstrap

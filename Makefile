@@ -3,7 +3,7 @@
 .DEFAULT_GOAL := help
 
 setup: ## Install dependencies across all packages
-	dart pub global activate melos
+	dart pub global activate melos 6.3.3
 	melos bootstrap
 
 generate: ## Run code generation across all packages that use build_runner
