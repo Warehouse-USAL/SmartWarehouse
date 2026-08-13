@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:developer';
 
 import 'package:commons/commons.dart';
@@ -53,8 +52,8 @@ class RemoteOrderRepository implements OrderRepository {
 
       final result = await httpHelper.post('/orders', data: body);
       return result.fold(
-        (error) => Left(OrderFailure(_mapError(error))),
-        (response) {
+        (error) async => Left(OrderFailure(_mapError(error))),
+        (response) async {
           final data = response.data;
           if (data is! Map<String, dynamic>) {
             return const Left(OrderFailure('Respuesta inválida'));
@@ -63,7 +62,14 @@ class RemoteOrderRepository implements OrderRepository {
           final order = dto.order.toEntity(fallbackItems: items);
           // Persistimos el ID en local: el order_tracking lo va a usar para
           // listar las órdenes propias sin depender de GET /orders global.
-          unawaited(historyStore.addOrderId(order.id));
+          // Si falla, la orden ya existe en el back: la devolvemos igual,
+          // pero logueamos fuerte para no perder el rastro.
+          try {
+            await historyStore.addOrderId(order.id);
+          } catch (e, st) {
+            log('addOrderId FAILED for order ${order.id}',
+                error: e, stackTrace: st);
+          }
           return Right(order);
         },
       );
