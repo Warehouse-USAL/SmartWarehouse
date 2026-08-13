@@ -280,7 +280,7 @@ Ya existe estructura; este trabajo **se integra en ella, no la duplica**:
 |---|---|---|
 | #129 `E8.2: Cubrir el código 100% con tests unitarios` | body vacío | Reescribir como epic con targets escalonados |
 | #130 `E8.2.1: Cambiar el PR para que haga un check...` | body vacío | **Ya es la Fase 0**; se le escribe el body, no se crea un issue nuevo |
-| #126 `E8.1: Tests integrales` | body vacío, ambiguo | **Aclarar con el equipo** antes de tocarlo (§9.4) |
+| #126 `E8.1: Tests integrales` | body vacío | Pertenece al trabajo de Patrol. Fuera de alcance (§9.4) |
 | #131 + #134–139, #151, #152, #154 (`E8.3.x`) | bodies completos | Trabajo de Patrol, de otro dev. No se toca. |
 
 **E8.2 (#129) se reescribe como epic**: pasa de "100% con tests unitarios" a los targets
@@ -310,13 +310,10 @@ Se reutiliza la taxonomía existente: `area:qa` en todos, `type:epic` en #129,
 `priority:P1` en Fases 0–1 y `priority:P2` en Fases 2–3. **No** se aplican labels `sprint:*`
 — las que existen llegan hasta `sprint:3` (27/05–17/06) y están vencidas.
 
-### 9.4 Pendiente de aclarar con el equipo
+### 9.4 Fuera de alcance
 
-`E8.1: Tests integrales` (#126) está vacío y su título es ambiguo: "integrales" puede
-significar integration tests, que se solaparían con este trabajo o con el de Patrol.
-**Está `In progress` en el board al 2026-08-13** — alguien lo está trabajando sin body
-escrito. Es la incógnita más grande del plan: consultar a quien lo creó **antes** de
-arrancar la Fase 0.
+`E8.1: Tests integrales` (#126) pertenece al trabajo de Patrol, igual que la serie E8.3.x.
+No se toca desde este spec.
 
 ### 9.5 Requisito de auth
 
@@ -344,7 +341,7 @@ lo que cubre Patrol.
 | Issue de Patrol | Contacto | Resolución |
 |---|---|---|
 | #152 (CI e2e) | Define el e2e como **workflow separado** (docker-compose + emulador Android, PRs a develop o nightly) | Sin conflicto: agrega, no reestructura. Confirma el supuesto de §10. |
-| #135 (keys de testing en design system) | **`In progress` al 2026-08-13.** Toca `design_system`, que es nuestra Fase 3 | **Fase 3 espera a que #135 mergee.** Escribir widget tests antes garantiza reescribirlos. |
+| #135 (keys de testing en design system) | Agrega `Key`s a widgets de `design_system` para que Patrol los seleccione | **Sin dependencia.** Agregar keys es aditivo: no rompe widget tests. Fase 3 no espera. |
 | #134 (setup de Patrol) | Agrega `patrol` + bloque `patrol:` al `pubspec.yaml` raíz | Solapamiento menor: Fase 0 también toca pubspecs. Merge trivial. |
 
 ---
@@ -357,7 +354,7 @@ lo que cubre Patrol.
 | `design_system` al 40% igual es mucho trabajo (3.190 LOC) | Está en Fase 3, después de que el gate ya protege las capas de lógica. |
 | El branch de Patrol mergea antes que Fase 0 | Los dueños de archivos no se solapan; solo hay que resolver `ci.yml` a mano. |
 | Los tests de widget quedan frágiles por cambios de layout | Solo se testean componentes con lógica; los de layout puro quedan fuera por convención. |
-| #135 (keys de testing) llega después de nuestra Fase 3 y hay que reescribir widget tests | Coordinar el orden con el dev de Patrol (§10.1). |
+| Los widget tests de Fase 3 chocan con las `Key`s que agrega #135 | Bajo: agregar keys es aditivo. Si aparece ruido, se resuelve en el PR de Fase 3. |
 
 ---
 
