@@ -54,6 +54,17 @@ class CartPage extends StatelessWidget {
   }
 
   Future<void> _onCreateOrderPressed(BuildContext context, Cart cart) async {
+    if (cart.hasMixedCurrencies) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Hay productos con monedas distintas en el pedido. '
+            'Quitá los que no correspondan para continuar.',
+          ),
+        ),
+      );
+      return;
+    }
     final invalid = cart.items.any((i) {
       final available = i.product.stock.available;
       return i.quantity <= 0 || i.quantity > available;

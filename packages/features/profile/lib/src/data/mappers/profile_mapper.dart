@@ -1,3 +1,4 @@
+import 'package:catalog/catalog.dart';
 import 'package:orders/orders.dart' as orders;
 import 'package:profile/src/data/dtos/user_dto.dart';
 import 'package:profile/src/domain/entities/order_summary.dart';
@@ -7,7 +8,7 @@ import 'package:profile/src/domain/entities/user_address.dart';
 extension UserDtoMapper on UserDto {
   ProfileUser toProfileUser({
     int openOrdersCount = 0,
-    double spentThisMonth = 0,
+    Money? spentThisMonth,
   }) =>
       ProfileUser(
         id: id,
@@ -65,16 +66,33 @@ extension UserAddressMapper on UserAddress {
 }
 
 extension OrderToSummary on orders.Order {
-  OrderSummary toSummary() {
+  /// [total] pisa el total derivado de los items (el caller lo calcula con
+  /// precios reales de catálogo). Sin override, se deriva de los items solo
+  /// si todos tienen precio > 0 y la misma moneda; si no, queda `null` y la
+  /// UI muestra "—" en vez de un monto incorrecto.
+  OrderSummary toSummary({Money? total}) {
     final itemsCount = items.fold<int>(0, (sum, i) => sum + i.quantity);
-    final cents = items.fold<int>(0, (sum, i) => sum + (i.unitPrice.amount * i.quantity));
     return OrderSummary(
       id: 'WH-${id.substring(id.length > 5 ? id.length - 5 : 0).toUpperCase()}',
       dateLabel: _formatDate(createdAt),
       itemCount: itemsCount,
       status: _mapStatus(status),
-      totalAmount: cents / 100.0,
+      total: total ?? _derivedTotal(),
+      createdAt: createdAt,
     );
+  }
+
+  Money? _derivedTotal() {
+    if (items.isEmpty) return null;
+    final currency = items.first.unitPrice.currency;
+    var cents = 0;
+    for (final i in items) {
+      if (i.unitPrice.amount <= 0 || i.unitPrice.currency != currency) {
+        return null;
+      }
+      cents += i.unitPrice.amount * i.quantity;
+    }
+    return Money(amount: cents, currency: currency);
   }
 
   OrderStatus _mapStatus(dynamic raw) {

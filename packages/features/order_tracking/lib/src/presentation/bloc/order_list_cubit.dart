@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:catalog/catalog.dart';
 import 'package:dartz/dartz.dart' hide Order;
@@ -14,8 +15,11 @@ class OrderListCubit extends Cubit<OrderListState> {
   OrderListCubit(this._repository, this._catalogRepository)
       : super(const OrderListLoading()) {
     scheduleMicrotask(load);
-    _wsSubscription =
-        _repository.watchOrderStatusChanges().listen((_) => _silentRefresh());
+    _wsSubscription = _repository.watchOrderStatusChanges().listen(
+          (_) => _silentRefresh(),
+          onError: (Object e, StackTrace st) =>
+              log('OrderListCubit WS error', error: e, stackTrace: st),
+        );
   }
 
   final OrderTrackingRepository _repository;
@@ -89,17 +93,30 @@ class OrderListCubit extends Cubit<OrderListState> {
     if (order.items.isEmpty) return order;
     Money? currency;
     var totalCents = 0;
+    // El total solo es confiable si TODOS los items tienen producto hidratado
+    // y comparten moneda; si no, lo dejamos en cero (la card muestra "—") en
+    // vez de mostrar un total parcial o con moneda equivocada.
+    var complete = true;
     final newItems = order.items.map((item) {
       final product = _productCache[item.productId];
-      if (product == null) return item;
+      if (product == null) {
+        complete = false;
+        return item;
+      }
+      if (currency != null && product.price.currency != currency!.currency) {
+        complete = false;
+      }
       currency = product.price;
       totalCents += (product.price.amount * item.quantity).toInt();
       return item.copyWith(
         unitPrice: product.price,
-        productName: item.productName.isEmpty ? product.name : item.productName,
+        productName: item.productName.isEmpty ||
+                item.productName == 'Producto no disponible'
+            ? product.name
+            : item.productName,
       );
     }).toList(growable: false);
-    if (currency == null) return order.copyWith(items: newItems);
+    if (currency == null || !complete) return order.copyWith(items: newItems);
     return order.copyWith(
       items: newItems,
       total: Money(
