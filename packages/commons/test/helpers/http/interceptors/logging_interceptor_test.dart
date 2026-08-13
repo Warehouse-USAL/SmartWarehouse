@@ -4,10 +4,20 @@ import 'package:commons/helpers/http/interceptors/logging_interceptor.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+/// Captures `print()` output from [body].
+///
+/// Uses `runZonedGuarded` (not plain `runZoned`) because `onError`'s
+/// `handler.next(error)` completes a `Completer` with an error via
+/// `_BaseHandler.future`, which dio marks `@protected` -- inaccessible from
+/// a test. Nobody downstream awaits that completer in these tests, so its
+/// error would otherwise surface as an unhandled-async-error failure; the
+/// zone's `onError` swallows it instead. `onRequest`/`onResponse` never
+/// error, so this is a no-op for those tests.
 List<String> _capturePrints(void Function() body) {
   final lines = <String>[];
-  runZoned(
+  runZonedGuarded(
     body,
+    (_, __) {},
     zoneSpecification: ZoneSpecification(
       print: (_, __, ___, line) => lines.add(line),
     ),
@@ -67,7 +77,7 @@ void main() {
     expect(lines.any((l) => l.contains('Data:') && l.contains('ok')), isTrue);
   });
 
-  test('onError logs the message and the status code when a response is present', () async {
+  test('onError logs the message and the status code when a response is present', () {
     final options = RequestOptions(path: '/x');
     final response = Response<String>(
       requestOptions: options,
@@ -80,16 +90,9 @@ void main() {
       response: response,
     );
 
-    final handler = ErrorInterceptorHandler();
     final lines = _capturePrints(() {
-      interceptor.onError(error, handler);
+      interceptor.onError(error, ErrorInterceptorHandler());
     });
-    // super.onError -> handler.next(error) completes the handler's future
-    // with an error; nothing downstream consumes it in this test, so await
-    // (and swallow) it here to avoid an unhandled-async-error test failure.
-    try {
-      await handler.future;
-    } catch (_) {}
 
     expect(lines.any((l) => l.contains('Message: server error')), isTrue);
     expect(lines.any((l) => l.contains('URI: ${options.uri}')), isTrue);
@@ -97,17 +100,13 @@ void main() {
     expect(lines.any((l) => l.contains('Data:') && l.contains('boom')), isTrue);
   });
 
-  test('onError does not log a status code or data when there is no response', () async {
+  test('onError does not log a status code or data when there is no response', () {
     final options = RequestOptions(path: '/x');
     final error = DioException(requestOptions: options, message: 'timeout');
 
-    final handler = ErrorInterceptorHandler();
     final lines = _capturePrints(() {
-      interceptor.onError(error, handler);
+      interceptor.onError(error, ErrorInterceptorHandler());
     });
-    try {
-      await handler.future;
-    } catch (_) {}
 
     expect(lines.any((l) => l.contains('Message: timeout')), isTrue);
     expect(lines.any((l) => l.startsWith('Status Code:')), isFalse);

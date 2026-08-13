@@ -1,12 +1,19 @@
 import 'package:commons/commons.dart';
 
-/// Clears the global [Injector] singleton.
+/// Limpia el singleton global [Injector].
 ///
-/// `Injector.i` is process-wide state, so without this a registration made by
-/// one test leaks into the next and tests pass or fail depending on order.
-/// Call from `setUp`, not `setUpAll`.
-void resetInjector() {
+/// `Injector.i` es estado de proceso: sin esto, un registro hecho por un test
+/// se filtra al siguiente y los tests pasan o fallan segun el orden.
+/// Llamar desde `setUp`, no `setUpAll`.
+///
+/// Es `async` a proposito: `GetItInjector.clear()` delega en `GetIt.reset()`,
+/// que es asincronico, y descarta su Future. Sin este pump, `isRegistered()`
+/// puede leer `true` viejo justo despues de limpiar. El delay de duracion cero
+/// corre despues de que la cola de microtasks drena por completo, asi que
+/// vacia el reset pendiente sin importar cuantos saltos encadene.
+Future<void> resetInjector() async {
   Injector.i.clear();
+  await Future<void>.delayed(Duration.zero);
 }
 
 /// Registers [mock] as a singleton of type [T] and returns it.

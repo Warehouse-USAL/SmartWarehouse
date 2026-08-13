@@ -18,9 +18,13 @@ void main() {
   setUp(() async {
     injector = GetItInjector();
     injector.clear();
-    // See the note in the isRegistered/clear test below: clear() does not
-    // wait for GetIt's async reset, so pump the event loop before the next
-    // test's registrations run.
+    // clear() does not wait for GetIt's async reset() (see the isRegistered/
+    // clear test below), so pump the event loop before the next test's
+    // registrations run. This file exercises GetItInjector directly rather
+    // than through the shared Injector.i singleton, so it pumps locally
+    // instead of using test_support's resetInjector() -- the same fix lives
+    // there (packages/test_support/lib/src/injector_harness.dart) for
+    // callers that go through Injector.i.
     await Future<void>.delayed(Duration.zero);
   });
 

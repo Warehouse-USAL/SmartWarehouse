@@ -1,5 +1,4 @@
 import 'package:commons/commons.dart';
-import 'package:commons/utils/image_url_resolver.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test_support/test_support.dart';
