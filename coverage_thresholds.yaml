@@ -17,7 +17,7 @@ defaults:
 packages:
   core:
     path: packages/core
-    min: 2
+    min: 85
   commons:
     path: packages/commons
     min: 85
