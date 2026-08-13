@@ -240,14 +240,42 @@ Job `coverage` nuevo, en paralelo a `test`, que corre `melos run test:coverage` 
 
 ## 7. Secuenciación
 
-Bottom-up por dependencias: `core` y `commons` son dependencias de todo, y los fixtures y
-helpers construidos ahí los reusa cada PR de feature posterior. Además son chicos, así que
-dan resultados rápidos.
+### 7.1 El grafo real de dependencias
 
-| Fase | Alcance |
+Medido el 2026-08-13, **no** es lo que sugiere el nombre de los packages:
+
+```
+core     → commons, auth, login, bottom_navigation_bar, catalog,
+           cart, orders, order_tracking, token_repository
+commons  → core          ← ciclo con core
+design_system → commons, core
+token_repository → commons, core
+auth     → commons, core
+```
+
+`core` depende de casi todas las features y **hay un ciclo `core ↔ commons`**. No existe un
+package hoja: un orden "bottom-up por dependencias" es imposible.
+
+### 7.2 Orden real: por testabilidad y leverage
+
+Se ordena por qué tan aislable es el *código* (no el package), y por qué fixtures desbloquea
+para las fases siguientes:
+
+| Fase | Alcance | Por qué acá |
+|---|---|---|
+| **0** | Infra + `test_support` | Nada se puede medir ni gatear sin esto. |
+| **1a** | `commons`: utils, entities de http, interceptor, mapper de permisos | Funciones puras sin dependencias: son hoja a nivel código aunque el package no lo sea. |
+| **1b** | `token_repository` | 65 LOC, lógica pura de decode de JWT. |
+| **1c** | `core` | Los use cases son estáticos que resuelven del `Injector` global: testeables, pero **cada test necesita scaffolding del Injector**, que `test_support` provee en Fase 0. |
+| **2** | 7 features | Reusan los fixtures de 1a–1c. |
+| **3** | `bottom_navigation_bar`, `design_system` | Casi todo UI. |
+
+### 7.3 Entregables por fase
+
+| Fase | Entregable |
 |---|---|
-| **0** | `mocktail` + `bloc_test` en todos los packages; `packages/test_support`; `coverage_thresholds.yaml`; `tool/check_coverage.dart` (+ sus tests); `tool/gen_coverage_imports.dart`; fix de `melos.yaml`; job `coverage` en CI; reescritura de `ARCHITECTURE.md` §18. |
-| **1** | `core` → 85%, `commons` → 85%, `token_repository` → 85% |
+| **0** | `mocktail` + `bloc_test` en todos los packages; `packages/test_support`; `coverage_thresholds.yaml`; `tool/check_coverage.dart` (+ sus tests); `tool/gen_coverage_imports.dart`; fix de `melos.yaml`; job `coverage` en CI; reescritura de `ARCHITECTURE.md` §18 |
+| **1** | `commons` → 85%, `token_repository` → 85%, `core` → 85% (en ese orden, §7.2) |
 | **2** | `auth`, `cart`, `orders`, `order_tracking`, `login`, `catalog`, `profile` → 80% |
 | **3** | `bottom_navigation_bar` → 60%, `design_system` → 40% |
 
