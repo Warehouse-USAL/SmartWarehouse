@@ -20,7 +20,7 @@ packages:
     min: 2
   commons:
     path: packages/commons
-    min: 48
+    min: 85
     exclude:
       # Adaptadores finos: delegan en un plugin y nada mas. Testearlos
       # equivale a afirmar "se llamo a Hive". Ver spec §5.1.
@@ -30,6 +30,7 @@ packages:
       - "lib/helpers/permissions/permissions_handler_package/permissions_handler_helper.dart"
       - "lib/helpers/navigation_helper/beamer_navigation_helper.dart"
       - "lib/helpers/http/dio_http_helper.dart"
+      - "lib/helpers/build_data/package_info_build_data_helper.dart"  # delega en package_info_plus
   token_repository:
     path: packages/features/repositories/token_repository
     min: 0
