@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:token_repository/token_repository.dart';
-import 'package:token_repository/src/data/repositories/local_token_repository.dart';
 
 /// Builds a JWT-shaped string whose payload is [payload].
 ///
