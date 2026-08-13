@@ -45,7 +45,13 @@ class ThresholdConfig {
     final rawPackages = doc['packages'];
     if (rawPackages is YamlMap) {
       rawPackages.forEach((key, value) {
-        if (value is! YamlMap) return;
+        if (value is! YamlMap) {
+          throw FormatException(
+            'El package "$key" en coverage_thresholds.yaml no es un mapa '
+            'valido (falta path/min o esta mal indentado). Una entrada a '
+            'medio escribir no puede desaparecer del scoring en silencio.',
+          );
+        }
         packages.add(
           PackageThreshold(
             name: key.toString(),

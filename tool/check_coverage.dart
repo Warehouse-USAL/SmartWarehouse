@@ -24,9 +24,27 @@ void main(List<String> args) {
   }
 
   final config = ThresholdConfig.parse(configFile.readAsStringSync());
+
+  if (config.packages.isEmpty) {
+    stderr.writeln(
+      'coverage_thresholds.yaml no declara ningun package. Un gate sin packages '
+      'no verifica nada: se trata como error, no como exito.',
+    );
+    exit(1);
+  }
+
   final results = <PackageResult>[];
 
   for (final package in config.packages) {
+    if (!Directory(package.path).existsSync()) {
+      stderr.writeln(
+        'El package "${package.name}" declara path "${package.path}" en '
+        '$_configPath, pero ese directorio no existe. Un package movido o '
+        'renombrado no puede seguir contando 0% en silencio.',
+      );
+      exit(1);
+    }
+
     final lcov = File('${package.path}/coverage/lcov.info');
     results.add(
       buildResult(
@@ -40,6 +58,22 @@ void main(List<String> args) {
   _printTable(results);
 
   if (options['update'] as bool) {
+    final missing = results.where((r) => !r.hasReport).toList();
+    if (missing.isNotEmpty) {
+      stderr.writeln(
+        '\n--update se nego a correr: ${missing.length} package(s) sin '
+        'coverage/lcov.info:',
+      );
+      for (final r in missing) {
+        stderr.writeln('  - ${r.name}');
+      }
+      stderr.writeln(
+        '\nCorre "melos run test:coverage" primero para generar los reportes. '
+        'Actualizar floors con reportes faltantes los pisaria a 0.',
+      );
+      exit(1);
+    }
+
     _updateFloors(configFile, results);
     stdout.writeln('\nFloors actualizados en $_configPath.');
     exit(0);
@@ -105,8 +139,11 @@ void _updateFloors(File configFile, List<PackageResult> results) {
     if (minMatch != null && currentPackage != null) {
       final result = byName[currentPackage];
       if (result != null) {
+        final existingMin = int.parse(minMatch.group(2)!);
+        final measuredFloor = result.percent.floor();
+        final newMin = existingMin > measuredFloor ? existingMin : measuredFloor;
         output.add(
-          '${minMatch.group(1)}${result.percent.floor()}${minMatch.group(3)}',
+          '${minMatch.group(1)}$newMin${minMatch.group(3)}',
         );
         continue;
       }

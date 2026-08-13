@@ -58,6 +58,9 @@ jobs:
       - name: Run flutter analyze
         run: melos exec -- flutter analyze
 
+      - name: Analyze root package (tool/ and test/tool/)
+        run: flutter analyze
+
   test:
     name: Tests
     needs: [skip-drafts, validate-branch]
@@ -96,6 +99,9 @@ jobs:
 
       - name: Bootstrap packages
         run: melos bootstrap
+
+      - name: Run coverage tooling tests
+        run: flutter test test/tool
 
       - name: Run tests with coverage and check thresholds
         run: melos run test:coverage
