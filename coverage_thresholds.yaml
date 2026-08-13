@@ -33,7 +33,7 @@ packages:
       - "lib/helpers/build_data/package_info_build_data_helper.dart"  # delega en package_info_plus
   token_repository:
     path: packages/features/repositories/token_repository
-    min: 0
+    min: 85
   auth:
     path: packages/features/auth
     min: 0
