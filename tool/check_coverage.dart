@@ -91,7 +91,7 @@ void _updateFloors(File configFile, List<PackageResult> results) {
 
   String? currentPackage;
   final packageKey = RegExp(r'^  ([A-Za-z0-9_]+):\s*$');
-  final minKey = RegExp(r'^(\s*min:\s*)(\d+)\s*$');
+  final minKey = RegExp(r'^(\s*min:\s*)(\d+)(\s*(?:#.*)?)$');
 
   for (final line in lines) {
     final packageMatch = packageKey.firstMatch(line);
@@ -105,7 +105,9 @@ void _updateFloors(File configFile, List<PackageResult> results) {
     if (minMatch != null && currentPackage != null) {
       final result = byName[currentPackage];
       if (result != null) {
-        output.add('${minMatch.group(1)}${result.percent.floor()}');
+        output.add(
+          '${minMatch.group(1)}${result.percent.floor()}${minMatch.group(3)}',
+        );
         continue;
       }
     }

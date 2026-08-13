@@ -24,6 +24,19 @@ scripts:
         - test
   test:coverage:
     run: |
+      set -e
       dart run tool/gen_coverage_imports.dart
-      melos exec --dir-exists=test -- flutter test --coverage --no-pub
+      # exit 79 = "No tests were found". Es esperado en packages que todavia no
+      # tienen tests propios: el archivo generado igual instrumenta todo lib/ y
+      # el package cuenta 0% en el denominador. Cualquier otro codigo distinto
+      # de 0 es una falla real y tiene que cortar la corrida.
+      #
+      # No se envuelve en `sh -c '...'`: `melos exec` reconstruye el comando
+      # uniendo sus argumentos con espacios y lo corre con `eval` por package,
+      # asi que una sub-cadena entre comillas simples pierde su agrupacion ahi
+      # y flutter termina corriendo sin argumentos (probado). Los tokens de
+      # control (||, [, $?, ]) se pasan sueltos, entrecomillados solo para
+      # este shell exterior, para que lleguen literales a `melos exec` y sea
+      # su propio eval — por package — el que los interprete.
+      melos exec --dir-exists=test -- flutter test --coverage --no-pub '||' '[' '$?' -eq 79 ']'
       dart run tool/check_coverage.dart
