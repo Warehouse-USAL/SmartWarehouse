@@ -126,6 +126,7 @@ class _CheckoutAddressSheetState extends State<CheckoutAddressSheet> {
                 ),
                 const SizedBox(height: 18),
                 _Field(
+                  fieldKey: E2eKeys.checkoutAddressStreet,
                   label: 'Calle y altura',
                   controller: _street,
                   hint: 'Ej. Av. Corrientes 1234',
@@ -133,6 +134,7 @@ class _CheckoutAddressSheetState extends State<CheckoutAddressSheet> {
                 ),
                 const SizedBox(height: 12),
                 _Field(
+                  fieldKey: E2eKeys.checkoutAddressPostalCode,
                   label: 'Código postal',
                   controller: _postal,
                   hint: 'Ej. C1043',
@@ -187,6 +189,7 @@ class _CheckoutAddressSheetState extends State<CheckoutAddressSheet> {
                 ),
                 const SizedBox(height: 12),
                 SwButton(
+                  key: E2eKeys.checkoutAddressSubmit,
                   label: 'Confirmar y crear orden',
                   onPressed: _submit,
                 ),
@@ -215,8 +218,10 @@ class _Field extends StatelessWidget {
     required this.controller,
     this.hint,
     this.required = false,
+    this.fieldKey,
   });
 
+  final Key? fieldKey;
   final String label;
   final TextEditingController controller;
   final String? hint;
@@ -237,6 +242,7 @@ class _Field extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         TextFormField(
+          key: fieldKey,
           controller: controller,
           decoration: InputDecoration(
             hintText: hint,

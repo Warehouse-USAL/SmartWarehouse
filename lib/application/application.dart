@@ -19,10 +19,14 @@ class _SmartWarehouseAppState extends State<SmartWarehouseApp> {
   bool _showSplashMinTimer = true;
   bool _splashDismissed = false;
 
+  /// Duración mínima del splash. Overrideable por dart-define para que los
+  /// tests e2e no tengan que esperar los 3s (--dart-define=SPLASH_MS=0).
+  static const _splashMs = int.fromEnvironment('SPLASH_MS', defaultValue: 3000);
+
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 3), () {
+    Timer(const Duration(milliseconds: _splashMs), () {
       setState(() => _showSplashMinTimer = false);
       _removeSplashIfNeeded();
     });

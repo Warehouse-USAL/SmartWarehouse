@@ -34,6 +34,12 @@ target 'Runner' do
   target 'RunnerTests' do
     inherit! :search_paths
   end
+
+  # Patrol e2e tests (see README "E2E tests" — the RunnerUITests target must
+  # exist in Xcode for this block to take effect).
+  target 'RunnerUITests' do
+    inherit! :complete
+  end
 end
 
 post_install do |installer|
