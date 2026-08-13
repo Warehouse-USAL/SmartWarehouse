@@ -18,7 +18,12 @@ scripts:
     packageFilters:
       dependsOn: build_runner
   test:
-    exec: |
-      if [ -d "test" ]; then
-        flutter test --no-pub
-      fi
+    exec: flutter test --no-pub
+    packageFilters:
+      dirExists:
+        - test
+  test:coverage:
+    run: |
+      dart run tool/gen_coverage_imports.dart
+      melos exec --dir-exists=test -- flutter test --coverage --no-pub
+      dart run tool/check_coverage.dart
