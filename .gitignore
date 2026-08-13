@@ -47,5 +47,7 @@ app.*.map.json
 
 # Generado por tool/gen_coverage_imports.dart
 **/test/_coverage_imports_test.dart
-coverage/
-**/coverage/
+# Salida de flutter test --coverage. Anclado a proposito: `**/coverage/`
+# tambien matchea tool/coverage/, que es codigo fuente, no output.
+/coverage/
+packages/**/coverage/
