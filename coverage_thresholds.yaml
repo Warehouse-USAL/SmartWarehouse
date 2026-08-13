@@ -20,7 +20,7 @@ packages:
     min: 2
   commons:
     path: packages/commons
-    min: 0
+    min: 48
     exclude:
       # Adaptadores finos: delegan en un plugin y nada mas. Testearlos
       # equivale a afirmar "se llamo a Hive". Ver spec §5.1.
