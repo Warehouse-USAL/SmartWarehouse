@@ -151,6 +151,7 @@ la API del plugin, sin detectar defectos reales:
 | `helpers/permissions/permissions_handler_package/permissions_handler_helper.dart` | delega en permission_handler |
 | `helpers/navigation_helper/beamer_navigation_helper.dart` | delega en Beamer |
 | `helpers/http/dio_http_helper.dart` | delega en Dio |
+| `helpers/build_data/package_info_build_data_helper.dart` | agregado durante la implementación (no estaba en este listado original); delega casi todo en `package_info_plus`, más un `??` y un `.toUpperCase()` triviales. No es load-bearing: `commons` mide 85.3% sin contarlo. |
 
 Lo que **sí** se cubre en `commons`: `utils/date_time_utils.dart`,
 `utils/image_url_resolver.dart`, `helpers/http/interceptors/*`,

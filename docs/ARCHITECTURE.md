@@ -1291,9 +1291,9 @@ packages/features/<feature>/test/
 
 Usamos **`mocktail`** para mocks y **`bloc_test`** para cubits. `mocktail` no
 necesita codegen y es null-safe; `bloc_test` maneja el ciclo de vida del stream,
-que a mano es fragil por timing.
+que a mano es frágil por timing.
 
-Los fakes escritos a mano se reservan para cuando un fake **con estado** es mas
+Los fakes escritos a mano se reservan para cuando un fake **con estado** es más
 claro que un mock: por ejemplo un repo in-memory que simula un store.
 
 Los helpers compartidos viven en `packages/test_support`: mocks comunes,
@@ -1318,26 +1318,6 @@ blocTest<CatalogCubit, CatalogState>(
 - **Cubits**: cada acción pública dispara los states esperados; pagination acumula; stale responses se descartan.
 - **Widget tests**: opcional para componentes complejos del design system.
 
-### Patrón típico de test de cubit
-
-```dart
-test('emits Loading then Ready with first page', () async {
-  final repo = _FakeRepo()
-    ..handler = (page, _, __) async =>
-        Right(_page(1, [_p('1'), _p('2')], total: 30, hasNext: true));
-  final cubit = CatalogCubit(repo);
-  final emitted = <CatalogState>[];
-  final sub = cubit.stream.listen(emitted.add);
-
-  await cubit.load();
-  await Future<void>.delayed(Duration.zero);
-  await sub.cancel();
-
-  expect(emitted.first, isA<CatalogLoading>());
-  expect(emitted.last, isA<CatalogReady>());
-});
-```
-
 ### Cobertura
 
 Cada package tiene un floor en `coverage_thresholds.yaml`, y CI falla si baja.
@@ -1349,11 +1329,22 @@ melos run test:coverage                      # corre todo y chequea los floors
 dart run tool/check_coverage.dart --update   # sube los floors a lo medido
 ```
 
-Que **no** se testea, a proposito:
+Qué **no** se testea, a propósito:
 - Entities de Freezed: `==`/`copyWith` son responsabilidad de Freezed.
 - Adaptadores finos de plataforma: delegan en un plugin (ver exclusiones en
   `coverage_thresholds.yaml`).
 - Pages: las cubre Patrol (E8.3.x), no los unit tests.
+
+### Frontera con Patrol
+
+Contrato de ownership entre este trabajo y el trabajo de Patrol (E8.3.x), para que
+no sea un acuerdo verbal:
+
+- **Este trabajo** es dueño de `packages/*/test/` (unit + widget).
+- **El trabajo de Patrol** es dueño de `integration_test/` en la raíz (E2E).
+- Los nombres de los jobs de CI (`analyze`, `test`, `coverage`) son fijos para que
+  el trabajo de Patrol **agregue** un job `e2e` en lugar de reestructurar los
+  existentes.
 
 ---
 
