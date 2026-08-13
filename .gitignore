@@ -44,3 +44,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Generado por tool/gen_coverage_imports.dart
+**/test/_coverage_imports_test.dart
+coverage/
+**/coverage/
