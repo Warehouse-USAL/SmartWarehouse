@@ -1,0 +1,66 @@
+# Floors de cobertura por package.
+#
+# Reglas:
+# - Los floors solo suben. Bajar uno requiere justificacion en el PR.
+# - `dart run tool/check_coverage.dart --update` reescribe los floors a lo
+#   medido, para que subir un umbral sea un diff revisable.
+# - Un package sin coverage/lcov.info cuenta 0%, nunca se saltea.
+#
+# Targets finales (spec §5): commons/core/token_repository 85,
+# features 80, bottom_navigation_bar 60, design_system 40.
+
+defaults:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+
+packages:
+  core:
+    path: packages/core
+    min: 2
+  commons:
+    path: packages/commons
+    min: 0
+    exclude:
+      # Adaptadores finos: delegan en un plugin y nada mas. Testearlos
+      # equivale a afirmar "se llamo a Hive". Ver spec §5.1.
+      - "lib/helpers/persistence_helper/hive_persistence_helper.dart"
+      - "lib/helpers/persistence_helper/shared_preferences_persistence_helper.dart"
+      - "lib/helpers/image_picker_helper/image_picker_helper_implementation.dart"
+      - "lib/helpers/permissions/permissions_handler_package/permissions_handler_helper.dart"
+      - "lib/helpers/navigation_helper/beamer_navigation_helper.dart"
+      - "lib/helpers/http/dio_http_helper.dart"
+  token_repository:
+    path: packages/features/repositories/token_repository
+    min: 0
+  auth:
+    path: packages/features/auth
+    min: 0
+  cart:
+    path: packages/features/cart
+    min: 0
+  catalog:
+    path: packages/features/catalog
+    min: 29
+  login:
+    path: packages/features/login
+    min: 7
+  orders:
+    path: packages/features/orders
+    min: 20
+  order_tracking:
+    path: packages/features/order_tracking
+    min: 24
+  profile:
+    path: packages/features/profile
+    min: 0
+  bottom_navigation_bar:
+    path: packages/features/bottom_navigation_bar
+    min: 2
+  design_system:
+    path: packages/design_system
+    min: 0
+
+# Fuera del gate:
+# - app shell (lib/ en la raiz): composition root, se cubre por E2E
+# - packages/test_support: es codigo de test
