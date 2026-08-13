@@ -33,3 +33,5 @@ dev_dependencies:
   freezed: ^3.2.3
   json_serializable: ^6.10.0
   dio: ^5.9.2
+  mocktail: ^1.0.4
+  bloc_test: ^10.0.0

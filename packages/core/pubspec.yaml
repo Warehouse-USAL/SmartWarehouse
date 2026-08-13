@@ -43,5 +43,9 @@ dev_dependencies:
   freezed: ^3.2.5
   json_serializable: ^6.9.0
   json_annotation: ^4.11.0
+  mocktail: ^1.0.4
+  bloc_test: ^10.0.0
+  test_support:
+    path: ../test_support
 
 

@@ -1,4 +1,4 @@
-# melos_managed_dependency_overrides: auth,bottom_navigation_bar,commons,core,design_system,login,cart,catalog,orders,order_tracking,profile
+# melos_managed_dependency_overrides: auth,bottom_navigation_bar,commons,core,design_system,login,cart,catalog,orders,order_tracking,profile,test_support
 dependency_overrides:
   auth:
     path: ../../auth
@@ -22,3 +22,5 @@ dependency_overrides:
     path: ../../orders
   profile:
     path: ../../profile
+  test_support:
+    path: ../../../test_support
