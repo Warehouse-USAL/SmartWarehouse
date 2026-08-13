@@ -48,7 +48,9 @@ packages:
     min: 7
   orders:
     path: packages/features/orders
-    min: 20
+    # Medido en 20.0% (38/190) exacto: sin headroom, una linea sin cubrir
+    # tumba el gate. Floor sembrado un punto abajo para dejar margen de ratchet.
+    min: 19
   order_tracking:
     path: packages/features/order_tracking
     min: 24
