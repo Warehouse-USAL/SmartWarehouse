@@ -44,7 +44,7 @@ packages:
     min: 0
   cart:
     path: packages/features/cart
-    min: 0
+    min: 80
   catalog:
     path: packages/features/catalog
     min: 29
