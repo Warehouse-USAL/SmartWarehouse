@@ -13,6 +13,11 @@ defaults:
   exclude:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
+    # Las pages no se testean con unit/widget tests a proposito (spec §4.1):
+    # esa capa la cubre Patrol (#131). Dejarlas en el denominador hacia que el
+    # target de 80% fuera inalcanzable por aritmetica — en `cart` la page sola
+    # es 133 de 290 lineas, o sea un techo teorico de 54%.
+    - "**/presentation/pages/**"
 
 packages:
   core:

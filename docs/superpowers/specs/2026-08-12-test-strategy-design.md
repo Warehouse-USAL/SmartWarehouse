@@ -137,7 +137,17 @@ que los tests de `catalog` ya definen, con los tres métodos no usados devolvien
 ```
 **/*.g.dart
 **/*.freezed.dart
+**/presentation/pages/**
 ```
+
+**Pages** — no se testean con unit/widget tests a propósito (§4.1): esa capa la
+cubre Patrol (#131). Dejarlas en el denominador de cobertura hacía que el target
+de §5 fuera inalcanzable por aritmética en algunos packages — en `cart` la page
+sola (`cart_page.dart`) es 133 de las 290 líneas instrumentables del package, un
+techo teórico de 54% aunque el resto del código estuviera 100% cubierto. Por eso
+`**/presentation/pages/**` es una exclusión global, no por-package: no es un caso
+particular de `cart`, es la misma inconsistencia entre §4.1 y §5 en cualquier
+feature con una page grande.
 
 **Adaptadores finos de plataforma en `commons`** — delegación pura a un plugin. Testearlos
 significa afirmar "¿se llamó a Hive?", lo cual es tautológico y se rompe cada vez que cambia
