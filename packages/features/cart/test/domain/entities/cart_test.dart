@@ -1,6 +1,5 @@
 import 'package:cart/src/domain/entities/cart.dart';
 import 'package:cart/src/domain/entities/cart_item.dart';
-import 'package:catalog/catalog.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:test_support/test_support.dart';
 
