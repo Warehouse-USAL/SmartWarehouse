@@ -170,7 +170,7 @@ void main() {
       verify(() => persistence.remove(any())).called(1);
     });
 
-    test('returns a failure when the response body has an unexpected shape', () async {
+    test('removes the token and returns Right(null) when the response body has an unexpected shape', () async {
       when(() => persistence.remove(any()))
           .thenAnswer((_) async => const None());
       when(() => http.post(any(), data: any(named: 'data'))).thenAnswer(
@@ -180,6 +180,7 @@ void main() {
       final result = await repo.refresh(refreshToken: 'ref');
 
       expect(result.getOrElse(() => anAuthData()), isNull);
+      verify(() => persistence.remove(any())).called(1);
     });
 
     test('on success saves and returns the new AuthData', () async {
