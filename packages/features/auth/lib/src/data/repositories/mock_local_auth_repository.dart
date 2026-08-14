@@ -69,7 +69,7 @@ class MockLocalAuthRepository implements AuthRepository {
         Uri.parse(refreshTokenUrl),
         body: {'refreshToken': refreshToken},
       );
-      final body = result.body as Map<String, dynamic>;
+      final body = json.decode(result.body) as Map<String, dynamic>;
       final model = RefreshTokenModel.fromJson(body);
       final authData = AuthData(token: model.token, refreshToken: model.refreshToken);
       final saveResult = await save(authData);

@@ -179,37 +179,51 @@ void main() {
   });
 
   group('refresh', () {
-    // DEFECTO REAL: `refresh()` hace `final body = result.body as Map<String,
-    // dynamic>;`, pero `http.Response.body` siempre es un `String` (el JSON
-    // crudo, sin decodificar). Ese cast falla en tiempo de ejecución sin
-    // importar qué devuelva el servidor, cae siempre al `catch`, borra la
-    // sesión y devuelve `Right(null)` — nunca puede tener éxito tal como está
-    // escrito. Debería ser `json.decode(result.body)`. No se corrige acá
-    // porque está fuera del alcance de este batch (y la clase no está
-    // conectada a ningún feature builder), pero se deja pineado en el test
-    // para que quede documentado y cualquier intento de "arreglarlo" note
-    // que rompe esta expectativa.
-    test(
-      'removes the token and returns Right(null) even on a well-formed response, '
-      'because the raw String body can never cast to Map (defecto real, ver comentario arriba)',
-      () async {
-        when(() => persistence.remove(any())).thenAnswer((_) async => const None());
-        final client = MockClient((request) async {
-          return http.Response(
-            json.encode({'accessToken': 'nuevo-token', 'refreshToken': 'nuevo-refresh'}),
-            200,
-          );
-        });
-
-        final result = await http.runWithClient(
-          () => repo.refresh(refreshToken: 'ref-viejo'),
-          () => client,
+    test('returns the renewed session and persists it on success', () async {
+      when(() => persistence.set(any(), any())).thenAnswer((_) async => const None());
+      final client = MockClient((request) async {
+        return http.Response(
+          json.encode({'accessToken': 'nuevo-token', 'refreshToken': 'nuevo-refresh'}),
+          200,
         );
+      });
 
-        expect(result.getOrElse(() => anAuthData()), isNull);
-        verify(() => persistence.remove(any())).called(1);
-      },
-    );
+      final result = await http.runWithClient(
+        () => repo.refresh(refreshToken: 'ref-viejo'),
+        () => client,
+      );
+
+      final data = result.getOrElse(() => null);
+      expect(data?.token, 'nuevo-token');
+      expect(data?.refreshToken, 'nuevo-refresh');
+      verify(() => persistence.set(any(), any())).called(1);
+    });
+
+    test('removes the token and returns Right(null) when the response is missing the expected fields', () async {
+      when(() => persistence.remove(any())).thenAnswer((_) async => const None());
+      final client = MockClient((request) async => http.Response('{}', 200));
+
+      final result = await http.runWithClient(
+        () => repo.refresh(refreshToken: 'ref-viejo'),
+        () => client,
+      );
+
+      expect(result.getOrElse(() => anAuthData()), isNull);
+      verify(() => persistence.remove(any())).called(1);
+    });
+
+    test('removes the token and returns Right(null) when the response body is not valid JSON', () async {
+      when(() => persistence.remove(any())).thenAnswer((_) async => const None());
+      final client = MockClient((request) async => http.Response('esto no es json', 200));
+
+      final result = await http.runWithClient(
+        () => repo.refresh(refreshToken: 'ref-viejo'),
+        () => client,
+      );
+
+      expect(result.getOrElse(() => anAuthData()), isNull);
+      verify(() => persistence.remove(any())).called(1);
+    });
 
     test('still returns Right(null) when removing the token after a failed refresh also fails', () async {
       when(() => persistence.remove(any())).thenAnswer(
