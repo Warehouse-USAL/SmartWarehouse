@@ -46,7 +46,7 @@ class MockLocalAuthRepository implements AuthRepository {
       if (await persistenceHelper.exists(_authKey)) {
         final result = await persistenceHelper.get(_authKey, PersistableAuthData.fromJson);
 
-        return result.fold(
+        return await result.fold(
           (failure) => Left(AuthFailure()),
           (data) {
             final isRegistered = _decodeToken<bool>(token: data.authData.token, key: 'isRegistered') ?? false;
@@ -73,7 +73,7 @@ class MockLocalAuthRepository implements AuthRepository {
       final model = RefreshTokenModel.fromJson(body);
       final authData = AuthData(token: model.token, refreshToken: model.refreshToken);
       final saveResult = await save(authData);
-      return saveResult.fold(
+      return await saveResult.fold(
         () => Right(authData),
         (failure) => _onRemoveToken(),
       );
@@ -93,7 +93,7 @@ class MockLocalAuthRepository implements AuthRepository {
   Future<Option<AuthFailure>> remove() async {
     try {
       final result = await persistenceHelper.remove(_authKey);
-      return result.fold(() => const None(), (_) => Some(AuthFailure()));
+      return await result.fold(() => const None(), (_) => Some(AuthFailure()));
     } catch (e) {
       log('$e');
       return Some(AuthFailure());
@@ -104,7 +104,7 @@ class MockLocalAuthRepository implements AuthRepository {
   Future<Option<AuthFailure>> save(AuthData authData) async {
     try {
       final result = await persistenceHelper.set(_authKey, PersistableAuthData.fromAuthData(authData));
-      return result.fold(() => const None(), (_) => Some(AuthFailure()));
+      return await result.fold(() => const None(), (_) => Some(AuthFailure()));
     } catch (e) {
       return Some(AuthFailure());
     }

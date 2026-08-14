@@ -38,7 +38,7 @@ class RemoteCatalogRepository implements CatalogRepository {
         if (category != null) 'category': category.key,
       };
       final result = await httpHelper.get('/products', queryParameters: query);
-      return result.fold(
+      return await result.fold(
         (error) => Left(CatalogFailure(error.message ?? 'Error obteniendo productos')),
         (response) {
           final data = response.data;
@@ -64,7 +64,7 @@ class RemoteCatalogRepository implements CatalogRepository {
   Future<Either<CatalogFailure, List<ProductCategory>>> getCategories() async {
     try {
       final result = await httpHelper.get('/products/categories');
-      return result.fold(
+      return await result.fold(
         (_) => Right(ProductCategory.values),
         (response) {
           final data = response.data;
@@ -91,7 +91,7 @@ class RemoteCatalogRepository implements CatalogRepository {
   Future<Either<CatalogFailure, Product>> getProductById(String id) async {
     try {
       final result = await httpHelper.get('/products/$id');
-      return result.fold(
+      return await result.fold(
         (error) {
           if (error.statusCode == 404) {
             return const Left(CatalogFailure('Producto no encontrado'));
