@@ -149,6 +149,18 @@ techo teórico de 54% aunque el resto del código estuviera 100% cubierto. Por e
 particular de `cart`, es la misma inconsistencia entre §4.1 y §5 en cualquier
 feature con una page grande.
 
+**Consecuencia: una page no puede contener lógica de negocio.** Validaciones,
+mappers y decisiones de dominio van al cubit o a un mapper. Si viven en la page
+quedan fuera del gate **y** fuera de Patrol por igual, sin que nadie lo note.
+Hoy `cart_page.dart` viola esto: tiene el guard de sobre-pedido (`quantity >
+available`) y un mapper Cart→OrderItem. Ver el issue de seguimiento (#173).
+
+Al aplicar esta exclusión, la cobertura medida de cinco packages subió sin que
+se escribiera ningún test — solo cambió el denominador: `catalog` 29.5→43.6,
+`order_tracking` 24.5→33.1, `orders` 20.0→24.2, `login` 7.9→14.1, `profile`
+1.0→1.3. De 837 líneas sacadas del denominador, exactamente **una** estaba
+cubierta. Los floors se re-ratchetearon en consecuencia.
+
 **Adaptadores finos de plataforma en `commons`** — delegación pura a un plugin. Testearlos
 significa afirmar "¿se llamó a Hive?", lo cual es tautológico y se rompe cada vez que cambia
 la API del plugin, sin detectar defectos reales:
@@ -184,6 +196,7 @@ defaults:
   exclude:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
+    - "**/presentation/pages/**"
 
 packages:
   core:
