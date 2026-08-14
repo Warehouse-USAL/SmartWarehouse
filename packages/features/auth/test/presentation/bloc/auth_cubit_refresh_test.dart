@@ -1,7 +1,6 @@
 import 'package:auth/src/domain/entities/auth_data.dart';
 import 'package:auth/src/domain/repositories/auth_repository.dart';
 import 'package:auth/src/presentation/bloc/auth_cubit.dart';
-import 'package:auth/src/presentation/bloc/auth_state.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
