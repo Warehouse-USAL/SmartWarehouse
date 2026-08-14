@@ -41,7 +41,7 @@ packages:
     min: 85
   auth:
     path: packages/features/auth
-    min: 0
+    min: 80
   cart:
     path: packages/features/cart
     min: 80
