@@ -46,6 +46,10 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          # Pineado a proposito: `channel: stable` flotante hace que una release
+          # del SDK con lints nuevos ponga CI en rojo en PRs que no tocaron nada
+          # relacionado. Paso el 2026-08-12 con unawaited_return_in_try_block.
+          flutter-version: 3.41.9
           channel: stable
           cache: true
 
@@ -70,6 +74,10 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          # Pineado a proposito: `channel: stable` flotante hace que una release
+          # del SDK con lints nuevos ponga CI en rojo en PRs que no tocaron nada
+          # relacionado. Paso el 2026-08-12 con unawaited_return_in_try_block.
+          flutter-version: 3.41.9
           channel: stable
           cache: true
 
@@ -91,6 +99,10 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          # Pineado a proposito: `channel: stable` flotante hace que una release
+          # del SDK con lints nuevos ponga CI en rojo en PRs que no tocaron nada
+          # relacionado. Paso el 2026-08-12 con unawaited_return_in_try_block.
+          flutter-version: 3.41.9
           channel: stable
           cache: true
 
@@ -123,6 +135,10 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          # Pineado a proposito: `channel: stable` flotante hace que una release
+          # del SDK con lints nuevos ponga CI en rojo en PRs que no tocaron nada
+          # relacionado. Paso el 2026-08-12 con unawaited_return_in_try_block.
+          flutter-version: 3.41.9
           channel: stable
           cache: true
 
@@ -144,6 +160,10 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          # Pineado a proposito: `channel: stable` flotante hace que una release
+          # del SDK con lints nuevos ponga CI en rojo en PRs que no tocaron nada
+          # relacionado. Paso el 2026-08-12 con unawaited_return_in_try_block.
+          flutter-version: 3.41.9
           channel: stable
           cache: true
 
