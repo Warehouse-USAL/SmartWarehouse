@@ -43,7 +43,7 @@ class LocalAuthRepository implements AuthRepository {
         '/authenticate/refresh-session',
         data: {'refreshToken': refreshToken},
       );
-      return result.fold(
+      return await result.fold(
         (failure) => _onRemoveToken(),
         (success) async {
           final data = success.data;
