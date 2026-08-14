@@ -157,8 +157,8 @@ available`) y un mapper Cart→OrderItem. Ver el issue de seguimiento (#173).
 
 Al aplicar esta exclusión, la cobertura medida de cinco packages subió sin que
 se escribiera ningún test — solo cambió el denominador: `catalog` 29.5→43.6,
-`order_tracking` 24.5→33.1, `orders` 20.0→24.2, `login` 7.9→14.1, `profile`
-1.0→1.3. De 837 líneas sacadas del denominador, exactamente **una** estaba
+`order_tracking` 24.5→33.1, `orders` 20.0→24.2, `login` 9.4→14.1, `profile`
+1.0→1.3. De 703 líneas sacadas del denominador, exactamente **una** estaba
 cubierta. Los floors se re-ratchetearon en consecuencia.
 
 **Adaptadores finos de plataforma en `commons`** — delegación pura a un plugin. Testearlos
