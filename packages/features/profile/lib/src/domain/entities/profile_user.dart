@@ -1,3 +1,4 @@
+import 'package:catalog/catalog.dart';
 import 'package:profile/src/domain/entities/user_address.dart';
 
 class ProfileUser {
@@ -7,7 +8,7 @@ class ProfileUser {
     required this.email,
     required this.role,
     required this.openOrdersCount,
-    required this.spentThisMonth,
+    this.spentThisMonth,
     this.address,
   });
 
@@ -16,7 +17,10 @@ class ProfileUser {
   final String email;
   final String role;
   final int openOrdersCount;
-  final double spentThisMonth;
+
+  /// Gastado en el mes en curso. `null` si no se pudo calcular de forma
+  /// confiable (algún precio faltante o monedas mezcladas) — la UI muestra "—".
+  final Money? spentThisMonth;
 
   /// Dirección guardada en el back (PATCH /users/me). null si el usuario
   /// no la configuró todavía.
@@ -30,12 +34,8 @@ class ProfileUser {
     return name.substring(0, name.length.clamp(0, 2)).toUpperCase();
   }
 
-  String get formattedSpent {
-    final cents = (spentThisMonth * 100).round();
-    final dollars = cents ~/ 100;
-    final remainder = cents % 100;
-    return '\$$dollars.${remainder.toString().padLeft(2, '0')}';
-  }
+  /// Único formato de dinero de la app: `Money.formatted`.
+  String get formattedSpent => spentThisMonth?.formatted ?? '—';
 
   ProfileUser copyWith({
     String? id,
@@ -43,7 +43,8 @@ class ProfileUser {
     String? email,
     String? role,
     int? openOrdersCount,
-    double? spentThisMonth,
+    Money? spentThisMonth,
+    bool clearSpent = false,
     UserAddress? address,
     bool clearAddress = false,
   }) =>
@@ -53,7 +54,7 @@ class ProfileUser {
         email: email ?? this.email,
         role: role ?? this.role,
         openOrdersCount: openOrdersCount ?? this.openOrdersCount,
-        spentThisMonth: spentThisMonth ?? this.spentThisMonth,
+        spentThisMonth: clearSpent ? null : (spentThisMonth ?? this.spentThisMonth),
         address: clearAddress ? null : (address ?? this.address),
       );
 

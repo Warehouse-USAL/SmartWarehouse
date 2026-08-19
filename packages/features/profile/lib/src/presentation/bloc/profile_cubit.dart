@@ -1,3 +1,4 @@
+import 'package:catalog/catalog.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:profile/src/domain/entities/order_summary.dart';
 import 'package:profile/src/domain/entities/profile_user.dart';
@@ -19,6 +20,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       _repository.getProfile(),
       _repository.getOrderHistory(),
     ]);
+    if (isClosed) return;
 
     final profileResult = results[0] as dynamic;
     final ordersResult = results[1] as dynamic;
@@ -47,6 +49,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       name: name,
       address: address,
     );
+    if (isClosed) return false;
     return result.fold(
       (_) => false,
       (updated) {
@@ -63,10 +66,29 @@ class ProfileCubit extends Cubit<ProfileState> {
             o.status != OrderStatus.delivered &&
             o.status != OrderStatus.cancelled)
         .length;
-    final spent = orders.fold<double>(0, (s, o) => s + o.totalAmount);
+    // "Gastado este mes": solo órdenes del mes en curso, y solo si todas
+    // tienen total confiable en la misma moneda. Si no, null → "—".
+    final now = DateTime.now();
+    Money? spent;
+    var reliable = true;
+    for (final o in orders) {
+      final created = o.createdAt;
+      if (created == null ||
+          created.year != now.year ||
+          created.month != now.month) {
+        continue;
+      }
+      final total = o.total;
+      if (total == null || (spent != null && total.currency != spent.currency)) {
+        reliable = false;
+        break;
+      }
+      spent = spent == null ? total : spent + total;
+    }
     return user.copyWith(
       openOrdersCount: open,
-      spentThisMonth: spent > 0 ? spent : user.spentThisMonth,
+      spentThisMonth: reliable ? spent : null,
+      clearSpent: !reliable,
     );
   }
 }

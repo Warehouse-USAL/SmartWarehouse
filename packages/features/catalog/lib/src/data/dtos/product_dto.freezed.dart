@@ -52,7 +52,7 @@ $Res call({
 });
 
 
-$PriceDtoCopyWith<$Res>? get price;$StockDtoCopyWith<$Res>? get stock;$OrderConstraintsDtoCopyWith<$Res>? get orderConstraints;$ProductLocationDtoCopyWith<$Res>? get location;
+$StockDtoCopyWith<$Res>? get stock;$OrderConstraintsDtoCopyWith<$Res>? get orderConstraints;$ProductLocationDtoCopyWith<$Res>? get location;
 
 }
 /// @nodoc
@@ -84,18 +84,6 @@ as String?,
   ));
 }
 /// Create a copy of ProductDto
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$PriceDtoCopyWith<$Res>? get price {
-    if (_self.price == null) {
-    return null;
-  }
-
-  return $PriceDtoCopyWith<$Res>(_self.price!, (value) {
-    return _then(_self.copyWith(price: value));
-  });
-}/// Create a copy of ProductDto
 /// with the given fields replaced by the non-null parameter values.
 @override
 @pragma('vm:prefer-inline')
@@ -329,7 +317,7 @@ $Res call({
 });
 
 
-@override $PriceDtoCopyWith<$Res>? get price;@override $StockDtoCopyWith<$Res>? get stock;@override $OrderConstraintsDtoCopyWith<$Res>? get orderConstraints;@override $ProductLocationDtoCopyWith<$Res>? get location;
+@override $StockDtoCopyWith<$Res>? get stock;@override $OrderConstraintsDtoCopyWith<$Res>? get orderConstraints;@override $ProductLocationDtoCopyWith<$Res>? get location;
 
 }
 /// @nodoc
@@ -362,18 +350,6 @@ as String?,
 }
 
 /// Create a copy of ProductDto
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$PriceDtoCopyWith<$Res>? get price {
-    if (_self.price == null) {
-    return null;
-  }
-
-  return $PriceDtoCopyWith<$Res>(_self.price!, (value) {
-    return _then(_self.copyWith(price: value));
-  });
-}/// Create a copy of ProductDto
 /// with the given fields replaced by the non-null parameter values.
 @override
 @pragma('vm:prefer-inline')

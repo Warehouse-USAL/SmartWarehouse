@@ -111,7 +111,11 @@ class _DetailView extends StatelessWidget {
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               alignment: Alignment.centerLeft,
-                              child: Text(p.price.formatted, style: SwText.display(size: 30)),
+                              child: Text(
+                                p.price.formatted,
+                                key: E2eKeys.productDetailPrice,
+                                style: SwText.display(size: 30),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -364,8 +368,7 @@ class _Specs extends StatelessWidget {
       ('Stock disponible', '${product.stock.available}'),
       ('Máx. por orden', '${product.orderConstraints.maxQuantityPerOrder}'),
       ('Precio unitario', product.price.formatted),
-      if (product.specs != null)
-        for (final s in product.specs!) (s.label, s.value),
+      for (final s in product.specs ?? const <Spec>[]) (s.label, s.value),
     ];
     return SwCard(
       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -426,7 +429,12 @@ class _StickyFooter extends StatelessWidget {
             QtyStepper(value: qty, onChanged: onQtyChanged, min: 1, max: maxQty, large: true),
             const SizedBox(width: 12),
             Expanded(
-              child: SwButton(label: label, icon: Icons.add, onPressed: disabled ? null : onAdd),
+              child: SwButton(
+                key: E2eKeys.productDetailAddToCart,
+                label: label,
+                icon: Icons.add,
+                onPressed: disabled ? null : onAdd,
+              ),
             ),
           ],
         ),

@@ -33,13 +33,19 @@ class RemoteLoginRepository implements LoginRepository {
         data: body,
         retryOnTokenExpired: false,
       );
-      return result.fold(
+      return await result.fold(
         (error) => Left(_mapError(error)),
         (response) {
           final data = response.data;
           if (data is! Map<String, dynamic>) return const Left(UnknownLoginFailure());
           final dto = LoginResponseDto.fromJson(data);
           if (dto.token.isEmpty) return const Left(UnknownLoginFailure());
+          // Payload con user malformado (email vacío) → tratamos como error
+          // de contrato en vez de loguear un usuario "fantasma" sin rol.
+          final user = dto.user;
+          if (user != null && user.email.isEmpty) {
+            return const Left(UnknownLoginFailure());
+          }
           return Right(dto.toEntity());
         },
       );
@@ -67,7 +73,7 @@ class RemoteLoginRepository implements LoginRepository {
       _loginCompleter?.future.whenComplete(() => _loginCompleter = null);
       final result = await httpHelper.post('/authenticate/email', data: {'email': email.toLowerCase()});
       await _completeAndWaitForCompleter();
-      return result.fold(
+      return await result.fold(
         (failure) => Some(_mapError(failure)),
         (_) => const None(),
       );

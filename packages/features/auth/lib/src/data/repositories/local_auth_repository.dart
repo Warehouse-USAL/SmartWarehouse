@@ -21,7 +21,7 @@ class LocalAuthRepository implements AuthRepository {
         return const Right(null);
       }
       final result = await persistenceHelper.get(_authKey, PersistableAuthData.fromJson);
-      return result.fold(
+      return await result.fold(
         (failure) => Left(AuthFailure()),
         (data) {
           final token = data.authData.token;
@@ -76,7 +76,7 @@ class LocalAuthRepository implements AuthRepository {
   Future<Option<AuthFailure>> remove() async {
     try {
       final result = await persistenceHelper.remove(_authKey);
-      return result.fold(() => const None(), (_) => Some(AuthFailure()));
+      return await result.fold(() => const None(), (_) => Some(AuthFailure()));
     } catch (e) {
       log('$e');
       return Some(AuthFailure());
@@ -87,7 +87,7 @@ class LocalAuthRepository implements AuthRepository {
   Future<Option<AuthFailure>> save(AuthData authData) async {
     try {
       final result = await persistenceHelper.set(_authKey, PersistableAuthData.fromAuthData(authData));
-      return result.fold(() => const None(), (_) => Some(AuthFailure()));
+      return await result.fold(() => const None(), (_) => Some(AuthFailure()));
     } catch (e) {
       return Some(AuthFailure());
     }

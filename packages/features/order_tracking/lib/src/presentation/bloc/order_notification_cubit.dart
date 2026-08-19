@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:order_tracking/src/domain/entities/order_notification.dart';
@@ -38,6 +39,8 @@ class OrderNotificationCubit extends Cubit<OrderNotificationState> {
         ));
         onEvent?.call(change);
       },
+      onError: (Object e, StackTrace st) =>
+          log('OrderNotificationCubit WS error', error: e, stackTrace: st),
     );
   }
 

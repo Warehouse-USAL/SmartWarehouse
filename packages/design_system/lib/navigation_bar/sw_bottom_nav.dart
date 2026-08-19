@@ -1,3 +1,4 @@
+import 'package:design_system/testing/e2e_keys.dart';
 import 'package:design_system/theme/sw_tokens.dart';
 import 'package:flutter/material.dart';
 
@@ -24,6 +25,7 @@ class SwBottomNav extends StatelessWidget {
           children: tabs
               .map((t) => Expanded(
                     child: _NavItem(
+                      key: E2eKeys.navTab(t.id),
                       tab: t,
                       isActive: t.id == activeId,
                       onTap: () => onTabSelected(t.id),
@@ -45,7 +47,7 @@ class SwNavTab {
 }
 
 class _NavItem extends StatelessWidget {
-  const _NavItem({required this.tab, required this.isActive, required this.onTap});
+  const _NavItem({required this.tab, required this.isActive, required this.onTap, super.key});
   final SwNavTab tab;
   final bool isActive;
   final VoidCallback onTap;
