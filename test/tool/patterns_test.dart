@@ -29,6 +29,30 @@ void main() {
     test('dots are literal, not wildcards', () {
       expect(matchesPattern('lib/axg.dart', '**/*.g.dart'), isFalse);
     });
+
+    test('matches everything under a pages directory at any depth', () {
+      expect(
+        matchesPattern('lib/src/presentation/pages/cart_page.dart',
+            '**/presentation/pages/**'),
+        isTrue,
+      );
+    });
+
+    test('does not match siblings of a pages directory', () {
+      expect(
+        matchesPattern('lib/src/presentation/widgets/cart_badge.dart',
+            '**/presentation/pages/**'),
+        isFalse,
+      );
+    });
+
+    test('does not match a page-named file outside the pages directory', () {
+      expect(
+        matchesPattern('lib/src/domain/entities/products_page.dart',
+            '**/presentation/pages/**'),
+        isFalse,
+      );
+    });
   });
 
   group('matchesAny', () {
