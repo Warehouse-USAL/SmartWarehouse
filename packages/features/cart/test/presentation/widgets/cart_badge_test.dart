@@ -1,4 +1,5 @@
 import 'package:cart/src/data/repositories/in_memory_cart_repository.dart';
+import 'package:catalog/catalog.dart';
 import 'package:cart/src/presentation/bloc/cart_cubit.dart';
 import 'package:cart/src/presentation/widgets/cart_badge.dart';
 import 'package:flutter/material.dart';
@@ -40,7 +41,15 @@ void main() {
       home: CartBadge(cubit: cubit, child: const Icon(Icons.shopping_cart)),
     ));
 
-    cubit.add(aProduct(id: 'p-1'), quantity: 150);
+    // Stock y máximo por orden altos para que el clamp no achique la cantidad.
+    cubit.add(
+      aProduct(
+        id: 'p-1',
+        stock: aStock(available: 500),
+        orderConstraints: const OrderConstraints(maxQuantityPerOrder: 500),
+      ),
+      quantity: 150,
+    );
     await tester.pump();
 
     expect(find.text('99+'), findsOneWidget);

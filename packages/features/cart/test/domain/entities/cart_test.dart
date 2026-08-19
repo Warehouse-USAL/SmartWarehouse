@@ -87,7 +87,7 @@ void main() {
       expect(cart.total?.currency, 'USD');
     });
 
-    test('throws when the cart mixes currencies', () {
+    test('mixed currencies: total is null and the flag is set', () {
       final cart = Cart(items: [
         CartItem(
           product: aProduct(id: 'a', price: aMoney(amount: 100, currency: 'ARS')),
@@ -99,7 +99,8 @@ void main() {
         ),
       ]);
 
-      expect(() => cart.total, throwsArgumentError);
+      expect(cart.hasMixedCurrencies, isTrue);
+      expect(cart.total, isNull);
     });
   });
 

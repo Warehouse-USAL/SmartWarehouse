@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:auth/src/auth_feature_builder.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:commons/commons.dart';
+import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -24,6 +25,8 @@ void main() {
     test('wires an AuthCubit from the injector and registers it as a singleton', () async {
       final persistence = registerMock<PersistenceHelper>(MockPersistenceHelper());
       registerMock<HttpHelper>(MockHttpHelper());
+      // Desde #174 el builder elige el repositorio según AppDataSource.
+      Injector.i.registerSingleton<AppDataSource>(const AppDataSource.remote());
       when(() => persistence.exists(any())).thenAnswer((_) async => false);
 
       AuthFeatureBuilder.injectDependencies();

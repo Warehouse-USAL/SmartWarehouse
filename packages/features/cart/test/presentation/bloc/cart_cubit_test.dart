@@ -78,8 +78,9 @@ void main() {
       repo.add(aProduct(id: 'p-1'), quantity: 1);
       return repo.current;
     },
-    act: (cubit) => cubit.updateQuantity('p-1', 6),
-    expect: () => [cartWith(itemCount: 6, lineCount: 1)],
+    // 4 queda dentro del clamp del builder (maxQuantityPerOrder: 5).
+    act: (cubit) => cubit.updateQuantity('p-1', 4),
+    expect: () => [cartWith(itemCount: 4, lineCount: 1)],
   );
 
   blocTest<CartCubit, Cart>(
