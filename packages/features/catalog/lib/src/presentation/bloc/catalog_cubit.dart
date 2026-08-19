@@ -44,6 +44,7 @@ class CatalogCubit extends Cubit<CatalogState> {
       search: _query.isEmpty ? null : _query,
       category: _category,
     );
+    if (isClosed) return;
     if (seq != _requestSeq) return;
 
     productsResult.fold(
@@ -75,6 +76,7 @@ class CatalogCubit extends Cubit<CatalogState> {
       search: _query.isEmpty ? null : _query,
       category: _category,
     );
+    if (isClosed) return;
     if (seq != _requestSeq) return;
 
     final current = state;

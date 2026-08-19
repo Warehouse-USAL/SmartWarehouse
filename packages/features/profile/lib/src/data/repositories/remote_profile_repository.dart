@@ -82,16 +82,31 @@ class RemoteProfileRepository implements ProfileRepository {
               (id) async => MapEntry(id, await catalogRepository.getProductById(id)),
             ),
           );
-          final priceByProduct = <String, int>{};
+          final priceByProduct = <String, Money>{};
           for (final pair in pairs) {
-            pair.value.fold((_) {}, (p) => priceByProduct[pair.key] = p.price.amount);
+            pair.value.fold((_) {}, (p) => priceByProduct[pair.key] = p.price);
           }
           final summaries = orders.map((o) {
-            final totalCents = o.items.fold<int>(
-              0,
-              (sum, i) => sum + (priceByProduct[i.productId] ?? 0) * i.quantity,
-            );
-            return o.toSummary().copyWith(totalAmount: totalCents / 100.0);
+            // Total solo si TODOS los items tienen precio conocido y comparten
+            // moneda; si no, null → la UI muestra "—" en vez de un total
+            // parcial o con moneda equivocada.
+            String? currency;
+            var cents = 0;
+            var complete = o.items.isNotEmpty;
+            for (final i in o.items) {
+              final price = priceByProduct[i.productId];
+              if (price == null ||
+                  (currency != null && price.currency != currency)) {
+                complete = false;
+                break;
+              }
+              currency = price.currency;
+              cents += price.amount * i.quantity;
+            }
+            final total = complete && currency != null
+                ? Money(amount: cents, currency: currency)
+                : null;
+            return o.toSummary(total: total);
           }).toList(growable: false);
           return Right(summaries);
         },

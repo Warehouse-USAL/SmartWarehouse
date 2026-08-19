@@ -10,10 +10,19 @@ class Cart {
 
   int get itemCount => items.fold(0, (sum, i) => sum + i.quantity);
 
+  /// True si hay items con monedas distintas — un carrito así no tiene un
+  /// total representable y no debe poder confirmarse.
+  bool get hasMixedCurrencies {
+    if (items.isEmpty) return false;
+    final currency = items.first.product.price.currency;
+    return items.any((i) => i.product.price.currency != currency);
+  }
+
   /// Sum de subtotales. Devuelve `null` si el carrito está vacío (sin moneda
-  /// de referencia).
+  /// de referencia) o si hay monedas mezcladas (sumar lanzaría; la UI debe
+  /// chequear [hasMixedCurrencies] y bloquear el checkout).
   Money? get total {
-    if (items.isEmpty) return null;
+    if (items.isEmpty || hasMixedCurrencies) return null;
     final currency = items.first.product.price.currency;
     var sum = Money.zero(currency);
     for (final i in items) {

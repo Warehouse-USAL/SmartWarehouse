@@ -40,6 +40,12 @@ class RemoteLoginRepository implements LoginRepository {
           if (data is! Map<String, dynamic>) return const Left(UnknownLoginFailure());
           final dto = LoginResponseDto.fromJson(data);
           if (dto.token.isEmpty) return const Left(UnknownLoginFailure());
+          // Payload con user malformado (email vacío) → tratamos como error
+          // de contrato en vez de loguear un usuario "fantasma" sin rol.
+          final user = dto.user;
+          if (user != null && user.email.isEmpty) {
+            return const Left(UnknownLoginFailure());
+          }
           return Right(dto.toEntity());
         },
       );

@@ -93,6 +93,7 @@ class _ProfileContent extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
             child: SwButton(
+              key: E2eKeys.profileLogoutButton,
               label: 'Cerrar sesión',
               variant: SwButtonVariant.secondary,
               icon: Icons.logout_rounded,

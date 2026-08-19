@@ -65,10 +65,20 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
 
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.14.2
   melos: ^6.2.0
+  patrol: ^3.15.0
+
+patrol:
+  app_name: Smart Warehouse
+  android:
+    package_name: com.smartwarehouse.smart_warehouse
+  ios:
+    bundle_id: com.smartwarehouse.smartWarehouse
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
