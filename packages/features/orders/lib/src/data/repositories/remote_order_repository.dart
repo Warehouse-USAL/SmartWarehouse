@@ -52,7 +52,7 @@ class RemoteOrderRepository implements OrderRepository {
       ).toJson();
 
       final result = await httpHelper.post('/orders', data: body);
-      return result.fold(
+      return await result.fold(
         (error) => Left(OrderFailure(_mapError(error))),
         (response) {
           final data = response.data;
@@ -83,7 +83,7 @@ class RemoteOrderRepository implements OrderRepository {
         '/orders/$id/cancel',
         data: {'reason': reason},
       );
-      return result.fold(
+      return await result.fold(
         (error) => Left(OrderFailure(_mapError(error))),
         (_) => const Right(unit),
       );

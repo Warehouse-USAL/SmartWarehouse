@@ -44,7 +44,7 @@ class RemoteProfileRepository implements ProfileRepository {
         return const Left(ProfileFailure('Token inválido'));
       }
       final result = await httpHelper.get('/users/$userId');
-      return result.fold(
+      return await result.fold(
         (error) => Left(ProfileFailure(error.message ?? 'Error obteniendo perfil')),
         (response) {
           final data = response.data;
@@ -121,7 +121,7 @@ class RemoteProfileRepository implements ProfileRepository {
         };
       }
       final result = await httpHelper.patch('/users/me', data: body);
-      return result.fold(
+      return await result.fold(
         (error) =>
             Left(ProfileFailure(error.message ?? 'Error actualizando perfil')),
         (response) {
