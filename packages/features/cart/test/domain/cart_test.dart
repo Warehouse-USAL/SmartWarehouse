@@ -34,4 +34,57 @@ void main() {
       expect(cart.total, isNull);
     });
   });
+
+  group('Cart.hasInvalidQuantities', () {
+    Cart cartWith({required int quantity, required int available}) {
+      final product = Product(
+        id: 'p1',
+        sku: 'SKU-p1',
+        name: 'Producto p1',
+        category: ProductCategory.otros,
+        price: const Money(amount: 1000, currency: 'ARS'),
+        stock: Stock(available: available, reserved: 0),
+        orderConstraints: OrderConstraints.defaults,
+      );
+      return Cart(items: [CartItem(product: product, quantity: quantity)]);
+    }
+
+    test('carrito vacío no tiene cantidades inválidas', () {
+      expect(Cart.empty().hasInvalidQuantities, isFalse);
+    });
+
+    test('cantidad 0 es inválida', () {
+      expect(cartWith(quantity: 0, available: 10).hasInvalidQuantities, isTrue);
+    });
+
+    test('cantidad negativa es inválida', () {
+      expect(cartWith(quantity: -1, available: 10).hasInvalidQuantities, isTrue);
+    });
+
+    test('cantidad igual al stock disponible es válida (borde)', () {
+      expect(cartWith(quantity: 10, available: 10).hasInvalidQuantities, isFalse);
+    });
+
+    test('cantidad mayor al stock disponible es inválida (sobreventa)', () {
+      expect(cartWith(quantity: 11, available: 10).hasInvalidQuantities, isTrue);
+    });
+
+    test('un solo item inválido alcanza para invalidar el carrito', () {
+      final ok = _product('a', cents: 1000, currency: 'ARS');
+      final sinStock = Product(
+        id: 'b',
+        sku: 'SKU-b',
+        name: 'Producto b',
+        category: ProductCategory.otros,
+        price: const Money(amount: 500, currency: 'ARS'),
+        stock: const Stock(available: 1, reserved: 0),
+        orderConstraints: OrderConstraints.defaults,
+      );
+      final cart = Cart(items: [
+        CartItem(product: ok, quantity: 1),
+        CartItem(product: sinStock, quantity: 2),
+      ]);
+      expect(cart.hasInvalidQuantities, isTrue);
+    });
+  });
 }

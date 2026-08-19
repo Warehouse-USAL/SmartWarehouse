@@ -31,6 +31,12 @@ class Cart {
     return sum;
   }
 
+  /// True si hay items con cantidad inválida: cero/negativa o mayor al stock
+  /// disponible. Un carrito así no puede confirmarse (sería sobreventa).
+  bool get hasInvalidQuantities => items.any(
+        (i) => i.quantity <= 0 || i.quantity > i.product.stock.available,
+      );
+
   bool get isEmpty => items.isEmpty;
 
   bool get isNotEmpty => items.isNotEmpty;
