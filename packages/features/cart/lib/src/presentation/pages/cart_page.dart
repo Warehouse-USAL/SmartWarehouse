@@ -84,6 +84,14 @@ class CartPage extends StatelessWidget {
     final result =
         await ProfileFeatureBuilder.collectCheckoutAddress(context);
     if (result == null) return;
+    // El future del sheet se completa cuando arranca el pop, no cuando termina
+    // la animación de salida. Si el submit resuelve antes de que el sheet
+    // termine de salir, el success reemplaza el stack de navegación con la
+    // transición todavía en curso y el Navigator lanza el assert
+    // `_debugLocked && !_debugUpdatingPage` (la app nunca llega a la pantalla
+    // de éxito). Esperamos a que el sheet cierre del todo antes de enviar.
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+    if (!context.mounted) return;
     await createOrderCubit.submit(
       items: _toOrderItems(cart),
       destination: OrderDestination(

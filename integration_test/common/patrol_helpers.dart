@@ -14,11 +14,13 @@ import 'config.dart';
 Future<void> bootApp(PatrolIntegrationTester $) async {
   const splashMs = int.fromEnvironment('SPLASH_MS', defaultValue: 3000);
   await app.main();
-  await $.pumpAndSettle();
+  // pumpAndTrySettle: el WS de notificaciones puede dejar timers vivos y
+  // pumpAndSettle plano hace timeout de forma flaky.
+  await $.pumpAndTrySettle();
   if (splashMs > 0) {
     await Future<void>.delayed(const Duration(milliseconds: splashMs + 500));
   }
-  await $.pumpAndSettle();
+  await $.pumpAndTrySettle();
 }
 
 /// True si estamos parados en el login (sesión no persistida).
@@ -58,9 +60,9 @@ Future<void> logout(PatrolIntegrationTester $) async {
 /// Descarta snackbars pendientes (las notificaciones por WebSocket pueden
 /// tapar botones durante los taps).
 Future<void> dismissSnackbars(PatrolIntegrationTester $) async {
-  final messengers = find.byType(ScaffoldMessenger).evaluate();
-  for (final e in messengers) {
-    ScaffoldMessenger.of(e).clearSnackBars();
+  final messengers = $.tester.stateList<ScaffoldMessengerState>(find.byType(ScaffoldMessenger));
+  for (final state in messengers) {
+    state.clearSnackBars();
   }
   await $.pump();
 }

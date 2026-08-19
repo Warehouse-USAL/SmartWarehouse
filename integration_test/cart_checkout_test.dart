@@ -37,7 +37,7 @@ void main() {
     await $(E2eKeys.navCartTab).tap();
     await $.pumpAndSettle();
 
-    await $(E2eKeys.cartItem(productId)).waitUntilVisible();
+    await $(E2eKeys.cartItemSubtotal(productId)).waitUntilVisible();
     final lineCents =
         parsePriceToCents(textOf($, E2eKeys.cartItemSubtotal(productId)));
     expect(lineCents, detailCents * 2,
@@ -109,7 +109,7 @@ void main() {
     await $(E2eKeys.navCartTab).tap();
     await $.pumpAndSettle();
 
-    await $(E2eKeys.cartItem(productId)).waitUntilVisible();
+    await $(E2eKeys.cartItemSubtotal(productId)).waitUntilVisible();
     await $('Quitar').tap();
     await $.pumpAndSettle();
 
