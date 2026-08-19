@@ -46,17 +46,23 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          # Pineado a proposito: `channel: stable` flotante hace que una release
+          # del SDK con lints nuevos ponga CI en rojo en PRs que no tocaron nada
+          # relacionado. Paso el 2026-08-12 con unawaited_return_in_try_block.
           channel: stable
           cache: true
 
       - name: Activate melos
-        run: dart pub global activate melos
+        run: dart pub global activate melos 6.3.3
 
       - name: Bootstrap packages
         run: melos bootstrap
 
       - name: Run flutter analyze
         run: melos exec -- flutter analyze
+
+      - name: Analyze root package (tool/ and test/tool/)
+        run: flutter analyze
 
   test:
     name: Tests
@@ -67,17 +73,55 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          # Pineado a proposito: `channel: stable` flotante hace que una release
+          # del SDK con lints nuevos ponga CI en rojo en PRs que no tocaron nada
+          # relacionado. Paso el 2026-08-12 con unawaited_return_in_try_block.
           channel: stable
           cache: true
 
       - name: Activate melos
-        run: dart pub global activate melos
+        run: dart pub global activate melos 6.3.3
 
       - name: Bootstrap packages
         run: melos bootstrap
 
       - name: Run tests
         run: melos run test
+
+  coverage:
+    name: Coverage gate
+    needs: [skip-drafts, validate-branch]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          # Pineado a proposito: `channel: stable` flotante hace que una release
+          # del SDK con lints nuevos ponga CI en rojo en PRs que no tocaron nada
+          # relacionado. Paso el 2026-08-12 con unawaited_return_in_try_block.
+          channel: stable
+          cache: true
+
+      - name: Activate melos
+        run: dart pub global activate melos 6.3.3
+
+      - name: Bootstrap packages
+        run: melos bootstrap
+
+      - name: Run coverage tooling tests
+        run: flutter test test/tool
+
+      - name: Run tests with coverage and check thresholds
+        run: melos run test:coverage
+
+      - name: Upload lcov reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: packages/**/coverage/lcov.info
+          if-no-files-found: warn
 
   build-web:
     name: Build Web (sanity check)
@@ -88,11 +132,14 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          # Pineado a proposito: `channel: stable` flotante hace que una release
+          # del SDK con lints nuevos ponga CI en rojo en PRs que no tocaron nada
+          # relacionado. Paso el 2026-08-12 con unawaited_return_in_try_block.
           channel: stable
           cache: true
 
       - name: Activate melos
-        run: dart pub global activate melos
+        run: dart pub global activate melos 6.3.3
 
       - name: Bootstrap packages
         run: melos bootstrap
@@ -109,6 +156,9 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          # Pineado a proposito: `channel: stable` flotante hace que una release
+          # del SDK con lints nuevos ponga CI en rojo en PRs que no tocaron nada
+          # relacionado. Paso el 2026-08-12 con unawaited_return_in_try_block.
           channel: stable
           cache: true
 
@@ -118,7 +168,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Activate melos
-        run: dart pub global activate melos
+        run: dart pub global activate melos 6.3.3
 
       - name: Bootstrap packages
         run: melos bootstrap

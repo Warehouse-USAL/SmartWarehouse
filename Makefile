@@ -12,17 +12,17 @@ endif
 .DEFAULT_GOAL := help
 
 setup: ## Install dependencies across all packages
-	dart pub global activate melos
+	dart pub global activate melos 6.3.3
 	melos bootstrap
 
 generate: ## Run code generation across all packages that use build_runner
-	melos run generate
+	melos run --no-select generate
 
 analyze: ## Run static analysis across all packages
 	melos exec -- flutter analyze
 
 test: ## Run tests across all packages
-	melos run test
+	melos run --no-select test
 
 clean: ## Clean build artifacts across all packages
 	melos exec -- flutter clean
