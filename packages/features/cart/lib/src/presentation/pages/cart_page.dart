@@ -1,3 +1,4 @@
+import 'package:cart/src/data/mappers/cart_order_mapper.dart';
 import 'package:cart/src/presentation/widgets/cart_item_tile.dart';
 import 'package:cart/src/presentation/widgets/create_order_confirmation_dialog.dart';
 import 'package:core/core.dart';
@@ -65,11 +66,7 @@ class CartPage extends StatelessWidget {
       );
       return;
     }
-    final invalid = cart.items.any((i) {
-      final available = i.product.stock.available;
-      return i.quantity <= 0 || i.quantity > available;
-    });
-    if (invalid) {
+    if (cart.hasInvalidQuantities) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Hay items con cantidad inválida o sin stock')),
       );
@@ -93,7 +90,7 @@ class CartPage extends StatelessWidget {
     await Future<void>.delayed(const Duration(milliseconds: 350));
     if (!context.mounted) return;
     await createOrderCubit.submit(
-      items: _toOrderItems(cart),
+      items: cart.toOrderItems(),
       destination: OrderDestination(
         area: result.destinationArea,
         street: result.address.street,
@@ -130,16 +127,6 @@ class CartPage extends StatelessWidget {
     }
   }
 
-  List<OrderItem> _toOrderItems(Cart cart) {
-    return cart.items
-        .map((i) => OrderItem(
-              productId: i.product.id,
-              productName: i.product.name,
-              unitPrice: i.product.price,
-              quantity: i.quantity,
-            ))
-        .toList();
-  }
 
   void _goCatalog(BuildContext context) {
     Injector.i.resolve<NavigationHelper>().pushNamed(context, routeName: Routes.catalog);
