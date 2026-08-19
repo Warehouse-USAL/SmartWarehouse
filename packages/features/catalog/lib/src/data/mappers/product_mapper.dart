@@ -17,6 +17,12 @@ import 'package:catalog/src/domain/entities/stock.dart';
 
 extension ProductDtoMapper on ProductDto {
   Product toEntity() {
+    // Un producto sin precio es un error de contrato: mejor cortar acá (la UI
+    // muestra error con "Reintentar") que mostrar $0 y dejarlo comprar gratis.
+    final priceDto = price;
+    if (priceDto == null) {
+      throw FormatException('Producto $id sin price');
+    }
     final imgs = images.map((i) => i.toEntity()).toList(growable: false);
     return Product(
       id: id,
@@ -24,7 +30,7 @@ extension ProductDtoMapper on ProductDto {
       name: name,
       description: description,
       category: ProductCategory.tryParse(category) ?? ProductCategory.otros,
-      price: price?.toEntity() ?? Money.zero('ARS'),
+      price: priceDto.toEntity(),
       stock: stock?.toEntity() ?? Stock.empty,
       orderConstraints:
           orderConstraints?.toEntity() ?? OrderConstraints.defaults,

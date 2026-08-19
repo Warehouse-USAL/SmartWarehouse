@@ -62,6 +62,7 @@ class CartItemTile extends StatelessWidget {
                       children: [
                         Text(
                           item.subtotal.formatted,
+                          key: E2eKeys.cartItemSubtotal(p.id),
                           style: SwText.display(size: 16),
                         ),
                         GestureDetector(

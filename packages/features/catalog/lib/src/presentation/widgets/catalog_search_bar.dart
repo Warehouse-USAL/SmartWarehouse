@@ -33,6 +33,7 @@ class CatalogSearchBar extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
+                    key: E2eKeys.catalogSearchField,
                     controller: controller,
                     onChanged: onChanged,
                     onSubmitted: onSubmit,

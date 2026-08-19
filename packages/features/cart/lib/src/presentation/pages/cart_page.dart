@@ -54,6 +54,17 @@ class CartPage extends StatelessWidget {
   }
 
   Future<void> _onCreateOrderPressed(BuildContext context, Cart cart) async {
+    if (cart.hasMixedCurrencies) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Hay productos con monedas distintas en el pedido. '
+            'Quitá los que no correspondan para continuar.',
+          ),
+        ),
+      );
+      return;
+    }
     final invalid = cart.items.any((i) {
       final available = i.product.stock.available;
       return i.quantity <= 0 || i.quantity > available;
@@ -73,6 +84,14 @@ class CartPage extends StatelessWidget {
     final result =
         await ProfileFeatureBuilder.collectCheckoutAddress(context);
     if (result == null) return;
+    // El future del sheet se completa cuando arranca el pop, no cuando termina
+    // la animación de salida. Si el submit resuelve antes de que el sheet
+    // termine de salir, el success reemplaza el stack de navegación con la
+    // transición todavía en curso y el Navigator lanza el assert
+    // `_debugLocked && !_debugUpdatingPage` (la app nunca llega a la pantalla
+    // de éxito). Esperamos a que el sheet cierre del todo antes de enviar.
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+    if (!context.mounted) return;
     await createOrderCubit.submit(
       items: _toOrderItems(cart),
       destination: OrderDestination(
@@ -203,6 +222,7 @@ class _CartBody extends StatelessWidget {
                             : null,
                       ),
                       child: CartItemTile(
+                        key: E2eKeys.cartItem(item.product.id),
                         item: item,
                         onQuantityChanged: (q) => onQty(item.product.id, q),
                         onRemove: () => onRemove(item.product.id),
@@ -229,7 +249,7 @@ class _CartBody extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('Total', style: SwText.body(size: 15, weight: FontWeight.w700)),
-                          Text(total.formatted, style: SwText.display(size: 22)),
+                          Text(total.formatted, key: E2eKeys.cartTotal, style: SwText.display(size: 22)),
                         ],
                       ),
                     ),
@@ -298,6 +318,7 @@ class _Footer extends StatelessWidget {
       child: Column(
         children: [
           SwButton(
+            key: E2eKeys.cartCheckoutButton,
             label: label,
             onPressed: onConfirm,
           ),

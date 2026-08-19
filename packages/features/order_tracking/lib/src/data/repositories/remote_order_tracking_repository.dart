@@ -74,7 +74,7 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
   Future<Either<OrderTrackingFailure, Order>> getOrderById(String id) async {
     try {
       final result = await httpHelper.get('/orders/$id');
-      return result.fold(
+      return await result.fold(
         (error) => Left(OrderTrackingFailure(_mapError(error))),
         (response) {
           final data = response.data;

@@ -51,7 +51,9 @@ class OrderCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  order.total.formatted,
+                  // Total en cero = todavía no hidratado (o no confiable):
+                  // mejor "—" que un $0 que parece un precio real.
+                  order.total.amount > 0 ? order.total.formatted : '—',
                   style: SwText.body(size: 14, weight: FontWeight.w600),
                 ),
                 const SizedBox(height: 2),
