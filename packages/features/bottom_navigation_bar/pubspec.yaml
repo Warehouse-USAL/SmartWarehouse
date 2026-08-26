@@ -31,5 +31,9 @@ dev_dependencies:
   freezed: ^3.2.5
   mocktail: ^1.0.4
   bloc_test: ^10.0.0
+  # Solo por `aProduct()`: el badge se testea con un carrito real, y `Product`
+  # vive en `catalog`, que `cart` no reexporta.
+  test_support:
+    path: ../../test_support
 
 flutter:

@@ -64,7 +64,10 @@ packages:
     min: 0
   bottom_navigation_bar:
     path: packages/features/bottom_navigation_bar
-    min: 2
+    # Medido en 80.4% (37/46) en #168, contra un target de 60%. Lo que queda
+    # afuera es el mapeo opcion->ruta de Beamer en el feature builder, que
+    # cubre la suite Patrol navegando tabs.
+    min: 79
   design_system:
     path: packages/design_system
     min: 0
