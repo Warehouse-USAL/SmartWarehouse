@@ -633,11 +633,23 @@ Y su contrapartida, que es la que se pasó por alto la primera vez:
 > **`test_support` no depende de packages de features.** Un helper que necesita una
 > feature va a `<feature>_test_builders`, nunca a `test_support`.
 
-Motivo: `test_support` dependía de `catalog`, y `commons` tiene a `test_support`
-como dev-dependency. El resultado era que el binario de tests de `commons`
-compilaba `catalog`, `bottom_navigation_bar` y `design_system` por un solo archivo
-que quería `MockHttpHelper`. De los cinco consumidores de `test_support`, cuatro no
-usaban un solo builder.
+Motivo: `test_support` declaraba `catalog` —una feature— entre sus dependencias, y de
+sus cinco consumidores, cuatro no usaban un solo builder. Un package de soporte que
+arrastra features hacia que cada consumidor cargara con el grafo entero por un archivo
+que solo quería `MockHttpHelper`, y creaba un ciclo de dev-dependency
+`commons →(dev) test_support → catalog → … → commons`.
+
+> **Lo que esto NO arregla.** Al separarlos se midió si `commons` dejaba de resolver
+> `catalog`, `design_system` y `bottom_navigation_bar`. **No lo hace**, y la causa es
+> anterior e independiente: `commons` depende de `core` (dependencia de producción), y
+> `core` depende de `auth`, `login`, `bottom_navigation_bar`, `catalog`, `cart`,
+> `orders`, `order_tracking` y `token_repository`. Como `core` a su vez depende de
+> `commons`, **`core ↔ commons` es un ciclo de dependencias de producción**. La arista
+> `test_support → catalog` era redundante sobre un grafo que ya estaba completo.
+>
+> Sacarla igual vale: la capa de soporte de tests queda con un grafo honesto y la regla
+> es verificable. Pero adelgazar los binarios de test exige romper `core → features`,
+> que es un problema aparte y mucho mayor.
 
 La regla está verificada por `test/tool/test_support_deps_test.dart`, que corre en
 CI dentro del job `Coverage gate`. No es una convención documentada: si alguien
@@ -752,17 +764,48 @@ Esperado: PASS, y el reporte del gate sin ningún package por debajo de su floor
 
 Los floors **no** deberían moverse: este plan no toca una sola línea de `lib/` de ningún package medido. Si algún porcentaje cambió, es una señal de que algo se movió de lugar sin querer — investigar antes de seguir, no re-ratchetear.
 
-- [ ] **Step 4: Confirmar que el binario de tests de `commons` adelgazó**
+- [ ] **Step 4: Confirmar el invariante que este cambio sí garantiza**
 
-Es el objetivo de todo el issue, así que conviene verificarlo y no asumirlo.
+> **Corrección al plan (2026-08-26, tras ejecutar la Task 3).** Este step decía antes
+> que había que verificar que `commons` dejaba de resolver `catalog`, `design_system` y
+> `bottom_navigation_bar`, y esperaba `OK`. **Eso es falso y se midió.** El motivo por el
+> que `commons` arrastra features no era `test_support`:
+>
+> ```
+> packages/commons/pubspec.yaml:10   commons -> core          (dependencia de produccion)
+> packages/core/pubspec.yaml         core    -> auth, login, bottom_navigation_bar,
+>                                               catalog, cart, orders, order_tracking,
+>                                               token_repository
+> ```
+>
+> `commons` depende de `core`, y `core` depende de casi todas las features, así que
+> `commons` las arrastra por su grafo de producción, independientemente de
+> `test_support`. Y como `core` a su vez depende de `commons`, **`core ↔ commons` es un
+> ciclo de dependencias de producción real.** La arista `test_support → catalog` era una
+> arista redundante sobre un grafo que ya estaba completo.
+>
+> Sacarla sigue valiendo la pena —`test_support` ya no declara una feature, el ciclo de
+> dev-dependency desapareció, la regla la verifica CI y los builders de `Order` para #163
+> y #164 tienen dónde vivir— pero **no** adelgaza ningún binario de tests. Eso necesita
+> romper `core → features`, que es un problema aparte y mucho más grande.
+
+Lo que sí garantiza este cambio, y es lo que hay que verificar:
 
 ```bash
-cd /home/hechicero/Documents/Prog/flutter/SmartWarehouse/packages/commons
-flutter pub deps --style=compact --no-dev 2>/dev/null | grep -E "catalog|design_system|bottom_navigation_bar" \
-  && echo "PROBLEMA: todavia arrastra features" \
-  || echo "OK: commons ya no ve catalog/design_system/bottom_navigation_bar"
+cd /home/hechicero/Documents/Prog/flutter/SmartWarehouse
+sed -n '/^dependencies:/,/^dev_dependencies:/p' packages/test_support/pubspec.yaml
 ```
-Esperado: `OK: commons ya no ve catalog/design_system/bottom_navigation_bar`.
+Esperado: exactamente `commons`, `flutter`, `flutter_test` y `mocktail`. Ninguna feature.
+
+Y que el guard test lo mantenga así:
+
+```bash
+flutter test test/tool/test_support_deps_test.dart
+```
+Esperado: PASS, 2 tests.
+
+Dejar constancia del hallazgo de `core ↔ commons` en un issue nuevo, con los números de
+arriba. No se arregla acá.
 
 - [ ] **Step 5: Abrir el PR**
 
@@ -775,10 +818,35 @@ gh pr create --base develop \
   --title "refactor(test): partir test_support para que no dependa de las features" \
   --body "Cierra #184.
 
-\`test_support\` dependia de \`catalog\`, y \`commons\` tiene a \`test_support\` como
-dev-dependency: el binario de tests de \`commons\` compilaba catalog,
-design_system y bottom_navigation_bar por un archivo que solo queria
-\`MockHttpHelper\`.
+\`test_support\` dependia de \`catalog\`, una feature, aunque cuatro de sus cinco
+consumidores no usaban un solo builder.
+
+## Correccion sobre la justificacion original
+
+El issue decia que por esa arista el binario de tests de \`commons\` compilaba
+catalog, design_system y bottom_navigation_bar. **Se midio y es falso.** El
+motivo real es otro y es anterior:
+
+\`\`\`
+packages/commons/pubspec.yaml:10   commons -> core   (dependencia de produccion)
+packages/core/pubspec.yaml         core    -> auth, login, bottom_navigation_bar,
+                                              catalog, cart, orders,
+                                              order_tracking, token_repository
+\`\`\`
+
+\`commons\` arrastra casi todas las features por \`core\`, independientemente de
+\`test_support\`. Y \`core\` depende de \`commons\`, con lo cual \`core <-> commons\` es
+un ciclo de dependencias de produccion. La arista \`test_support -> catalog\` era
+redundante sobre un grafo ya completo.
+
+**Este PR no adelgaza ningun binario de tests.** Lo que si hace:
+
+- \`test_support\` ya no declara una feature entre sus dependencias
+- desaparece el ciclo de dev-dependency \`commons ->dev test_support -> catalog -> ... -> commons\`
+- la regla pasa de un comentario a un test que corre en CI
+- los builders de \`Order\` que van a compartir #163 y #164 tienen donde vivir
+
+El \`core <-> commons\` queda registrado en un issue aparte.
 
 De los 16 archivos que importaban \`test_support\`, 10 usaban solo mocks e
 injector y 6 (todos de \`cart\`) usaban solo builders. Ninguno usaba las dos
@@ -801,7 +869,7 @@ compartir #163 y #164.
 - \`melos exec -- flutter analyze\` y \`flutter analyze\` limpios
 - \`flutter test test/tool\` PASS
 - \`melos run test:coverage\` PASS, sin cambios en los floors
-- \`commons\` ya no resuelve catalog/design_system/bottom_navigation_bar"
+- \`test_support\` declara exactamente commons, flutter, flutter_test y mocktail"
 ```
 
 ---
