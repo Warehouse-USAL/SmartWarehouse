@@ -119,10 +119,21 @@ Y su contrapartida, que es la que se pasó por alto la primera vez:
 > **`test_support` no depende de packages de features.** Un helper que necesita una
 > feature va a `<feature>_test_builders`, nunca a `test_support`.
 
-Motivo: `test_support` declaraba `catalog` —una feature— entre sus dependencias, y de
-sus cinco consumidores, cuatro no usaban un solo builder. Un package de soporte que
-arrastra features hacia que cada consumidor cargara con el grafo entero por un archivo
-que solo quería `MockHttpHelper`, y creaba un ciclo de dev-dependency
+Y cuándo ese `<feature>_test_builders` es un package nuevo en vez de una extensión
+de uno existente:
+
+> Un `<feature>_test_builders` nuevo se crea **solo si** los builders que
+> alojaría necesitan una feature de la que ningún package de builders existente ya
+> depende. Si ya depende de ella, se extiende ese package. Cada package nuevo
+> arrastra un `pubspec.lock` de ~1150 líneas trackeado, un `pubspec_overrides.yaml`
+> y un slot de `melos bootstrap`: cómodo con dos o tres, pesado con ocho. Por
+> ejemplo, `orders_test_builders` sirve tanto a #163 (`orders`) como a #164
+> (`order_tracking`), porque `order_tracking` ya depende de `orders`.
+
+Motivo: `test_support` declaraba una feature (`catalog`) entre sus dependencias, y de
+sus cinco consumidores, cuatro no usaban un solo builder. Un package de soporte no
+debería arrastrar una feature completa por un archivo que solo quería
+`MockHttpHelper`, y la arista creaba un ciclo de dev-dependency
 `commons →(dev) test_support → catalog → … → commons`.
 
 > **Lo que esto NO arregla.** Al separarlos se midió si `commons` dejaba de resolver

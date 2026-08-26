@@ -846,7 +846,7 @@ redundante sobre un grafo ya completo.
 - la regla pasa de un comentario a un test que corre en CI
 - los builders de \`Order\` que van a compartir #163 y #164 tienen donde vivir
 
-El \`core <-> commons\` queda registrado en un issue aparte.
+El \`core <-> commons\` queda para registrar en un issue aparte.
 
 De los 16 archivos que importaban \`test_support\`, 10 usaban solo mocks e
 injector y 6 (todos de \`cart\`) usaban solo builders. Ninguno usaba las dos

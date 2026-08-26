@@ -45,7 +45,10 @@ void main() {
     });
 
     test('acepta price y stock explicitos', () {
-      final product = aProduct(price: aMoney(amount: 5), stock: aStock(available: 1));
+      final product = aProduct(
+        price: aMoney(amount: 5),
+        stock: aStock(available: 1),
+      );
 
       expect(product.price.amount, 5);
       expect(product.stock.available, 1);
