@@ -2,7 +2,7 @@ import 'package:cart/src/domain/entities/cart_item.dart';
 import 'package:cart/src/presentation/widgets/cart_item_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_support/test_support.dart';
+import 'package:catalog_test_builders/catalog_test_builders.dart';
 
 void main() {
   Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));

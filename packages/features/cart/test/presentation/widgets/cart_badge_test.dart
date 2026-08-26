@@ -4,7 +4,7 @@ import 'package:cart/src/presentation/bloc/cart_cubit.dart';
 import 'package:cart/src/presentation/widgets/cart_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_support/test_support.dart';
+import 'package:catalog_test_builders/catalog_test_builders.dart';
 
 void main() {
   testWidgets('renders only the child when the cart is empty', (tester) async {
