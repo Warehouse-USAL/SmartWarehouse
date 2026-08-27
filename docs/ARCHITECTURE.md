@@ -553,7 +553,7 @@ En la UI:
 
 ```dart
 return switch (state) {
-  CatalogLoading() => const CircularProgressIndicator(),
+  CatalogLoading() => const SwLoadingSpinner(),
   CatalogError(:final message) => ErrorView(message: message),
   CatalogReady() => ProductsGrid(state: state),
 };

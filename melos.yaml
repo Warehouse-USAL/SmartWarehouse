@@ -17,3 +17,8 @@ scripts:
     exec: dart run build_runner build --delete-conflicting-outputs
     packageFilters:
       dependsOn: build_runner
+  test:
+    exec: |
+      if [ -d "test" ]; then
+        flutter test --no-pub
+      fi

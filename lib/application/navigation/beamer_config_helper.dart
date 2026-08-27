@@ -1,10 +1,9 @@
 import 'package:beamer/beamer.dart';
 import 'package:core/core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:profile/profile.dart';
 import 'package:smart_warehouse/application/navigation/guards/auth/authenticated_guard.dart';
 import 'package:smart_warehouse/application/navigation/guards/auth/not_authenticated_guard.dart';
-import 'package:upgrader/upgrader.dart';
 
 class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
   @override
@@ -32,38 +31,33 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
 
   Map<Pattern, dynamic Function(BuildContext, BeamState, Object?)> _buildRoutes() {
     return {
-      Routes.login: (_, __, ___) {
-        return _beamerPage(
-          title: 'Login',
-          key: 'login',
-          child: LoginFeatureBuilder.buildPage(
-            onLoginSuccess: (context, tokens) async {
-              await AuthFeatureBuilder.login(
-                token: tokens.accessToken,
-                refreshToken: tokens.refreshToken,
-              );
-            },
-          ),
-        );
-      },
-      Routes.profile: (_, __, ___) {
-        return _beamerPage(
-          title: 'Profile',
-          key: 'profile',
-          child: const Scaffold(
-            body: Center(
-              child: Text('Profile - TODO: Implement profile feature'),
+      Routes.login: (_, __, ___) => _beamerPage(
+            title: 'Login',
+            key: 'login',
+            child: LoginFeatureBuilder.buildPage(
+              onLoginSuccess: (context, tokens) async {
+                await AuthFeatureBuilder.login(
+                  token: tokens.accessToken,
+                  refreshToken: tokens.refreshToken,
+                );
+              },
             ),
           ),
-        );
-      },
-      Routes.catalog: (_, __, ___) {
-        return _beamerPage(
-          title: 'Catálogo',
-          key: 'catalog',
-          child: CatalogFeatureBuilder.buildCatalogPage(),
-        );
-      },
+      Routes.profile: (_, __, ___) => _beamerPage(
+            title: 'Perfil',
+            key: 'profile',
+            child: ProfileFeatureBuilder.buildProfilePage(),
+          ),
+      Routes.profileEditAddress: (_, __, ___) => _beamerPage(
+            title: 'Dirección',
+            key: 'profile-edit-address',
+            child: ProfileFeatureBuilder.buildEditAddressPage(),
+          ),
+      Routes.catalog: (_, __, ___) => _beamerPage(
+            title: 'Catálogo',
+            key: 'catalog',
+            child: CatalogFeatureBuilder.buildCatalogPage(),
+          ),
       Routes.catalogDetailPattern: (_, state, __) {
         final id = state.pathParameters['id'] ?? '';
         return _beamerPage(
@@ -75,13 +69,11 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
           ),
         );
       },
-      Routes.cart: (_, __, ___) {
-        return _beamerPage(
-          title: 'Carrito',
-          key: 'cart',
-          child: CartFeatureBuilder.buildCartPage(),
-        );
-      },
+      Routes.cart: (_, __, ___) => _beamerPage(
+            title: 'Carrito',
+            key: 'cart',
+            child: CartFeatureBuilder.buildCartPage(),
+          ),
       Routes.orderSuccessPattern: (_, state, __) {
         final id = state.pathParameters['id'] ?? '';
         return _beamerPage(
@@ -90,6 +82,24 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
           child: OrdersFeatureBuilder.buildOrderSuccessPage(id),
         );
       },
+      Routes.orders: (_, __, ___) => _beamerPage(
+            title: 'Mis órdenes',
+            key: 'orders',
+            child: OrderTrackingFeatureBuilder.buildOrderListPage(),
+          ),
+      Routes.orderDetailPattern: (_, state, __) {
+        final id = state.pathParameters['id'] ?? '';
+        return _beamerPage(
+          title: 'Detalle de orden',
+          key: 'order-detail-$id',
+          child: OrderTrackingFeatureBuilder.buildOrderDetailPage(id),
+        );
+      },
+      Routes.notifications: (_, __, ___) => _beamerPage(
+            title: 'Notificaciones',
+            key: 'notifications',
+            child: OrderTrackingFeatureBuilder.buildNotificationsPage(),
+          ),
     };
   }
 
@@ -98,18 +108,18 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
     required String key,
     required Widget child,
   }) {
+    // NOTA: antes había un UpgradeAlert envolviendo cada page acá. Lo
+    // sacamos porque colisiona con NoAnimationTransitionDelegate de Beamer:
+    // el DialogRoute<bool> del upgrade alert dispara _flushHistoryUpdates
+    // mientras el navigator está en medio de _updatePages, crasheando con
+    // 'Failed assertion: _debugLocked && !_debugUpdatingPage'.
+    // El upgrade check, si se reactivara, debería ir al root de la app
+    // (en MaterialApp.builder), NO envolviendo cada page.
     return BeamPage(
       title: title,
       key: ValueKey(key),
       name: key,
-      child: UpgradeAlert(
-        upgrader: Upgrader(
-          minAppVersion: '1.0.0',
-          debugLogging: kDebugMode,
-          countryCode: 'US',
-        ),
-        child: child,
-      ),
+      child: child,
     );
   }
 }

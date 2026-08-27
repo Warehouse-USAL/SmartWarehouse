@@ -22,21 +22,27 @@ class BottomNavigationComponent extends StatelessWidget {
         final tabs = <SwNavTab>[
           const SwNavTab(id: 'products', label: 'Catálogo', icon: Icons.inventory_2_outlined),
           SwNavTab(id: 'cart', label: 'Carrito', icon: Icons.shopping_cart_outlined, badgeCount: cart.itemCount),
-        const SwNavTab(id: 'profile', label: 'Profile', icon: Icons.person_outline),
+          const SwNavTab(id: 'orders', label: 'Órdenes', icon: Icons.local_shipping_outlined),
+          const SwNavTab(id: 'profile', label: 'Perfil', icon: Icons.person_outline),
         ];
-        final activeId = selectedTab.when(
-          profile: () => 'home',
+
+        final activeId = selectedTab.maybeWhen(
           products: () => 'products',
           cart: () => 'cart',
+          orders: () => 'orders',
+          profile: () => 'profile',
+          orElse: () => 'products',
         );
+
         return SwBottomNav(
           tabs: tabs,
           activeId: activeId,
           onTabSelected: (id) {
             final option = switch (id) {
-              'profile' => const NavigationBarOption.profile(),
               'products' => const NavigationBarOption.products(),
               'cart' => const NavigationBarOption.cart(),
+              'orders' => const NavigationBarOption.orders(),
+              'profile' => const NavigationBarOption.profile(),
               _ => const NavigationBarOption.products(),
             };
             onItemPressed(context, option);

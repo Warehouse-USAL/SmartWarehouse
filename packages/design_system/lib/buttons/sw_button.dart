@@ -1,3 +1,4 @@
+import 'package:design_system/indicators/sw_loading_spinner.dart';
 import 'package:design_system/theme/sw_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -59,10 +60,10 @@ class SwButton extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (isLoading)
-                  const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: SwColors.text),
+                  const SwLoadingSpinner(
+                    size: 18,
+                    strokeWidth: 2,
+                    color: SwColors.text,
                   )
                 else ...[
                   if (icon != null) ...[

@@ -1,4 +1,4 @@
-import 'package:catalog/src/domain/entities/category.dart';
+import 'package:catalog/src/domain/entities/product_category.dart';
 import 'package:catalog/src/domain/repositories/catalog_repository.dart';
 import 'package:catalog/src/presentation/bloc/catalog_state.dart';
 import 'package:flutter/widgets.dart';
@@ -21,21 +21,18 @@ class CatalogCubit extends Cubit<CatalogState> {
   int _requestSeq = 0;
 
   String _query = '';
-  String? _categoryId;
-  List<Category> _categoriesCache = const [];
+  ProductCategory? _category;
+  List<ProductCategory> _categoriesCache = const [];
 
   /// Cache de categorías. Sobrevive a re-loads para que la barra de filtros
   /// siga visible aunque `state` esté en `CatalogLoading`.
-  List<Category> get categories => _categoriesCache;
-  String? get selectedCategoryId => _categoryId;
+  List<ProductCategory> get categories => _categoriesCache;
+  ProductCategory? get selectedCategory => _category;
 
   Future<void> load() async {
     final seq = ++_requestSeq;
     emit(const CatalogLoading());
 
-    // El back todavía no expone /categories; el repo devuelve una lista
-    // mockeada con los slugs del seed. Cuando exista, esto se queda igual y
-    // solo cambia el repo.
     if (_categoriesCache.isEmpty) {
       final categoriesResult = await _repository.getCategories();
       categoriesResult.fold((_) {}, (c) => _categoriesCache = c);
@@ -45,7 +42,7 @@ class CatalogCubit extends Cubit<CatalogState> {
       page: 1,
       pageSize: _pageSize,
       search: _query.isEmpty ? null : _query,
-      categoryId: _categoryId,
+      category: _category,
     );
     if (seq != _requestSeq) return;
 
@@ -55,7 +52,7 @@ class CatalogCubit extends Cubit<CatalogState> {
         products: page.items,
         categories: _categoriesCache,
         query: _query,
-        selectedCategoryId: _categoryId,
+        selectedCategory: _category,
         page: page.page,
         pageSize: page.pageSize,
         total: page.total,
@@ -76,7 +73,7 @@ class CatalogCubit extends Cubit<CatalogState> {
       page: s.page + 1,
       pageSize: s.pageSize,
       search: _query.isEmpty ? null : _query,
-      categoryId: _categoryId,
+      category: _category,
     );
     if (seq != _requestSeq) return;
 
@@ -110,8 +107,8 @@ class CatalogCubit extends Cubit<CatalogState> {
     await load();
   }
 
-  void selectCategory(String? id) {
-    _categoryId = id;
+  void selectCategory(ProductCategory? category) {
+    _category = category;
     load();
   }
 

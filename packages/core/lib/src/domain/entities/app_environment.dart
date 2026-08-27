@@ -33,11 +33,18 @@ class EnvironmentConfig {
   });
 
   factory EnvironmentConfig.fromEnvVariables() {
+    const dataSourceEnv = String.fromEnvironment('data_source');
+    const appDataSourceEnv = String.fromEnvironment('APP_DATA_SOURCE');
+
+    final dataSource = dataSourceEnv.isNotEmpty
+        ? AppDataSource.fromString(dataSourceEnv)
+        : appDataSourceEnv.isNotEmpty
+            ? AppDataSource.fromString(appDataSourceEnv)
+            : const AppDataSource.remote();
+
     return EnvironmentConfig(
       environment: AppEnvironment.fromString(appFlavor),
-      dataSource: AppDataSource.fromString(
-        const String.fromEnvironment('data_source', defaultValue: 'remote'),
-      ),
+      dataSource: dataSource,
     );
   }
 

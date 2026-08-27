@@ -5,7 +5,6 @@ import 'package:catalog/src/data/dtos/product_dto.dart';
 import 'package:catalog/src/data/dtos/products_page_dto.dart';
 import 'package:catalog/src/data/mappers/product_mapper.dart';
 import 'package:catalog/src/data/mappers/products_page_mapper.dart';
-import 'package:catalog/src/domain/repositories/catalog_repository.dart';
 import 'package:commons/commons.dart';
 import 'package:dartz/dartz.dart';
 
@@ -13,7 +12,11 @@ import 'package:dartz/dartz.dart';
 ///
 ///   GET    /products?category=&search=&isActive=&page=&size=
 ///   GET    /products/{id}
-///   GET    /categories      ← NO IMPLEMENTADO en el backend; devolvemos mock.
+///   GET    /products/categories   ← especificado en el RFC sec 3.3, pero
+///                                   todavía no está implementado en el back
+///                                   (a junio 2026). Si el call falla
+///                                   caemos al enum local — graceful upgrade
+///                                   cuando el back lo agregue.
 class RemoteCatalogRepository implements CatalogRepository {
   RemoteCatalogRepository({required this.httpHelper});
 
@@ -24,7 +27,7 @@ class RemoteCatalogRepository implements CatalogRepository {
     int page = 1,
     int pageSize = 20,
     String? search,
-    String? categoryId,
+    ProductCategory? category,
   }) async {
     try {
       final backendPage = (page - 1).clamp(0, 1 << 30);
@@ -32,7 +35,7 @@ class RemoteCatalogRepository implements CatalogRepository {
         'page': backendPage,
         'size': pageSize,
         if (search != null && search.isNotEmpty) 'search': search,
-        if (categoryId != null && categoryId.isNotEmpty) 'category': categoryId,
+        if (category != null) 'category': category.key,
       };
       final result = await httpHelper.get('/products', queryParameters: query);
       return result.fold(
@@ -52,19 +55,37 @@ class RemoteCatalogRepository implements CatalogRepository {
     }
   }
 
+  /// `GET /products/categories` está definido en el RFC (sec 3.3) pero el
+  /// back todavía no lo implementó. Lo intentamos igual — si falla por
+  /// cualquier motivo (404, 500, red caída) hacemos fallback al enum local
+  /// que de todos modos espeja el back. Así cuando el back lo agregue, el
+  /// front lo consume sin más cambios.
   @override
-  Future<Either<CatalogFailure, List<Category>>> getCategories() async {
-    // El backend todavía no tiene `/categories`. Devolvemos una lista hardcoded
-    // con los slugs que existen en los products seedeados, para que el filtro
-    // de la UI funcione. Cuando el endpoint exista, reemplazar por HTTP real.
-    return const Right(_mockCategories);
+  Future<Either<CatalogFailure, List<ProductCategory>>> getCategories() async {
+    try {
+      final result = await httpHelper.get('/products/categories');
+      return result.fold(
+        (_) => Right(ProductCategory.values),
+        (response) {
+          final data = response.data;
+          if (data is! Map<String, dynamic>) return Right(ProductCategory.values);
+          final raw = data['categories'];
+          if (raw is! List) return Right(ProductCategory.values);
+          final parsed = raw
+              .whereType<String>()
+              .map(ProductCategory.tryParse)
+              .whereType<ProductCategory>()
+              .toList(growable: false);
+          // Si el back devolvió una lista vacía o todos strings desconocidos,
+          // preferimos el enum local antes que dejar la UI sin filtros.
+          return Right(parsed.isEmpty ? ProductCategory.values : parsed);
+        },
+      );
+    } catch (e, st) {
+      log('getCategories error (fallback to local enum)', error: e, stackTrace: st);
+      return Right(ProductCategory.values);
+    }
   }
-
-  static const _mockCategories = [
-    Category(id: 'seguridad', name: 'Seguridad'),
-    Category(id: 'herramientas', name: 'Herramientas'),
-    Category(id: 'almacenamiento', name: 'Almacenamiento'),
-  ];
 
   @override
   Future<Either<CatalogFailure, Product>> getProductById(String id) async {

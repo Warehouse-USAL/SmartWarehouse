@@ -85,7 +85,11 @@ class OrderSuccessPage extends StatelessWidget {
               SwButton(
                 label: 'Ver mis pedidos',
                 variant: SwButtonVariant.secondary,
-                onPressed: () {},
+                onPressed: () => Injector.i.resolve<NavigationHelper>().pushNamed(
+                  context,
+                  routeName: Routes.orders,
+                  replace: true,
+                ),
               ),
               const SizedBox(height: 8),
             ],

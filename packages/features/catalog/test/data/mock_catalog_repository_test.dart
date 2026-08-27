@@ -1,3 +1,4 @@
+import 'package:catalog/catalog.dart';
 import 'package:catalog/src/data/repositories/mock_catalog_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -36,19 +37,22 @@ void main() {
       );
     });
 
-    test('filters by categoryId before paginating', () async {
+    test('filters by category before paginating', () async {
       final result = await repo.getProducts(
         page: 1,
         pageSize: 20,
-        categoryId: 'books',
+        category: ProductCategory.tecnologia,
       );
       result.fold(
         (_) => fail('expected Right'),
         (page) {
-          expect(page.items, hasLength(9));
-          expect(page.total, 9);
+          expect(page.items, hasLength(14));
+          expect(page.total, 14);
           expect(page.hasNext, isFalse);
-          expect(page.items.every((p) => p.category.id == 'books'), isTrue);
+          expect(
+            page.items.every((p) => p.category == ProductCategory.tecnologia),
+            isTrue,
+          );
         },
       );
     });

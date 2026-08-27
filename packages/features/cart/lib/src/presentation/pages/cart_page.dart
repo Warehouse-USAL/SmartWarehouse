@@ -4,6 +4,7 @@ import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:profile/profile.dart';
 
 class CartPage extends StatelessWidget {
   const CartPage({required this.cartCubit, required this.createOrderCubit, super.key});
@@ -65,9 +66,22 @@ class CartPage extends StatelessWidget {
     }
     final confirmed = await CreateOrderConfirmationDialog.show(context, cart);
     if (!confirmed) return;
+    if (!context.mounted) return;
+    // Abre el sheet de confirmación de entrega. Pre-popula con el address
+    // guardado en el perfil (si lo hay) y permite tickear "Guardar en mi
+    // perfil" para persistir vía PATCH /users/me. Si cancela, abortamos.
+    final result =
+        await ProfileFeatureBuilder.collectCheckoutAddress(context);
+    if (result == null) return;
     await createOrderCubit.submit(
       items: _toOrderItems(cart),
-      destination: OrderDestination.defaults,
+      destination: OrderDestination(
+        area: result.destinationArea,
+        street: result.address.street,
+        postalCode: result.address.postalCode,
+        department: result.address.department,
+        floor: result.address.floor,
+      ),
     );
   }
 
@@ -87,10 +101,7 @@ class CartPage extends StatelessWidget {
             content: Text(message),
             action: SnackBarAction(
               label: 'Reintentar',
-              onPressed: () => createOrderCubit.submit(
-                items: _toOrderItems(cartCubit.state),
-                destination: OrderDestination.defaults,
-              ),
+              onPressed: () => _onCreateOrderPressed(context, cartCubit.state),
             ),
           ),
         );

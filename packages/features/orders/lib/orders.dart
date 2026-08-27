@@ -1,5 +1,6 @@
 library orders;
 
+export 'src/data/storage/order_history_store.dart';
 export 'src/domain/entities/order.dart';
 export 'src/domain/entities/order_destination.dart';
 export 'src/domain/entities/order_item.dart';

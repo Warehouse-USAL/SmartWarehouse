@@ -22,6 +22,7 @@ class DioHttpHelper implements HttpHelper {
     required this.debuggingInterceptors,
   });
 
+  @override
   final String baseUrl;
   final OnRefreshTokenCallback onRefreshToken;
   final IsExpiredTokenCheckCallback isExpiredToken;

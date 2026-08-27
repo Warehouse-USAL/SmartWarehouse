@@ -9,17 +9,27 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../widgets/catalog_search_bar.dart';
 import '../widgets/category_filter_bar.dart';
 
-class CatalogPage extends StatelessWidget {
+class CatalogPage extends StatefulWidget {
   const CatalogPage({required this.cubit, super.key});
   final CatalogCubit cubit;
 
   @override
+  State<CatalogPage> createState() => _CatalogPageState();
+}
+
+class _CatalogPageState extends State<CatalogPage> {
+  @override
+  void initState() {
+    super.initState();
+    // El cubit es singleton — siempre re-fetcheamos al entrar para que el
+    // stock se actualice después de crear órdenes (cada orden baja el stock
+    // del producto en el back).
+    widget.cubit.load();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Kick-off del primer fetch si el cubit aún no cargó.
-    if (cubit.state is! CatalogReady) {
-      // Microtask para no llamar emit durante build.
-      Future.microtask(cubit.load);
-    }
+    final cubit = widget.cubit;
     return Scaffold(
       backgroundColor: SwColors.white,
       bottomNavigationBar:
@@ -45,7 +55,7 @@ class CatalogPage extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                     child: CategoryFilterBar(
                       categories: cubit.categories,
-                      selectedCategoryId: cubit.selectedCategoryId,
+                      selectedCategory: cubit.selectedCategory,
                       onSelected: cubit.selectCategory,
                     ),
                   ),
@@ -109,6 +119,8 @@ class _CatalogAppBar extends StatelessWidget {
             ),
           ),
 
+          OrderTrackingFeatureBuilder.buildNotificationBell(),
+          const SizedBox(width: 4),
           SwIconButton(
             icon: Icons.logout,
             tooltip: 'Cerrar sesión',
@@ -137,10 +149,10 @@ class _Results extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = state;
     if (s is CatalogLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const SwLoadingSpinner();
     }
     if (s is CatalogError) {
-      return _ErrorView(message: s.message, onRetry: cubit.load);
+      return SwErrorView(message: s.message, onRetry: cubit.load);
     }
     final ready = s as CatalogReady;
     final products = ready.products;
@@ -165,7 +177,10 @@ class _Results extends StatelessWidget {
         ),
         Expanded(
           child: products.isEmpty && !ready.isLoadingMore
-              ? const _EmptyView()
+              ? const SwEmptyView(
+                  title: 'No se encontraron productos',
+                  message: 'Probá ajustando los filtros o buscando otro término.',
+                )
               : GridView.builder(
                   controller: cubit.scrollController,
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -200,50 +215,6 @@ class _Results extends StatelessWidget {
                 ),
         ),
       ],
-    );
-  }
-}
-
-class _EmptyView extends StatelessWidget {
-  const _EmptyView();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Text(
-          'No se encontraron productos.',
-          style: SwText.body(size: 14, color: SwColors.text3),
-          textAlign: TextAlign.center,
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message, required this.onRetry});
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.error_outline, color: SwColors.stockOut, size: 40),
-          const SizedBox(height: 12),
-          Text(message, style: SwText.body(size: 14)),
-          const SizedBox(height: 16),
-          SwButton(
-            label: 'Reintentar',
-            variant: SwButtonVariant.secondary,
-            onPressed: onRetry,
-          ),
-        ],
-      ),
     );
   }
 }

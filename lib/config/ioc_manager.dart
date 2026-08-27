@@ -8,6 +8,7 @@ import 'package:commons/helpers/permissions/permissions_handler_package/permissi
 import 'package:commons/helpers/permissions/permissions_helper.dart';
 import 'package:commons/helpers/persistence_helper/hive_persistence_helper.dart';
 import 'package:core/core.dart';
+import 'package:profile/profile.dart';
 import 'package:smart_warehouse/application/navigation/beamer_config_helper.dart';
 
 /// IoC (Inversion of Control) manager for dependency registration.
@@ -57,19 +58,33 @@ class IocManager {
     CatalogFeatureBuilder.injectDependencies();
     OrdersFeatureBuilder.injectDependencies();
     CartFeatureBuilder.injectDependencies();
+    OrderTrackingFeatureBuilder.injectDependencies(
+      baseUrl: config.environment.when(
+        dev: _localBackendUrl,
+        qa: _localBackendUrl,
+        prod: _localBackendUrl,
+      ),
+    );
+    ProfileFeatureBuilder.injectDependencies();
   }
 }
 
-/// URL del backend cuando corre en `localhost` del host de desarrollo.
+/// URL del backend.
 ///
-/// El emulator Android no ve `localhost` de la máquina anfitriona — para él
-/// `localhost` es el propio emulator. Se debe usar `10.0.2.2` (alias mágico
-/// que Android le da al host). En iOS simulator y desktop, `localhost`
-/// funciona porque comparten network stack.
-///
-/// Para device físico, pasar la IP de tu máquina en la red local con
-/// `--dart-define=API_HOST=192.168.x.x` (y opcional `API_PORT=8080`).
+/// Precedence (de mayor a menor):
+/// 1. `--dart-define=API_BASE_URL=https://api.example.com` — URL completa con
+///    scheme. Usado en builds de release / APK demo para apuntar al back
+///    público.
+/// 2. `--dart-define=API_HOST=192.168.1.10 --dart-define=API_PORT=8080` —
+///    útil para device físico en red local (asume http://).
+/// 3. Defaults locales: `10.0.2.2:8080` para Android emulator (alias mágico
+///    al host), `localhost:8080` para iOS simulator / desktop / web.
 String _localBackendUrl() {
+  // Override absoluto: la URL ya viene con scheme + host + (port opcional) +
+  // (path opcional). Se respeta tal cual.
+  const fullOverride = String.fromEnvironment('API_BASE_URL');
+  if (fullOverride.isNotEmpty) return fullOverride;
+
   const overrideHost = String.fromEnvironment('API_HOST');
   const overridePort = String.fromEnvironment('API_PORT', defaultValue: '8080');
   if (overrideHost.isNotEmpty) {

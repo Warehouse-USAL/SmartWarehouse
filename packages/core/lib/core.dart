@@ -7,6 +7,7 @@ export 'package:catalog/catalog.dart';
 export 'package:commons/commons.dart';
 export 'package:login/login.dart';
 export 'package:orders/orders.dart';
+export 'package:order_tracking/order_tracking.dart';
 export 'package:token_repository/token_repository.dart';
 
 export 'src/domain/entities/app_data_source.dart';

@@ -13,6 +13,7 @@ _CreateOrderRequestDto _$CreateOrderRequestDtoFromJson(
       .map((e) => CreateOrderItemDto.fromJson(e as Map<String, dynamic>))
       .toList(),
   destinationArea: json['destination_area'] as String,
+  address: AddressDto.fromJson(json['address'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$CreateOrderRequestDtoToJson(
@@ -20,6 +21,7 @@ Map<String, dynamic> _$CreateOrderRequestDtoToJson(
 ) => <String, dynamic>{
   'items': instance.items.map((e) => e.toJson()).toList(),
   'destination_area': instance.destinationArea,
+  'address': instance.address.toJson(),
 };
 
 _CreateOrderItemDto _$CreateOrderItemDtoFromJson(Map<String, dynamic> json) =>
@@ -32,4 +34,19 @@ Map<String, dynamic> _$CreateOrderItemDtoToJson(_CreateOrderItemDto instance) =>
     <String, dynamic>{
       'product_id': instance.productId,
       'quantity': instance.quantity,
+    };
+
+_AddressDto _$AddressDtoFromJson(Map<String, dynamic> json) => _AddressDto(
+  street: json['street'] as String,
+  postalCode: json['postal_code'] as String,
+  department: json['department'] as String?,
+  floor: json['floor'] as String?,
+);
+
+Map<String, dynamic> _$AddressDtoToJson(_AddressDto instance) =>
+    <String, dynamic>{
+      'street': instance.street,
+      'postal_code': instance.postalCode,
+      'department': instance.department,
+      'floor': instance.floor,
     };

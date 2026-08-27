@@ -23,6 +23,8 @@ dependencies:
     path: ../features/cart
   orders:
     path: ../features/orders
+  order_tracking:
+    path: ../features/order_tracking
   token_repository:
     path: ../features/repositories/token_repository
   beamer: ^1.7.0

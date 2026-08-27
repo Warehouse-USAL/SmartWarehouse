@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CreateOrderRequestDto {
 
- List<CreateOrderItemDto> get items; String get destinationArea;
+ List<CreateOrderItemDto> get items; String get destinationArea; AddressDto get address;
 /// Create a copy of CreateOrderRequestDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $CreateOrderRequestDtoCopyWith<CreateOrderRequestDto> get copyWith => _$CreateOr
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateOrderRequestDto&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.destinationArea, destinationArea) || other.destinationArea == destinationArea));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateOrderRequestDto&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.destinationArea, destinationArea) || other.destinationArea == destinationArea)&&(identical(other.address, address) || other.address == address));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(items),destinationArea);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(items),destinationArea,address);
 
 @override
 String toString() {
-  return 'CreateOrderRequestDto(items: $items, destinationArea: $destinationArea)';
+  return 'CreateOrderRequestDto(items: $items, destinationArea: $destinationArea, address: $address)';
 }
 
 
@@ -48,11 +48,11 @@ abstract mixin class $CreateOrderRequestDtoCopyWith<$Res>  {
   factory $CreateOrderRequestDtoCopyWith(CreateOrderRequestDto value, $Res Function(CreateOrderRequestDto) _then) = _$CreateOrderRequestDtoCopyWithImpl;
 @useResult
 $Res call({
- List<CreateOrderItemDto> items, String destinationArea
+ List<CreateOrderItemDto> items, String destinationArea, AddressDto address
 });
 
 
-
+$AddressDtoCopyWith<$Res> get address;
 
 }
 /// @nodoc
@@ -65,14 +65,24 @@ class _$CreateOrderRequestDtoCopyWithImpl<$Res>
 
 /// Create a copy of CreateOrderRequestDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? items = null,Object? destinationArea = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? items = null,Object? destinationArea = null,Object? address = null,}) {
   return _then(_self.copyWith(
 items: null == items ? _self.items : items // ignore: cast_nullable_to_non_nullable
 as List<CreateOrderItemDto>,destinationArea: null == destinationArea ? _self.destinationArea : destinationArea // ignore: cast_nullable_to_non_nullable
-as String,
+as String,address: null == address ? _self.address : address // ignore: cast_nullable_to_non_nullable
+as AddressDto,
   ));
 }
-
+/// Create a copy of CreateOrderRequestDto
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$AddressDtoCopyWith<$Res> get address {
+  
+  return $AddressDtoCopyWith<$Res>(_self.address, (value) {
+    return _then(_self.copyWith(address: value));
+  });
+}
 }
 
 
@@ -151,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<CreateOrderItemDto> items,  String destinationArea)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<CreateOrderItemDto> items,  String destinationArea,  AddressDto address)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CreateOrderRequestDto() when $default != null:
-return $default(_that.items,_that.destinationArea);case _:
+return $default(_that.items,_that.destinationArea,_that.address);case _:
   return orElse();
 
 }
@@ -172,10 +182,10 @@ return $default(_that.items,_that.destinationArea);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<CreateOrderItemDto> items,  String destinationArea)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<CreateOrderItemDto> items,  String destinationArea,  AddressDto address)  $default,) {final _that = this;
 switch (_that) {
 case _CreateOrderRequestDto():
-return $default(_that.items,_that.destinationArea);}
+return $default(_that.items,_that.destinationArea,_that.address);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -189,10 +199,10 @@ return $default(_that.items,_that.destinationArea);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<CreateOrderItemDto> items,  String destinationArea)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<CreateOrderItemDto> items,  String destinationArea,  AddressDto address)?  $default,) {final _that = this;
 switch (_that) {
 case _CreateOrderRequestDto() when $default != null:
-return $default(_that.items,_that.destinationArea);case _:
+return $default(_that.items,_that.destinationArea,_that.address);case _:
   return null;
 
 }
@@ -204,7 +214,7 @@ return $default(_that.items,_that.destinationArea);case _:
 @JsonSerializable()
 
 class _CreateOrderRequestDto implements CreateOrderRequestDto {
-  const _CreateOrderRequestDto({required final  List<CreateOrderItemDto> items, required this.destinationArea}): _items = items;
+  const _CreateOrderRequestDto({required final  List<CreateOrderItemDto> items, required this.destinationArea, required this.address}): _items = items;
   factory _CreateOrderRequestDto.fromJson(Map<String, dynamic> json) => _$CreateOrderRequestDtoFromJson(json);
 
  final  List<CreateOrderItemDto> _items;
@@ -215,6 +225,7 @@ class _CreateOrderRequestDto implements CreateOrderRequestDto {
 }
 
 @override final  String destinationArea;
+@override final  AddressDto address;
 
 /// Create a copy of CreateOrderRequestDto
 /// with the given fields replaced by the non-null parameter values.
@@ -229,16 +240,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreateOrderRequestDto&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.destinationArea, destinationArea) || other.destinationArea == destinationArea));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreateOrderRequestDto&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.destinationArea, destinationArea) || other.destinationArea == destinationArea)&&(identical(other.address, address) || other.address == address));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),destinationArea);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),destinationArea,address);
 
 @override
 String toString() {
-  return 'CreateOrderRequestDto(items: $items, destinationArea: $destinationArea)';
+  return 'CreateOrderRequestDto(items: $items, destinationArea: $destinationArea, address: $address)';
 }
 
 
@@ -249,11 +260,11 @@ abstract mixin class _$CreateOrderRequestDtoCopyWith<$Res> implements $CreateOrd
   factory _$CreateOrderRequestDtoCopyWith(_CreateOrderRequestDto value, $Res Function(_CreateOrderRequestDto) _then) = __$CreateOrderRequestDtoCopyWithImpl;
 @override @useResult
 $Res call({
- List<CreateOrderItemDto> items, String destinationArea
+ List<CreateOrderItemDto> items, String destinationArea, AddressDto address
 });
 
 
-
+@override $AddressDtoCopyWith<$Res> get address;
 
 }
 /// @nodoc
@@ -266,15 +277,25 @@ class __$CreateOrderRequestDtoCopyWithImpl<$Res>
 
 /// Create a copy of CreateOrderRequestDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? items = null,Object? destinationArea = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? items = null,Object? destinationArea = null,Object? address = null,}) {
   return _then(_CreateOrderRequestDto(
 items: null == items ? _self._items : items // ignore: cast_nullable_to_non_nullable
 as List<CreateOrderItemDto>,destinationArea: null == destinationArea ? _self.destinationArea : destinationArea // ignore: cast_nullable_to_non_nullable
-as String,
+as String,address: null == address ? _self.address : address // ignore: cast_nullable_to_non_nullable
+as AddressDto,
   ));
 }
 
-
+/// Create a copy of CreateOrderRequestDto
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$AddressDtoCopyWith<$Res> get address {
+  
+  return $AddressDtoCopyWith<$Res>(_self.address, (value) {
+    return _then(_self.copyWith(address: value));
+  });
+}
 }
 
 
@@ -531,6 +552,272 @@ class __$CreateOrderItemDtoCopyWithImpl<$Res>
 productId: null == productId ? _self.productId : productId // ignore: cast_nullable_to_non_nullable
 as String,quantity: null == quantity ? _self.quantity : quantity // ignore: cast_nullable_to_non_nullable
 as int,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$AddressDto {
+
+ String get street; String get postalCode; String? get department; String? get floor;
+/// Create a copy of AddressDto
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$AddressDtoCopyWith<AddressDto> get copyWith => _$AddressDtoCopyWithImpl<AddressDto>(this as AddressDto, _$identity);
+
+  /// Serializes this AddressDto to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AddressDto&&(identical(other.street, street) || other.street == street)&&(identical(other.postalCode, postalCode) || other.postalCode == postalCode)&&(identical(other.department, department) || other.department == department)&&(identical(other.floor, floor) || other.floor == floor));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,street,postalCode,department,floor);
+
+@override
+String toString() {
+  return 'AddressDto(street: $street, postalCode: $postalCode, department: $department, floor: $floor)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $AddressDtoCopyWith<$Res>  {
+  factory $AddressDtoCopyWith(AddressDto value, $Res Function(AddressDto) _then) = _$AddressDtoCopyWithImpl;
+@useResult
+$Res call({
+ String street, String postalCode, String? department, String? floor
+});
+
+
+
+
+}
+/// @nodoc
+class _$AddressDtoCopyWithImpl<$Res>
+    implements $AddressDtoCopyWith<$Res> {
+  _$AddressDtoCopyWithImpl(this._self, this._then);
+
+  final AddressDto _self;
+  final $Res Function(AddressDto) _then;
+
+/// Create a copy of AddressDto
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? street = null,Object? postalCode = null,Object? department = freezed,Object? floor = freezed,}) {
+  return _then(_self.copyWith(
+street: null == street ? _self.street : street // ignore: cast_nullable_to_non_nullable
+as String,postalCode: null == postalCode ? _self.postalCode : postalCode // ignore: cast_nullable_to_non_nullable
+as String,department: freezed == department ? _self.department : department // ignore: cast_nullable_to_non_nullable
+as String?,floor: freezed == floor ? _self.floor : floor // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [AddressDto].
+extension AddressDtoPatterns on AddressDto {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _AddressDto value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _AddressDto() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _AddressDto value)  $default,){
+final _that = this;
+switch (_that) {
+case _AddressDto():
+return $default(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _AddressDto value)?  $default,){
+final _that = this;
+switch (_that) {
+case _AddressDto() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String street,  String postalCode,  String? department,  String? floor)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _AddressDto() when $default != null:
+return $default(_that.street,_that.postalCode,_that.department,_that.floor);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String street,  String postalCode,  String? department,  String? floor)  $default,) {final _that = this;
+switch (_that) {
+case _AddressDto():
+return $default(_that.street,_that.postalCode,_that.department,_that.floor);}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String street,  String postalCode,  String? department,  String? floor)?  $default,) {final _that = this;
+switch (_that) {
+case _AddressDto() when $default != null:
+return $default(_that.street,_that.postalCode,_that.department,_that.floor);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _AddressDto implements AddressDto {
+  const _AddressDto({required this.street, required this.postalCode, this.department, this.floor});
+  factory _AddressDto.fromJson(Map<String, dynamic> json) => _$AddressDtoFromJson(json);
+
+@override final  String street;
+@override final  String postalCode;
+@override final  String? department;
+@override final  String? floor;
+
+/// Create a copy of AddressDto
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$AddressDtoCopyWith<_AddressDto> get copyWith => __$AddressDtoCopyWithImpl<_AddressDto>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$AddressDtoToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AddressDto&&(identical(other.street, street) || other.street == street)&&(identical(other.postalCode, postalCode) || other.postalCode == postalCode)&&(identical(other.department, department) || other.department == department)&&(identical(other.floor, floor) || other.floor == floor));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,street,postalCode,department,floor);
+
+@override
+String toString() {
+  return 'AddressDto(street: $street, postalCode: $postalCode, department: $department, floor: $floor)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$AddressDtoCopyWith<$Res> implements $AddressDtoCopyWith<$Res> {
+  factory _$AddressDtoCopyWith(_AddressDto value, $Res Function(_AddressDto) _then) = __$AddressDtoCopyWithImpl;
+@override @useResult
+$Res call({
+ String street, String postalCode, String? department, String? floor
+});
+
+
+
+
+}
+/// @nodoc
+class __$AddressDtoCopyWithImpl<$Res>
+    implements _$AddressDtoCopyWith<$Res> {
+  __$AddressDtoCopyWithImpl(this._self, this._then);
+
+  final _AddressDto _self;
+  final $Res Function(_AddressDto) _then;
+
+/// Create a copy of AddressDto
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? street = null,Object? postalCode = null,Object? department = freezed,Object? floor = freezed,}) {
+  return _then(_AddressDto(
+street: null == street ? _self.street : street // ignore: cast_nullable_to_non_nullable
+as String,postalCode: null == postalCode ? _self.postalCode : postalCode // ignore: cast_nullable_to_non_nullable
+as String,department: freezed == department ? _self.department : department // ignore: cast_nullable_to_non_nullable
+as String?,floor: freezed == floor ? _self.floor : floor // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
