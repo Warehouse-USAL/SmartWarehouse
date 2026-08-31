@@ -26,6 +26,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  google_fonts: ^6.2.1
   flutter_lints: ^5.0.0
   build_runner: ^2.4.13
   freezed: ^3.2.5
