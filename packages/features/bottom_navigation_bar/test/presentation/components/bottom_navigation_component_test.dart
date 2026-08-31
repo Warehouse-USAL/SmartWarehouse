@@ -3,7 +3,6 @@ import 'package:bottom_navigation_bar/src/presentation/components/bottom_navigat
 import 'package:cart/cart.dart';
 import 'package:commons/commons.dart';
 import 'package:design_system/design_system.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:test_support/test_support.dart';
 
