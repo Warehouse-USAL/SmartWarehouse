@@ -94,20 +94,69 @@ Solo 4 packages tienen tests. La cobertura nunca se midió y CI no la controla.
 Se siguen usando fakes a mano **solo** donde un fake con estado es genuinamente más claro
 que un mock (repos in-memory que simulan un store).
 
-### 4.3 `packages/test_support`
+### 4.3 Packages de soporte de tests
 
-Package nuevo, solo para desarrollo (no se publica, no entra en el bundle de la app):
+Dos packages, separados por sus dependencias. Los dos son solo para desarrollo:
+`publish_to: none`, no entran en el bundle de la app y quedan **fuera del gate de
+cobertura** (§5).
 
-- **Builders de entities**: `aProduct()`, `anOrder()`, `aCartItem()`, con defaults
-  razonables y overrides por parámetro nombrado.
-- **Carga de fixtures JSON**: helper para leer los golden files del contrato del backend.
+**`packages/test_support`** — depende solo de `commons`.
+
 - **Mocks compartidos** de `mocktail` y sus `registerFallbackValue`.
+- **Injector harness**: `resetInjector()`, `registerMock<T>()`.
+- **Carga de fixtures JSON**: helper para leer los golden files del contrato.
 
-Motivo: la duplicación ya existe. `order_tracking` reimplementa a mano un `_FakeCatalog`
-que los tests de `catalog` ya definen, con los tres métodos no usados devolviendo
-`Left(CatalogFailure('not used'))`.
+**`packages/<feature>_test_builders`** — uno por feature que define las entities.
+Hoy existe `catalog_test_builders` (`aMoney`, `aProduct`, `aStock`).
 
-`test_support` queda excluido del gate de cobertura (es código de test).
+#### La regla
+
+> Un builder va a un package compartido **solo si lo necesitan dos o más
+> packages**. Si lo necesita uno solo, vive en el `test/support/` de ese package.
+
+Y su contrapartida, que es la que se pasó por alto la primera vez:
+
+> **`test_support` no depende de packages de features.** Un helper que necesita una
+> feature va a `<feature>_test_builders`, nunca a `test_support`.
+
+Y cuándo ese `<feature>_test_builders` es un package nuevo en vez de una extensión
+de uno existente:
+
+> Un `<feature>_test_builders` nuevo se crea **solo si** los builders que
+> alojaría necesitan una feature de la que ningún package de builders existente ya
+> depende. Si ya depende de ella, se extiende ese package. Cada package nuevo
+> arrastra un `pubspec.lock` de ~1150 líneas trackeado, un `pubspec_overrides.yaml`
+> y un slot de `melos bootstrap`: cómodo con dos o tres, pesado con ocho. Por
+> ejemplo, `orders_test_builders` sirve tanto a #163 (`orders`) como a #164
+> (`order_tracking`), porque `order_tracking` ya depende de `orders`.
+
+Motivo: `test_support` declaraba una feature (`catalog`) entre sus dependencias, y de
+sus cinco consumidores, cuatro no usaban un solo builder. Un package de soporte no
+debería arrastrar una feature completa por un archivo que solo quería
+`MockHttpHelper`, y la arista creaba un ciclo de dev-dependency
+`commons →(dev) test_support → catalog → … → commons`.
+
+> **Lo que esto NO arregla.** Al separarlos se midió si `commons` dejaba de resolver
+> `catalog`, `design_system` y `bottom_navigation_bar`. **No lo hace**, y la causa es
+> anterior e independiente: `commons` depende de `core` (dependencia de producción), y
+> `core` depende de `auth`, `login`, `bottom_navigation_bar`, `catalog`, `cart`,
+> `orders`, `order_tracking` y `token_repository`. Como `core` a su vez depende de
+> `commons`, **`core ↔ commons` es un ciclo de dependencias de producción**. La arista
+> `test_support → catalog` era redundante sobre un grafo que ya estaba completo.
+>
+> Sacarla igual vale: la capa de soporte de tests queda con un grafo honesto y la regla
+> es verificable. Pero adelgazar los binarios de test exige romper `core → features`,
+> que es un problema aparte y mucho mayor.
+
+La regla está verificada por `test/tool/test_support_deps_test.dart`, que corre en
+CI dentro del job `Coverage gate`. No es una convención documentada: si alguien
+agrega una feature a `test_support`, CI se pone en rojo.
+
+Sobre la duplicación que motivaba el package original: `order_tracking`
+reimplementa a mano un `_FakeCatalog` que los tests de `catalog` ya definen, con
+los tres métodos no usados devolviendo `Left(CatalogFailure('not used'))`. Eso lo
+resuelve un builder compartido en `catalog_test_builders`, que es donde
+corresponde, no un package que junta todo.
 
 ---
 
@@ -129,6 +178,7 @@ que los tests de `catalog` ya definen, con los tres métodos no usados devolvien
 | `design_system` | 40% | 41 archivos de widgets; solo los que tienen lógica. |
 | app shell (`lib/`) | excluido | Composition root y bootstrap; se cubre vía E2E. |
 | `test_support` | excluido | Es código de test. |
+| `<feature>_test_builders` | excluido | Es código de test. |
 
 ### 5.1 Exclusiones
 
@@ -137,7 +187,29 @@ que los tests de `catalog` ya definen, con los tres métodos no usados devolvien
 ```
 **/*.g.dart
 **/*.freezed.dart
+**/presentation/pages/**
 ```
+
+**Pages** — no se testean con unit/widget tests a propósito (§4.1): esa capa la
+cubre Patrol (#131). Dejarlas en el denominador de cobertura hacía que el target
+de §5 fuera inalcanzable por aritmética en algunos packages — en `cart` la page
+sola (`cart_page.dart`) es 133 de las 290 líneas instrumentables del package, un
+techo teórico de 54% aunque el resto del código estuviera 100% cubierto. Por eso
+`**/presentation/pages/**` es una exclusión global, no por-package: no es un caso
+particular de `cart`, es la misma inconsistencia entre §4.1 y §5 en cualquier
+feature con una page grande.
+
+**Consecuencia: una page no puede contener lógica de negocio.** Validaciones,
+mappers y decisiones de dominio van al cubit o a un mapper. Si viven en la page
+quedan fuera del gate **y** fuera de Patrol por igual, sin que nadie lo note.
+Hoy `cart_page.dart` viola esto: tiene el guard de sobre-pedido (`quantity >
+available`) y un mapper Cart→OrderItem. Ver el issue de seguimiento (#173).
+
+Al aplicar esta exclusión, la cobertura medida de cinco packages subió sin que
+se escribiera ningún test — solo cambió el denominador: `catalog` 29.5→43.6,
+`order_tracking` 24.5→33.1, `orders` 20.0→24.2, `login` 9.4→14.1, `profile`
+1.0→1.3. De 703 líneas sacadas del denominador, exactamente **una** estaba
+cubierta. Los floors se re-ratchetearon en consecuencia.
 
 **Adaptadores finos de plataforma en `commons`** — delegación pura a un plugin. Testearlos
 significa afirmar "¿se llamó a Hive?", lo cual es tautológico y se rompe cada vez que cambia
@@ -174,6 +246,7 @@ defaults:
   exclude:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
+    - "**/presentation/pages/**"
 
 packages:
   core:

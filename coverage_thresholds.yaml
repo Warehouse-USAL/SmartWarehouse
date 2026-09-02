@@ -13,6 +13,11 @@ defaults:
   exclude:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
+    # Las pages no se testean con unit/widget tests a proposito (spec §4.1):
+    # esa capa la cubre Patrol (#131). Dejarlas en el denominador hacia que el
+    # target de 80% fuera inalcanzable por aritmetica — en `cart` la page sola
+    # es 133 de 290 lineas, o sea un techo teorico de 54%.
+    - "**/presentation/pages/**"
 
 packages:
   core:
@@ -36,32 +41,33 @@ packages:
     min: 85
   auth:
     path: packages/features/auth
-    min: 0
+    min: 96
   cart:
     path: packages/features/cart
-    min: 0
+    min: 89
   catalog:
     path: packages/features/catalog
-    min: 29
+    min: 42
   login:
     path: packages/features/login
-    min: 7
+    min: 13
   orders:
     path: packages/features/orders
-    # Medido en 20.0% (38/190) exacto: sin headroom, una linea sin cubrir
-    # tumba el gate. Floor sembrado un punto abajo para dejar margen de ratchet.
-    min: 19
+    # Medido en 24.2% (38/157) tras la exclusion de pages (spec 5.1). Floor
+    # sembrado un punto abajo para dejar margen de ratchet.
+    min: 23
   order_tracking:
     path: packages/features/order_tracking
-    # El merge de E8.3 (suite Patrol + robustez) sumo lineas a lib/ y dejo el
-    # package en 23.99%: un punto abajo para no cortar por redondeo.
-    min: 23
+    min: 32
   profile:
     path: packages/features/profile
     min: 0
   bottom_navigation_bar:
     path: packages/features/bottom_navigation_bar
-    min: 2
+    # Medido en 80.4% (37/46) en #168, contra un target de 60%. Lo que queda
+    # afuera es el mapeo opcion->ruta de Beamer en el feature builder, que
+    # cubre la suite Patrol navegando tabs.
+    min: 79
   design_system:
     path: packages/design_system
     min: 0
@@ -69,3 +75,4 @@ packages:
 # Fuera del gate:
 # - app shell (lib/ en la raiz): composition root, se cubre por E2E
 # - packages/test_support: es codigo de test
+# - packages/<feature>_test_builders (ej. packages/catalog_test_builders): es codigo de test

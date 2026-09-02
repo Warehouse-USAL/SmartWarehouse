@@ -150,6 +150,13 @@ packages:
       relative: true
     source: path
     version: "0.0.1"
+  catalog_test_builders:
+    dependency: "direct dev"
+    description:
+      path: "../../catalog_test_builders"
+      relative: true
+    source: path
+    version: "0.0.1"
   characters:
     dependency: transitive
     description:

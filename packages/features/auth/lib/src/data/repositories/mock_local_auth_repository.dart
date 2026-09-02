@@ -9,6 +9,12 @@ import 'package:commons/helpers/persistence_helper/persistence_helper.dart';
 import 'package:dartz/dartz.dart';
 import 'package:http/http.dart' as http;
 
+// Esta clase no esta cableada: a diferencia de las otras cinco features
+// (catalog, login, orders, order_tracking, profile), que eligen su
+// repositorio segun `Injector.i.resolve<AppDataSource>().isMock`,
+// `AuthFeatureBuilder.injectDependencies()` siempre construye
+// `LocalAuthRepository` y nunca esta. Que tenga tests en verde no implica que
+// se use en runtime.
 class MockLocalAuthRepository implements AuthRepository {
   MockLocalAuthRepository({
     required this.refreshTokenUrl,
@@ -69,7 +75,7 @@ class MockLocalAuthRepository implements AuthRepository {
         Uri.parse(refreshTokenUrl),
         body: {'refreshToken': refreshToken},
       );
-      final body = result.body as Map<String, dynamic>;
+      final body = json.decode(result.body) as Map<String, dynamic>;
       final model = RefreshTokenModel.fromJson(body);
       final authData = AuthData(token: model.token, refreshToken: model.refreshToken);
       final saveResult = await save(authData);

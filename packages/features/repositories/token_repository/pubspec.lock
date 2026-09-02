@@ -1202,13 +1202,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.6.16"
-  test_support:
-    dependency: "direct dev"
-    description:
-      path: "../../../test_support"
-      relative: true
-    source: path
-    version: "0.0.1"
   typed_data:
     dependency: transitive
     description:
