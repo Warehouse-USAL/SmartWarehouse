@@ -57,4 +57,19 @@ end_of_record
   test('returns empty list for empty input', () {
     expect(parseLcov(''), isEmpty);
   });
+
+  test('normalises Windows separators so exclude globs can match', () {
+    // `flutter test --coverage` en Windows emite `SF:lib\a\b.dart`, y los
+    // globs de `coverage_thresholds.yaml` estan escritos con `/`. Sin
+    // normalizar acá ninguna exclusion matchea y el gate mide contra un
+    // denominador inflado — en silencio, porque CI corre en Linux y ahi los
+    // separadores ya vienen bien.
+    const lcov = r'''
+SF:lib\presentation\pages\home_page.dart
+DA:1,1
+end_of_record
+''';
+
+    expect(parseLcov(lcov).single.path, 'lib/presentation/pages/home_page.dart');
+  });
 }

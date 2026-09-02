@@ -6,7 +6,8 @@ class FileCoverage {
     required this.linesHit,
   });
 
-  /// Path as it appears in the `SF:` line — relative to the package root.
+  /// Path from the `SF:` line — relative to the package root, con separadores
+  /// normalizados a `/`.
   final String path;
   final int linesFound;
   final int linesHit;
@@ -17,6 +18,13 @@ class FileCoverage {
 /// Only `SF:` and `DA:` lines are read. `LF:`/`LH:` summary lines are ignored
 /// on purpose: after exclusions are applied the totals have to be recomputed
 /// from the surviving `DA:` lines anyway.
+///
+/// Los separadores de `SF:` se normalizan a `/`. En Windows `flutter test
+/// --coverage` los emite como `lib\theme\...`, y los globs de
+/// `coverage_thresholds.yaml` estan escritos con `/`: sin normalizar, **ninguna
+/// exclusion matchea** y el gate mide contra un denominador inflado. En Linux
+/// no cambia nada, que es donde corre CI — por eso el bug sobrevivio hasta
+/// #169.
 List<FileCoverage> parseLcov(String content) {
   final files = <FileCoverage>[];
   String? path;
@@ -35,7 +43,7 @@ List<FileCoverage> parseLcov(String content) {
   for (final line in content.split('\n')) {
     if (line.startsWith('SF:')) {
       flush();
-      path = line.substring(3).trim();
+      path = line.substring(3).trim().replaceAll(r'\', '/');
     } else if (line.startsWith('DA:')) {
       final parts = line.substring(3).split(',');
       if (parts.length < 2) continue;
