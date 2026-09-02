@@ -1,0 +1,97 @@
+name: E2E (Patrol)
+
+# Suite e2e completa contra el backend real dockerizado (E8.3.8, #152).
+# Corre nightly y a demanda: el emulador + build integra ~20-30 min,
+# prohibitivo para cada PR (decisión registrada en el issue).
+on:
+  workflow_dispatch:
+  schedule:
+    # 06:00 UTC = madrugada en AR; el resultado está antes de empezar el día.
+    - cron: '0 6 * * *'
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-android:
+    name: Patrol e2e (Android + backend docker)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout backend
+        uses: actions/checkout@v4
+        with:
+          repository: Warehouse-USAL/wh-backend
+          path: wh-backend
+
+      - name: Start backend stack
+        working-directory: wh-backend
+        run: |
+          docker compose up -d --build
+          echo "Esperando al backend en :8080..."
+          for i in $(seq 1 60); do
+            if curl -sf -o /dev/null http://localhost:8080/swagger-ui.html; then
+              echo "Backend arriba."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "ERROR: el backend no levantó en 5 minutos."
+          docker compose logs backend | tail -50
+          exit 1
+
+      - name: Verify seed (admin login)
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8080/auth/login \
+            -H 'Content-Type: application/json' \
+            -d '{"email":"admin@smartwarehouse.local","password":"changeme"}')
+          if [ "$code" != "200" ]; then
+            echo "ERROR: login del seed devolvió $code (ver docs/e2e-data-contract.md)."
+            exit 1
+          fi
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Activate melos + patrol_cli
+        run: |
+          dart pub global activate melos
+          dart pub global activate patrol_cli 3.11.0
+
+      - name: Bootstrap packages
+        run: melos bootstrap
+
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run Patrol suite on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: patrol test --dart-define=E2E_EMAIL=admin@smartwarehouse.local --dart-define=E2E_PASSWORD=changeme --dart-define=SPLASH_MS=0
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: patrol-report
+          path: |
+            build/app/reports/androidTests/
+            build/app/outputs/androidTest-results/
+          if-no-files-found: warn
