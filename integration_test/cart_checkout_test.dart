@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol/patrol.dart';
 
+import 'common/api_helpers.dart';
 import 'common/patrol_helpers.dart';
 
 void main() {
@@ -94,6 +95,10 @@ void main() {
 
     // Pantalla de éxito.
     await $('¡Pedido creado!').waitUntilVisible();
+
+    // Teardown: cancelar las órdenes pending para no ensuciar corridas
+    // futuras (contrato de datos: docs/e2e-data-contract.md).
+    await E2eApi.cancelPendingOrders(await E2eApi.adminToken());
   });
 
   patrolTest('quitar el único item deja el carrito vacío', ($) async {

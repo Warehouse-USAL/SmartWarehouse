@@ -10,10 +10,13 @@ import 'package:test_api/src/backend/invoker.dart';
 
 // START: GENERATED TEST IMPORTS
 import 'cart_checkout_test.dart' as cart_checkout_test;
+import 'catalog_pagination_test.dart' as catalog_pagination_test;
 import 'catalog_test.dart' as catalog_test;
 import 'login_test.dart' as login_test;
+import 'mixed_currency_test.dart' as mixed_currency_test;
 import 'orders_test.dart' as orders_test;
 import 'profile_test.dart' as profile_test;
+import 'session_test.dart' as session_test;
 // END: GENERATED TEST IMPORTS
 
 Future<void> main() async {
@@ -74,10 +77,13 @@ Future<void> main() async {
 
   // START: GENERATED TEST GROUPS
   group('cart_checkout_test', cart_checkout_test.main);
+  group('catalog_pagination_test', catalog_pagination_test.main);
   group('catalog_test', catalog_test.main);
   group('login_test', login_test.main);
+  group('mixed_currency_test', mixed_currency_test.main);
   group('orders_test', orders_test.main);
   group('profile_test', profile_test.main);
+  group('session_test', session_test.main);
   // END: GENERATED TEST GROUPS
 
   final dartTestGroup = await testExplorationCompleter.future;

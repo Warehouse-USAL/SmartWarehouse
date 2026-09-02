@@ -36,5 +36,7 @@ dev_dependencies:
   # vive en `catalog`, que `cart` no reexporta.
   test_support:
     path: ../../test_support
+  catalog_test_builders:
+    path: ../../catalog_test_builders
 
 flutter:
