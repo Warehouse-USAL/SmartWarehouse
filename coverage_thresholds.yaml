@@ -70,7 +70,23 @@ packages:
     min: 79
   design_system:
     path: packages/design_system
-    min: 0
+    # Medido en 98.4% (599/609) en #169, contra un target de 40%.
+    #
+    # El target bajo no estaba de mas: se puso porque testear este package
+    # "en serio" significaria fijar layout, y esa restriccion se respeto —
+    # no hay una sola asercion sobre padding, radio ni hex. Lo que pasa es
+    # que estos componentes son chicos y sus lineas ejecutables son casi
+    # todas el cuerpo del `build`, asi que montarlos para afirmar un
+    # callback las cubre de arrastre. El numero es efecto de la metrica.
+    #
+    # Ojo con leerlo al reves: lo que esta protegido es lo que enumera el
+    # spec de #169 §6. El resto de las lineas esta ejecutado, no
+    # verificado (§6.2).
+    #
+    # Quedan 10 lineas afuera, de a una o dos en nueve archivos: ramas de
+    # error de carga de imagenes y de callback que el entorno de test no
+    # puede provocar sin un mock que valdria mas que la linea que cubre.
+    min: 97
     exclude:
       # --- Archivos que no referencia nadie (spec #169 §5.1) ---
       #
