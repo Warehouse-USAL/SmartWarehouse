@@ -9,8 +9,6 @@ environment:
 dependencies:
   commons:
     path: ../commons
-  catalog:
-    path: ../features/catalog
   flutter:
     sdk: flutter
   flutter_test:

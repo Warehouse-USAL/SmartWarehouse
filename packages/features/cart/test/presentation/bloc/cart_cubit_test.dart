@@ -3,7 +3,7 @@ import 'package:cart/src/data/repositories/in_memory_cart_repository.dart';
 import 'package:cart/src/domain/entities/cart.dart';
 import 'package:cart/src/presentation/bloc/cart_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_support/test_support.dart';
+import 'package:catalog_test_builders/catalog_test_builders.dart';
 
 /// `Cart` no implementa `==`, así que no se puede comparar instancias en el
 /// `expect` de blocTest. Este matcher afirma sobre los campos.

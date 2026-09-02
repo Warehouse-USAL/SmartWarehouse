@@ -75,3 +75,4 @@ packages:
 # Fuera del gate:
 # - app shell (lib/ en la raiz): composition root, se cubre por E2E
 # - packages/test_support: es codigo de test
+# - packages/<feature>_test_builders (ej. packages/catalog_test_builders): es codigo de test

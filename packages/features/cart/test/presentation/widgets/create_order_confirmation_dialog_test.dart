@@ -3,7 +3,7 @@ import 'package:cart/src/domain/entities/cart_item.dart';
 import 'package:cart/src/presentation/widgets/create_order_confirmation_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_support/test_support.dart';
+import 'package:catalog_test_builders/catalog_test_builders.dart';
 
 void main() {
   testWidgets('shows singular wording for a single unit', (tester) async {
