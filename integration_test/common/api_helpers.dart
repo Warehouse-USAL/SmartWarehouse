@@ -38,6 +38,12 @@ abstract final class E2eApi {
     return (body['products'] as List).cast<Map<String, dynamic>>();
   }
 
+  /// Total de productos activos en el catálogo.
+  static Future<int> productCount(String token) async {
+    final body = await _request('GET', '/products?page=0&size=1', token: token);
+    return (body['pagination'] as Map<String, dynamic>)['total_elements'] as int;
+  }
+
   /// Un producto de la página [page] (1-indexed, como la ve la UI) del
   /// listado, para asertar paginación. El backend es 0-indexed.
   static Future<Map<String, dynamic>?> productOnPage(

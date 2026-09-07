@@ -192,6 +192,8 @@ jobs:
                   'price': {'amount_cents': i * 100000, 'currency': 'ARS',
                             'tax_included': True},
                   'height': 1.0, 'width': 1.0, 'length': 1.0, 'weight': 1.0,
+                  # Sin esto queda en 0 y la app clampea la cantidad a 1.
+                  'max_quantity_per_order': 10,
               }, token))
               posid = find_id(call('POST', f'/warehouse/lines/{lid}/positions', {
                   'position_name': f'PE2E{i}', 'maximum_capacity': 500,

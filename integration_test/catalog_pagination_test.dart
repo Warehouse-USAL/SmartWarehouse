@@ -18,12 +18,15 @@ void main() {
     final token = await E2eApi.adminToken();
     const pageSize = 20;
     final created = <String>[];
-    // Crear lo suficiente para garantizar 2 páginas. SKU único por corrida:
-    // el DELETE del teardown es soft y deja el SKU reservado para siempre
-    // (un inactivo no se puede reactivar por PATCH), así que reutilizar SKUs
-    // fijos rompería la segunda corrida.
+    // Crear lo que falte para garantizar 2 páginas según el total ACTUAL del
+    // backend (el seed de CI tiene 3 productos; el local, 16). SKU único por
+    // corrida: el DELETE del teardown es soft y deja el SKU reservado para
+    // siempre (un inactivo no se puede reactivar por PATCH), así que
+    // reutilizar SKUs fijos rompería la segunda corrida.
+    final total = await E2eApi.productCount(token);
+    final needed = (pageSize + 1 - total).clamp(1, 30);
     final runId = DateTime.now().millisecondsSinceEpoch;
-    for (var i = 1; i <= 6; i++) {
+    for (var i = 1; i <= needed; i++) {
       created.add(await E2eApi.createProduct(
         token,
         sku: 'E2E-PAG-$runId-$i',
