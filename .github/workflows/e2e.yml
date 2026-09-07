@@ -31,8 +31,10 @@ jobs:
         working-directory: wh-backend
         run: |
           # Los servicios usan bind mounts en ./data y corren con uids propios
-          # (redpanda: 101); sin permisos abiertos crashloopean en el runner.
-          mkdir -p data
+          # (redpanda: 101); si docker crea los subdirectorios los deja como
+          # root:755 y redpanda muere con 'mkdir failed: Permission denied'.
+          # Hay que crearlos ANTES del up, abiertos.
+          mkdir -p data/redpanda data/mongodb data/minio
           chmod -R 0777 data
           docker compose up -d --build || {
             echo "::group::docker compose ps"
