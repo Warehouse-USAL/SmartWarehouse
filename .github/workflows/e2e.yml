@@ -29,6 +29,12 @@ jobs:
 
       - name: Start backend stack
         working-directory: wh-backend
+        env:
+          # El seed del backend los toma del entorno (localmente viven en el
+          # .env, que no está en el repo). Mismas credenciales que usa la
+          # suite (E2eConfig) y el paso "Verify seed".
+          ADMIN_EMAIL: admin@smartwarehouse.local
+          ADMIN_PASSWORD: changeme
         run: |
           # Los servicios usan bind mounts en ./data y corren con uids propios
           # (redpanda: 101); si docker crea los subdirectorios los deja como
