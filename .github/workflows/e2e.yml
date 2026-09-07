@@ -140,10 +140,11 @@ jobs:
                   raise
 
           def find_id(o):
+              # Los responses usan keys tipo id / id_zone / id_line / id_position.
               if isinstance(o, dict):
-                  v = o.get('id')
-                  if isinstance(v, str):
-                      return v
+                  for k, v in o.items():
+                      if k.startswith('id') and isinstance(v, str):
+                          return v
                   for x in o.values():
                       r = find_id(x)
                       if r:
@@ -157,7 +158,8 @@ jobs:
           # nueva; si no hay, crear una propia.
           zones = call('GET', '/warehouse/zones', token=token)
           zlist = zones.get('zones') or zones.get('data') or []
-          candidates = [z['id'] for z in zlist if 'id' in z]
+          candidates = [find_id(z) for z in zlist]
+          candidates = [c for c in candidates if c]
           lid = None
           for zid in candidates:
               # numero de linea alto para no chocar con las que seedWarehouse
