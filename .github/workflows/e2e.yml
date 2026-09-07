@@ -32,7 +32,10 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-          cache: true
+          # Sin cache: su hashFiles('**/pubspec.lock') barre TODO el workspace
+          # y muere con los archivos root-owned que docker deja bajo
+          # wh-backend/. El SDK se baja en ~2 min, irrelevante para un nightly.
+          cache: false
 
       - name: Activate melos + patrol_cli
         run: |
