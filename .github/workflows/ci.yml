@@ -37,6 +37,15 @@ jobs:
           fi
           echo "Branch name is valid."
 
+  e2e-keys:
+    name: E2E keys consistency
+    needs: [skip-drafts, validate-branch]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toda E2eKey declarada debe usarse en lib/
+        run: bash tool/check_e2e_keys.sh
+
   analyze:
     name: Flutter Analyze
     needs: [skip-drafts, validate-branch]
