@@ -222,6 +222,14 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: patrol test --dart-define=E2E_EMAIL=admin@smartwarehouse.local --dart-define=E2E_PASSWORD=changeme --dart-define=SPLASH_MS=0 || { echo '===== LOGCAT (tail) ====='; adb logcat -d -t 800 | grep -iE 'patrol|flutter|TestRunner|AndroidRuntime|FATAL|Instrumentation' | tail -200; exit 1; }
 
+      # Los post-steps de flutter-action (cache) corren al final y su
+      # hashFiles no puede leer los archivos root-owned que docker dejó en
+      # wh-backend/data: sin esta limpieza el job termina rojo con la suite
+      # verde.
+      - name: Cleanup backend data (root-owned)
+        if: always()
+        run: sudo rm -rf wh-backend/data
+
       - name: Upload test report
         if: always()
         uses: actions/upload-artifact@v4
