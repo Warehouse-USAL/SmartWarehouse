@@ -177,8 +177,13 @@ jobs:
           if not lid:
               zid = find_id(call('POST', '/warehouse/zones',
                                  {'zone_code': 'ZE2E', 'max_allowed_lines': 5}, token))
+              call('PATCH', f'/warehouse/zones/{zid}',
+                   {'is_active': True, 'max_allowed_lines': 5}, token)
               lid = find_id(call('POST', f'/warehouse/zones/{zid}/lines',
                                  {'number_line': 1, 'max_allowed_positions': 10}, token))
+          # Las lineas nuevas nacen inactivas y no aceptan posiciones.
+          call('PATCH', f'/warehouse/lines/{lid}',
+               {'is_active': True, 'max_allowed_positions': 10}, token)
 
           for i in (1, 2, 3):
               pid = find_id(call('POST', '/products', {
