@@ -70,7 +70,66 @@ packages:
     min: 79
   design_system:
     path: packages/design_system
-    min: 0
+    # Medido en 98.4% (599/609) en #169, contra un target de 40%.
+    #
+    # El target bajo no estaba de mas: se puso porque testear este package
+    # "en serio" significaria fijar layout, y esa restriccion se respeto —
+    # no hay una sola asercion sobre padding, radio ni hex. Lo que pasa es
+    # que estos componentes son chicos y sus lineas ejecutables son casi
+    # todas el cuerpo del `build`, asi que montarlos para afirmar un
+    # callback las cubre de arrastre. El numero es efecto de la metrica.
+    #
+    # Ojo con leerlo al reves: lo que esta protegido es lo que enumera el
+    # spec de #169 §6. El resto de las lineas esta ejecutado, no
+    # verificado (§6.2).
+    #
+    # Quedan 10 lineas afuera, de a una o dos en nueve archivos: ramas de
+    # error de carga de imagenes y de callback que el entorno de test no
+    # puede provocar sin un mock que valdria mas que la linea que cubre.
+    min: 97
+    exclude:
+      # --- Archivos que no referencia nadie (spec #169 §5.1) ---
+      #
+      # Calculados por alcanzabilidad transitiva desde los cinco roots reales
+      # del package: el barrel design_system.dart, smart_warehouse_theme.dart,
+      # y los tres componentes que usa `login` (AccessLayout, CustomAppBar,
+      # CustomText). Son 218 lineas ejecutables de codigo que ninguna pantalla
+      # monta.
+      #
+      # Se excluyen y no se borran porque este es un repo compartido y puede
+      # haber ramas sin mergear que los usen. La deuda queda anotada acá para
+      # quien decida removerlos.
+      #
+      # Testearlos seria peor que no hacerlo: CustomTabBar y CustomDropdown son
+      # justo los componentes "con estado interno y callbacks" que pide #169,
+      # asi que fijarian el comportamiento de codigo muerto y se comerian el
+      # presupuesto de la fase sin proteger ninguna pantalla.
+      - "lib/buttons/custom_icon_button.dart"
+      - "lib/buttons/icon_text_button.dart"
+      - "lib/dropdown/custom_dropdown.dart"
+      - "lib/layouts/otp_layout.dart"
+      - "lib/navigation_bar/custom_navigation_bar.dart"
+      - "lib/navigation_bar/navigation_item.dart"
+      - "lib/widgets/base_custom_list.dart"
+      - "lib/widgets/circular_image.dart"
+      - "lib/widgets/custom_tab_bar.dart"
+      - "lib/widgets/custom_tab_bar_list.dart"
+      # Huerfano tambien, pero distinto en naturaleza: es un mixin que **nada
+      # mixea**, y arrastra la dependencia `vibration` — muerta en todo el
+      # monorepo — a la resolucion del workspace y al registro de plugins de
+      # Android e iOS. El spec (§4.2) preferia borrarlo junto con la linea
+      # `vibration: ^2.0.0` del pubspec; queda excluido para que el diff de
+      # #169 sea 100% test-only. Borrarlo o excluirlo da el mismo denominador.
+      - "lib/mixins/vibration.dart"
+      # --- Declaraciones puras (spec #169 §5.2) ---
+      #
+      # 64 lineas de getters que devuelven un TextStyle literal. Afirmar que
+      # f18W500 mide 18 es una constante igual a si misma: el mismo criterio
+      # que el spec original aplico a los adaptadores finos de `commons`.
+      - "lib/theme/themes/smartwarehouse/smart_warehouse_text_styles.dart"
+      # 0 lineas ejecutables; se excluye por consistencia, sin efecto sobre el
+      # numero.
+      - "lib/theme/themes/smartwarehouse/smart_warehouse_colors.dart"
 
 # Fuera del gate:
 # - app shell (lib/ en la raiz): composition root, se cubre por E2E
