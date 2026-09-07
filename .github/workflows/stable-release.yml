@@ -1,10 +1,19 @@
 name: Stable Release
 
+# Trigger por push a master (no pull_request:closed): con ese evento GitHub
+# resuelve el reusable workflow local (backport.yml) contra el merge-ref del
+# PR, que ya no existe despues del merge -> startup_failure (v1.0.0 se
+# publico a mano por esto). El push del merge commit no tiene ese problema.
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches:
       - master
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version a releasear (ej: v1.0.1). Vacio: derivar del ultimo merge.'
+        required: false
+        type: string
 
 # URL del backend a la que apunta el build estable. Configurar el secret
 # API_BASE_URL en el repo. Si está vacío, los builds usan los defaults
@@ -16,10 +25,11 @@ env:
 jobs:
   gate:
     name: Verify release conditions
+    # push: solo merges de beta/ o hotfix/ (gitflow: master no recibe otra cosa).
     if: >
-      github.event.pull_request.merged == true &&
-      (startsWith(github.event.pull_request.head.ref, 'beta/') ||
-       startsWith(github.event.pull_request.head.ref, 'hotfix/'))
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, 'beta/') ||
+      contains(github.event.head_commit.message, 'hotfix/')
     runs-on: ubuntu-latest
     steps:
       - name: Release conditions verified
@@ -117,16 +127,16 @@ jobs:
       - name: Derive stable version tag
         id: tag
         env:
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          INPUT_VERSION: ${{ inputs.version }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
-          BRANCH="$HEAD_REF"
-          if [[ "$BRANCH" == beta/* ]]; then
-            VERSION="${BRANCH#beta/}"
-          elif [[ "$BRANCH" == hotfix/* ]]; then
-            VERSION="${BRANCH#hotfix/}"
+          if [[ -n "$INPUT_VERSION" ]]; then
+            VERSION="${INPUT_VERSION#v}"
           else
-            echo "ERROR: unexpected branch '$BRANCH'" >&2
-            exit 1
+            # El merge commit de master dice "... from <owner>/beta/vX.Y.Z"
+            VERSION=$(echo "$COMMIT_MSG" | grep -oE '(beta|hotfix)/[^ ]+' | head -1 | cut -d/ -f2-)
+            [[ -n "$VERSION" ]] || { echo "ERROR: no pude derivar la version del commit: $COMMIT_MSG" >&2; exit 1; }
+            VERSION="${VERSION#v}"
           fi
           echo "version=v${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Stable version: v${VERSION}"
