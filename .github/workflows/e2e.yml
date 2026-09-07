@@ -17,42 +17,13 @@ jobs:
   e2e-android:
     name: Patrol e2e (Android + backend docker)
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
-      - name: Checkout backend
-        uses: actions/checkout@v4
-        with:
-          repository: Warehouse-USAL/wh-backend
-          path: wh-backend
-
-      - name: Start backend stack
-        working-directory: wh-backend
-        run: |
-          docker compose up -d --build
-          echo "Esperando al backend en :8080..."
-          for i in $(seq 1 60); do
-            if curl -sf -o /dev/null http://localhost:8080/swagger-ui.html; then
-              echo "Backend arriba."
-              exit 0
-            fi
-            sleep 5
-          done
-          echo "ERROR: el backend no levantó en 5 minutos."
-          docker compose logs backend | tail -50
-          exit 1
-
-      - name: Verify seed (admin login)
-        run: |
-          code=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8080/auth/login \
-            -H 'Content-Type: application/json' \
-            -d '{"email":"admin@smartwarehouse.local","password":"changeme"}')
-          if [ "$code" != "200" ]; then
-            echo "ERROR: login del seed devolvió $code (ver docs/e2e-data-contract.md)."
-            exit 1
-          fi
-
+      # El toolchain se instala ANTES de levantar el backend: docker deja
+      # archivos root-owned en wh-backend/data y el hashFiles del cache de
+      # flutter-action no puede leerlos (falla el setup).
       - uses: actions/setup-java@v4
         with:
           java-version: '17'
@@ -61,7 +32,10 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-          cache: true
+          # Sin cache: su hashFiles('**/pubspec.lock') barre TODO el workspace
+          # y muere con los archivos root-owned que docker deja bajo
+          # wh-backend/. El SDK se baja en ~2 min, irrelevante para un nightly.
+          cache: false
 
       - name: Activate melos + patrol_cli
         run: |
@@ -77,14 +51,187 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Checkout backend
+        uses: actions/checkout@v4
+        with:
+          repository: Warehouse-USAL/wh-backend
+          path: wh-backend
+
+      - name: Start backend stack
+        working-directory: wh-backend
+        env:
+          # El seed del backend los toma del entorno (localmente viven en el
+          # .env, que no está en el repo). Mismas credenciales que usa la
+          # suite (E2eConfig) y el paso "Verify seed".
+          ADMIN_EMAIL: admin@smartwarehouse.local
+          ADMIN_PASSWORD: changeme
+        run: |
+          # Los servicios usan bind mounts en ./data y corren con uids propios
+          # (redpanda: 101); si docker crea los subdirectorios los deja como
+          # root:755 y redpanda muere con 'mkdir failed: Permission denied'.
+          # Hay que crearlos ANTES del up, abiertos.
+          mkdir -p data/redpanda data/mongodb data/minio
+          chmod -R 0777 data
+          docker compose up -d --build || {
+            echo "::group::docker compose ps"
+            docker compose ps -a
+            echo "::endgroup::"
+            for svc in redpanda backend mongodb minio; do
+              echo "::group::logs $svc"
+              docker compose logs "$svc" 2>/dev/null | tail -60
+              echo "::endgroup::"
+            done
+            exit 1
+          }
+          echo "Esperando al backend en :8080..."
+          for i in $(seq 1 60); do
+            if curl -sf -o /dev/null http://localhost:8080/swagger-ui.html; then
+              echo "Backend arriba."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "ERROR: el backend no levantó en 5 minutos."
+          docker compose ps -a
+          docker compose logs redpanda 2>/dev/null | tail -60
+          docker compose logs backend 2>/dev/null | tail -60
+          exit 1
+
+      - name: Verify seed (admin login)
+        run: |
+          # El seed corre asíncrono después de que la app abre el puerto:
+          # reintentar hasta 2 minutos antes de declarar el seed roto.
+          for i in $(seq 1 24); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8080/auth/login \
+              -H 'Content-Type: application/json' \
+              -d '{"email":"admin@smartwarehouse.local","password":"changeme"}')
+            if [ "$code" = "200" ]; then
+              echo "Seed OK."
+              exit 0
+            fi
+            echo "login -> $code, reintento $i/24..."
+            sleep 5
+          done
+          echo "ERROR: el login del seed nunca devolvió 200 (ver docs/e2e-data-contract.md)."
+          cd wh-backend && docker compose logs backend 2>/dev/null | tail -60
+          exit 1
+
+      - name: Seed products with stock
+        run: |
+          # El DataInitializer del backend solo seedea admin + warehouse; los
+          # productos que el contrato e2e garantiza (>= 2 activos en ARS con
+          # stock, docs/e2e-data-contract.md) hay que crearlos aca. El stock
+          # se asigna via posiciones del warehouse (PATCH position).
+          python3 - <<'EOF'
+          import json, sys, urllib.request
+
+          BASE = 'http://localhost:8080'
+
+          def call(method, path, body=None, token=None):
+              req = urllib.request.Request(BASE + path, method=method)
+              req.add_header('Content-Type', 'application/json')
+              if token:
+                  req.add_header('Authorization', 'Bearer ' + token)
+              data = json.dumps(body).encode() if body is not None else None
+              try:
+                  with urllib.request.urlopen(req, data) as res:
+                      text = res.read().decode()
+                      print(f'{method} {path} -> {res.status}')
+                      return json.loads(text) if text else {}
+              except urllib.error.HTTPError as e:
+                  print(f'{method} {path} -> {e.code}: {e.read().decode()[:300]}')
+                  raise
+
+          def find_id(o):
+              # Los responses usan keys tipo id / id_zone / id_line / id_position.
+              if isinstance(o, dict):
+                  for k, v in o.items():
+                      if k.startswith('id') and isinstance(v, str):
+                          return v
+                  for x in o.values():
+                      r = find_id(x)
+                      if r:
+                          return r
+              return None
+
+          token = call('POST', '/auth/login', {
+              'email': 'admin@smartwarehouse.local', 'password': 'changeme'})['token']
+
+          # seedWarehouse() ya crea zonas: reutilizar la primera con una linea
+          # nueva; si no hay, crear una propia.
+          zones = call('GET', '/warehouse/zones', token=token)
+          zlist = zones.get('zones') or zones.get('data') or []
+          candidates = [find_id(z) for z in zlist]
+          candidates = [c for c in candidates if c]
+          lid = None
+          for zid in candidates:
+              # numero de linea alto para no chocar con las que seedWarehouse
+              # ya haya creado en la zona.
+              for n in (90, 91, 92):
+                  try:
+                      lid = find_id(call('POST', f'/warehouse/zones/{zid}/lines',
+                                         {'number_line': n,
+                                          'max_allowed_positions': 10}, token))
+                      break
+                  except urllib.error.HTTPError:
+                      continue
+              if lid:
+                  break
+          if not lid:
+              zid = find_id(call('POST', '/warehouse/zones',
+                                 {'zone_code': 'ZE2E', 'max_allowed_lines': 5}, token))
+              call('PATCH', f'/warehouse/zones/{zid}',
+                   {'is_active': True, 'max_allowed_lines': 5}, token)
+              lid = find_id(call('POST', f'/warehouse/zones/{zid}/lines',
+                                 {'number_line': 1, 'max_allowed_positions': 10}, token))
+          # Las lineas nuevas nacen inactivas y no aceptan posiciones.
+          call('PATCH', f'/warehouse/lines/{lid}',
+               {'is_active': True, 'max_allowed_positions': 10}, token)
+
+          for i in (1, 2, 3):
+              pid = find_id(call('POST', '/products', {
+                  'sku': f'SEED-00{i}', 'name': f'Producto seed {i}',
+                  'category': 'TECNOLOGIA',
+                  'price': {'amount_cents': i * 100000, 'currency': 'ARS',
+                            'tax_included': True},
+                  'height': 1.0, 'width': 1.0, 'length': 1.0, 'weight': 1.0,
+                  # Sin esto queda en 0 y la app clampea la cantidad a 1.
+                  'max_quantity_per_order': 10,
+              }, token))
+              posid = find_id(call('POST', f'/warehouse/lines/{lid}/positions', {
+                  'position_name': f'PE2E{i}', 'maximum_capacity': 500,
+                  'size_stock_to_save': 'GRANDE'}, token))
+              call('PATCH', f'/warehouse/positions/{posid}', {
+                  'product_id': pid, 'current_stock': 50, 'is_active': True,
+                  'size_stock_to_save': 'GRANDE'}, token)
+              print(f'SEED-00{i}: producto {pid} con stock 50 en {posid}')
+
+          total = call('GET', '/products?page=0&size=1',
+                       token=token)['pagination']['total_elements']
+          print('Productos totales en el catalogo:', total)
+          assert total >= 2, 'el catalogo sigue con menos de 2 productos'
+          EOF
+
       - name: Run Patrol suite on emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          # API 31: los system images de 34 son pesados para los runners
+          # hosted (2 cores) y cuelgan/pierden tests de instrumentation.
+          api-level: 31
           arch: x86_64
           profile: pixel_6
+          ram-size: 4096M
           disable-animations: true
-          script: patrol test --dart-define=E2E_EMAIL=admin@smartwarehouse.local --dart-define=E2E_PASSWORD=changeme --dart-define=SPLASH_MS=0
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: patrol test --dart-define=E2E_EMAIL=admin@smartwarehouse.local --dart-define=E2E_PASSWORD=changeme --dart-define=SPLASH_MS=0 || { echo '===== LOGCAT (tail) ====='; adb logcat -d -t 800 | grep -iE 'patrol|flutter|TestRunner|AndroidRuntime|FATAL|Instrumentation' | tail -200; exit 1; }
+
+      # Los post-steps de flutter-action (cache) corren al final y su
+      # hashFiles no puede leer los archivos root-owned que docker dejó en
+      # wh-backend/data: sin esta limpieza el job termina rojo con la suite
+      # verde.
+      - name: Cleanup backend data (root-owned)
+        if: always()
+        run: sudo rm -rf wh-backend/data
 
       - name: Upload test report
         if: always()
