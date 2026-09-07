@@ -113,6 +113,46 @@ jobs:
           cd wh-backend && docker compose logs backend 2>/dev/null | tail -60
           exit 1
 
+      - name: Seed products with stock
+        run: |
+          # El DataInitializer del backend solo seedea admin + warehouse; los
+          # productos que el contrato e2e garantiza (>= 2 activos en ARS con
+          # stock, docs/e2e-data-contract.md) hay que crearlos acá. El stock
+          # se asigna vía posiciones del warehouse (PATCH position).
+          set -e
+          TOKEN=$(curl -sf -X POST http://localhost:8080/auth/login \
+            -H 'Content-Type: application/json' \
+            -d '{"email":"admin@smartwarehouse.local","password":"changeme"}' \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
+          auth=(-H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json')
+          jqid(){ python3 -c '
+          import json,sys
+          def find(o):
+            if isinstance(o,dict):
+              if "id" in o and isinstance(o["id"],str): return o["id"]
+              for v in o.values():
+                r=find(v)
+                if r: return r
+            return None
+          print(find(json.load(sys.stdin)))'; }
+          ZID=$(curl -sf "${auth[@]}" -X POST http://localhost:8080/warehouse/zones \
+            -d '{"zone_code":"ZE2E","max_allowed_lines":5}' | jqid)
+          LID=$(curl -sf "${auth[@]}" -X POST "http://localhost:8080/warehouse/zones/$ZID/lines" \
+            -d '{"number_line":1,"max_allowed_positions":10}' | jqid)
+          for i in 1 2 3; do
+            PID=$(curl -sf "${auth[@]}" -X POST http://localhost:8080/products \
+              -d "{\"sku\":\"SEED-00$i\",\"name\":\"Producto seed $i\",\"category\":\"TECNOLOGIA\",\"price\":{\"amount_cents\":$((i*100000)),\"currency\":\"ARS\",\"tax_included\":true},\"height\":1.0,\"width\":1.0,\"length\":1.0,\"weight\":1.0}" | jqid)
+            POSID=$(curl -sf "${auth[@]}" -X POST "http://localhost:8080/warehouse/lines/$LID/positions" \
+              -d "{\"position_name\":\"PE2E$i\",\"maximum_capacity\":500,\"size_stock_to_save\":\"GRANDE\"}" | jqid)
+            curl -sf "${auth[@]}" -X PATCH "http://localhost:8080/warehouse/positions/$POSID" \
+              -d "{\"product_id\":\"$PID\",\"current_stock\":50,\"is_active\":true,\"size_stock_to_save\":\"GRANDE\"}" > /dev/null
+            echo "Producto SEED-00$i ($PID) con stock 50."
+          done
+          count=$(curl -sf "${auth[@]}" "http://localhost:8080/products?page=0&size=1" \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["pagination"]["total_elements"])')
+          echo "Productos totales en el catálogo: $count"
+          [ "$count" -ge 2 ]
+
       - name: Run Patrol suite on emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
