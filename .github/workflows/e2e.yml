@@ -212,10 +212,14 @@ jobs:
       - name: Run Patrol suite on emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          # API 31: los system images de 34 son pesados para los runners
+          # hosted (2 cores) y cuelgan/pierden tests de instrumentation.
+          api-level: 31
           arch: x86_64
           profile: pixel_6
+          ram-size: 4096M
           disable-animations: true
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: patrol test --dart-define=E2E_EMAIL=admin@smartwarehouse.local --dart-define=E2E_PASSWORD=changeme --dart-define=SPLASH_MS=0 || { echo '===== LOGCAT (tail) ====='; adb logcat -d -t 800 | grep -iE 'patrol|flutter|TestRunner|AndroidRuntime|FATAL|Instrumentation' | tail -200; exit 1; }
 
       - name: Upload test report
