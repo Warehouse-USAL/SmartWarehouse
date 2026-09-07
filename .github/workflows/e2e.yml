@@ -30,7 +30,21 @@ jobs:
       - name: Start backend stack
         working-directory: wh-backend
         run: |
-          docker compose up -d --build
+          # Los servicios usan bind mounts en ./data y corren con uids propios
+          # (redpanda: 101); sin permisos abiertos crashloopean en el runner.
+          mkdir -p data
+          chmod -R 0777 data
+          docker compose up -d --build || {
+            echo "::group::docker compose ps"
+            docker compose ps -a
+            echo "::endgroup::"
+            for svc in redpanda backend mongodb minio; do
+              echo "::group::logs $svc"
+              docker compose logs "$svc" 2>/dev/null | tail -60
+              echo "::endgroup::"
+            done
+            exit 1
+          }
           echo "Esperando al backend en :8080..."
           for i in $(seq 1 60); do
             if curl -sf -o /dev/null http://localhost:8080/swagger-ui.html; then
@@ -40,7 +54,9 @@ jobs:
             sleep 5
           done
           echo "ERROR: el backend no levantó en 5 minutos."
-          docker compose logs backend | tail -50
+          docker compose ps -a
+          docker compose logs redpanda 2>/dev/null | tail -60
+          docker compose logs backend 2>/dev/null | tail -60
           exit 1
 
       - name: Verify seed (admin login)
