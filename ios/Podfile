@@ -1,5 +1,5 @@
 # Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+# platform :ios, '15.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -35,10 +35,14 @@ target 'Runner' do
     inherit! :search_paths
   end
 
-  # Patrol e2e tests (see README "E2E tests" — the RunnerUITests target must
-  # exist in Xcode for this block to take effect).
-  target 'RunnerUITests' do
-    inherit! :complete
+  # Patrol e2e tests (see README "E2E tests"). El target RunnerUITests se
+  # crea a mano en Xcode; si no existe en esta máquina, se omite para que
+  # `pod install` (y flutter run en iOS) no fallen.
+  project_targets = Xcodeproj::Project.open('Runner.xcodeproj').targets.map(&:name)
+  if project_targets.include?('RunnerUITests')
+    target 'RunnerUITests' do
+      inherit! :complete
+    end
   end
 end
 

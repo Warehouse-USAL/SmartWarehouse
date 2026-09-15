@@ -5,7 +5,10 @@ reglas siguen los tests que crean o modifican datos.
 
 ## Qué garantiza el seed del backend
 
-El stack local (`make up-dev` en `wh-backend`) seedea:
+Desde 2026-09, el seed es **oficial del backend**: `DemoDataSeeder` (activado
+con `SEED_DEMO=true`, implementación de wh-backend#111). En CI el workflow lo
+activa y solo **verifica** el contrato; ya no crea productos por API. El stack
+local (`make up-dev` en `wh-backend`, con `SEED_DEMO=true` en el `.env`) seedea:
 
 | Garantía | Valor | Quién depende |
 |---|---|---|
