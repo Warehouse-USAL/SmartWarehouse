@@ -58,7 +58,17 @@ packages:
     min: 23
   order_tracking:
     path: packages/features/order_tracking
-    min: 32
+    # Medido en 84.8% (436/514) en #164, contra un target de 80%.
+    # Floor sembrado un punto abajo para dejar margen de ratchet, igual que
+    # bottom_navigation_bar (#168) y design_system (#169).
+    #
+    # Lo que queda afuera son los dos loops de reconexion WS de
+    # RemoteOrderTrackingRepository (_connectWithRetry y
+    # _watchStatusChangesLoop): `while` infinitos sobre el WebSocketChannel
+    # real y Future.delayed real, sin seam para inyectar un canal falso.
+    # Cubrirlos pide o un parametro de factory en produccion o fake_async,
+    # que el repo no usa en ningun lado. Ver docs/superpowers/plans/2026-09-16-order-tracking-coverage.md
+    min: 84
   profile:
     path: packages/features/profile
     min: 0
