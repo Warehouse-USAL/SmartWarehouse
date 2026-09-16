@@ -1,14 +1,11 @@
-import 'dart:io';
-
-import 'package:commons/commons.dart';
+import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+// ignore: depend_on_referenced_packages
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:order_tracking/src/domain/entities/order_status_change.dart';
-import 'package:order_tracking/src/presentation/bloc/order_notification_cubit.dart';
 import 'package:order_tracking/src/presentation/widgets/notification_bell.dart';
-import 'package:orders/orders.dart';
 import 'package:test_support/test_support.dart';
 
 import '../../support/fake_order_tracking_repository.dart';
@@ -26,14 +23,14 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(FakeBuildContext());
-    // `SwText.body` (el numero del badge) se construye sobre `google_fonts`,
-    // que baja la tipografia por `package:http` en el primer uso. `order_tracking`
-    // no depende de `google_fonts` directamente (es transitivo via
-    // `design_system`), asi que en vez de importarlo solo para apagar
-    // `GoogleFonts.config.allowRuntimeFetching` cortamos la red a nivel
-    // `dart:io`: sin esto el fetch cuelga el test esperando una respuesta que
-    // nunca llega en este entorno.
-    HttpOverrides.global = _NoNetworkHttpOverrides();
+    // `SwText.body` (el numero del badge) se construye sobre `google_fonts`;
+    // sin apagar `allowRuntimeFetching` el widget intenta bajar la tipografia
+    // por red durante el test (mismo patron que
+    // `design_system/test/support/harness.dart` y
+    // `bottom_navigation_bar/test/support/harness.dart`). `order_tracking` no
+    // declara `google_fonts` en su propio pubspec (es transitivo via
+    // `design_system`), de ahi el `ignore` en el import de arriba.
+    GoogleFonts.config.allowRuntimeFetching = false;
   });
 
   setUp(() async {
@@ -112,7 +109,12 @@ void main() {
     await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     await tester.pump();
 
+    // `find.text('3')` por si sola pasaria igual si quedara, por ejemplo, 1
+    // no-leida de las 3 (mostraria '1', no '3'). `Positioned` es el badge
+    // completo -- solo existe en el arbol cuando `unreadCount > 0` -- asi que
+    // su ausencia es la prueba real de que no quedo ningun digito.
     expect(find.text('3'), findsNothing);
+    expect(find.byType(Positioned), findsNothing);
   });
 
   testWidgets('el tap navega a notificaciones', (tester) async {
@@ -123,32 +125,10 @@ void main() {
 
     verify(() => nav.pushNamed(
           any(),
-          routeName: any(named: 'routeName'),
-          disableAnimation: any(named: 'disableAnimation'),
+          routeName: Routes.notifications,
+          disableAnimation: false,
         )).called(1);
   });
 }
 
 class FakeBuildContext extends Fake implements BuildContext {}
-
-/// Fuerza cualquier request HTTP a fallar de inmediato, sin tocar la red.
-///
-/// `google_fonts` usa `package:http`, que sobre `dart:io` delega la creacion
-/// de su `HttpClient` en `HttpOverrides.current` — interceptando ahi evitamos
-/// el intento real de conexion (y el cuelgue que causaba) sin necesitar
-/// `google_fonts` como dependencia directa de este package.
-class _NoNetworkHttpOverrides extends HttpOverrides {
-  @override
-  HttpClient createHttpClient(SecurityContext? context) => _BlockedHttpClient();
-}
-
-class _BlockedHttpClient implements HttpClient {
-  @override
-  Future<HttpClientRequest> openUrl(String method, Uri url) =>
-      Future<HttpClientRequest>.error(
-        const SocketException('red deshabilitada en los tests'),
-      );
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
