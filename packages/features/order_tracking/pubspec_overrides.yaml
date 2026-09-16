@@ -1,4 +1,4 @@
-# melos_managed_dependency_overrides: catalog_test_builders,orders_test_builders
+# melos_managed_dependency_overrides: catalog_test_builders,orders_test_builders,test_support
 # melos_managed_dependency_overrides: auth,bottom_navigation_bar,cart,catalog,commons,core,design_system,login,orders,token_repository,profile
 dependency_overrides:
   auth:
@@ -25,5 +25,7 @@ dependency_overrides:
     path: ..\\..\\orders_test_builders
   profile:
     path: ../profile
+  test_support:
+    path: ..\\..\\test_support
   token_repository:
     path: ../repositories/token_repository
