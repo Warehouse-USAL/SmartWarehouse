@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:order_tracking/src/domain/entities/order_status_change.dart';
 import 'package:order_tracking/src/presentation/bloc/order_notification_cubit.dart';
-import 'package:order_tracking/src/presentation/bloc/order_notification_state.dart';
 import 'package:orders/orders.dart';
 
 import '../../support/fake_order_tracking_repository.dart';
