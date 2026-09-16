@@ -41,13 +41,19 @@ class _ProfilePageState extends State<ProfilePage> {
           bloc: cubit,
           builder: (context, state) {
             if (state is ProfileLoading) {
-              return const Center(child: CircularProgressIndicator());
+              // Spinner del design system: el CircularProgressIndicator pelado
+              // renderiza la rueda azul default de Material, fuera de la paleta.
+              return const Center(child: SwLoadingSpinner());
             }
             if (state is ProfileError) {
               return _ErrorView(message: state.message, onRetry: cubit.load);
             }
             final ready = state as ProfileReady;
-            return _ProfileContent(state: ready, cubit: cubit);
+            return RefreshIndicator(
+              color: SwColors.yellow,
+              onRefresh: cubit.load,
+              child: _ProfileContent(state: ready, cubit: cubit),
+            );
           },
         ),
       ),
@@ -64,6 +70,7 @@ class _ProfileContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         SliverToBoxAdapter(
           child: Padding(
@@ -123,17 +130,7 @@ class _ProfileAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(
-          child: Text(
-            'Perfil',
-            style: SwText.display(size: 26),
-          ),
-        ),
-        SwIconButton(
-          icon: Icons.settings_outlined,
-          tooltip: 'Configuración',
-          onPressed: () {},
-        ),
+        Expanded(child: Text('Perfil', style: SwText.display(size: 26))),
       ],
     );
   }

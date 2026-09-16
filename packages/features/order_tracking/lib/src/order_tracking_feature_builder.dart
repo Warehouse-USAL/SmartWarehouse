@@ -46,6 +46,11 @@ class OrderTrackingFeatureBuilder {
   static void startNotifications() =>
       Injector.i.resolve<OrderNotificationCubit>().start();
 
+  /// Navegación del botón "Ver" del snackbar. La setea la capa de aplicación
+  /// con el router real: el contexto del scaffoldMessengerKey vive FUERA del
+  /// árbol de Beamer, así que navegar desde acá con ese contexto no funciona.
+  static void Function(String orderId)? onOpenOrder;
+
   /// Icono de campana con badge — usar en app bars donde quiera mostrarse
   /// el indicador de notificaciones pendientes.
   static Widget buildNotificationBell() => const NotificationBell();
@@ -57,20 +62,26 @@ class OrderTrackingFeatureBuilder {
   /// del WS. Muestra una SnackBar a través del scaffoldMessengerKey global —
   /// no depende del árbol de widgets, así que se puede llamar de cualquier
   /// rincón sin tocar el navigator.
+  // Último evento mostrado: si el backend repite order.updated con el mismo
+  // estado (telemetría, re-emisiones del WS), cada show renovaba el snackbar
+  // y parecía que no se iba nunca. Un (orden, estado) idéntico no re-muestra.
+  static String? _lastShownKey;
+
   static void _showOrderSnackBar(OrderStatusChange change) {
     final messenger = scaffoldMessengerKey.currentState;
     if (messenger == null) return;
     final orderId = change.orderId;
     final newStatus = change.newStatus;
+    final key = '$orderId:$newStatus';
+    if (key == _lastShownKey) return;
+    _lastShownKey = key;
     messenger.clearSnackBars();
     messenger.showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
         backgroundColor: SwColors.text,
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 5),
         content: Row(
           children: [
@@ -114,12 +125,8 @@ class OrderTrackingFeatureBuilder {
           label: 'Ver',
           textColor: SwColors.yellow,
           onPressed: () {
-            final ctx = scaffoldMessengerKey.currentContext;
-            if (ctx == null) return;
-            Injector.i.resolve<NavigationHelper>().pushNamed(
-                  ctx,
-                  routeName: Routes.orderDetail(orderId),
-                );
+            messenger.hideCurrentSnackBar();
+            onOpenOrder?.call(orderId);
           },
         ),
       ),
@@ -127,11 +134,11 @@ class OrderTrackingFeatureBuilder {
   }
 
   static String _statusLabel(OrderStatus status) => switch (status) {
-        OrderStatus.pending => 'Pendiente',
-        OrderStatus.inProgress => 'En progreso',
-        OrderStatus.completed => 'Completado',
-        OrderStatus.cancelled => 'Cancelado',
-      };
+    OrderStatus.pending => 'Pendiente',
+    OrderStatus.inProgress => 'En progreso',
+    OrderStatus.completed => 'Completado',
+    OrderStatus.cancelled => 'Cancelado',
+  };
 
   static Widget buildOrderListPage() =>
       OrderListPage(cubit: Injector.i.resolve<OrderListCubit>());

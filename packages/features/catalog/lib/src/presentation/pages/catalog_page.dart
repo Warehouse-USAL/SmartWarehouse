@@ -31,8 +31,10 @@ class _CatalogPageState extends State<CatalogPage> {
     final cubit = widget.cubit;
     return Scaffold(
       backgroundColor: SwColors.white,
-      bottomNavigationBar:
-          BottomNavigationBarFeatureBuilder.build(context, const NavigationBarOption.products()),
+      bottomNavigationBar: BottomNavigationBarFeatureBuilder.build(
+        context,
+        const NavigationBarOption.products(),
+      ),
       body: SafeArea(
         bottom: false,
         child: BlocBuilder<CatalogCubit, CatalogState>(
@@ -58,7 +60,13 @@ class _CatalogPageState extends State<CatalogPage> {
                       onSelected: cubit.selectCategory,
                     ),
                   ),
-                Expanded(child: _Results(cubit: cubit, state: state, onProductTap: _onProductTap)),
+                Expanded(
+                  child: _Results(
+                    cubit: cubit,
+                    state: state,
+                    onProductTap: _onProductTap,
+                  ),
+                ),
               ],
             );
           },
@@ -69,9 +77,9 @@ class _CatalogPageState extends State<CatalogPage> {
 
   void _onProductTap(BuildContext context, String productId) {
     Injector.i.resolve<NavigationHelper>().pushNamed(
-          context,
-          routeName: Routes.catalogDetail(productId),
-        );
+      context,
+      routeName: Routes.catalogDetail(productId),
+    );
   }
 }
 
@@ -157,7 +165,9 @@ class _Results extends StatelessWidget {
     final products = ready.products;
     final showSkeletons = ready.isLoadingMore;
     final showErrorFooter = ready.loadMoreError != null && !ready.isLoadingMore;
-    final footerSlots = (showSkeletons || showErrorFooter) ? _footerSlotCount : 0;
+    final footerSlots = (showSkeletons || showErrorFooter)
+        ? _footerSlotCount
+        : 0;
     final itemCount = products.length + footerSlots;
 
     final resultText = ready.hasNext
@@ -170,7 +180,10 @@ class _Results extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
           child: Row(
             children: [
-              Text(resultText, style: SwText.body(size: 12, color: SwColors.text3)),
+              Text(
+                resultText,
+                style: SwText.body(size: 12, color: SwColors.text3),
+              ),
             ],
           ),
         ),
@@ -178,40 +191,56 @@ class _Results extends StatelessWidget {
           child: products.isEmpty && !ready.isLoadingMore
               ? const SwEmptyView(
                   title: 'No se encontraron productos',
-                  message: 'Probá ajustando los filtros o buscando otro término.',
+                  message:
+                      'Probá ajustando los filtros o buscando otro término.',
                 )
-              : GridView.builder(
-                  controller: cubit.scrollController,
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.62,
-                  ),
-                  itemCount: itemCount,
-                  itemBuilder: (context, index) {
-                    if (index < products.length) {
-                      final product = products[index];
-                      final tinted = index % 5 == 0;
-                      return ProductCard(
-                        key: E2eKeys.productCard(product.id),
-                        product: product,
-                        tinted: tinted,
-                        onTap: () => onProductTap(context, product.id),
-                      );
-                    }
-                    if (showErrorFooter) {
-                      return Center(
-                        child: TextButton(
-                          onPressed: cubit.retryLoadMore,
-                          child: Text('Reintentar',
-                              style: SwText.body(size: 13, color: SwColors.link, weight: FontWeight.w700)),
+              // Pull-to-refresh: el stock/precio puede cambiar del lado del
+              // backend mientras se navega; load() re-trae la página 1 con
+              // los filtros vigentes.
+              : RefreshIndicator(
+                  color: SwColors.yellow,
+                  onRefresh: cubit.load,
+                  child: GridView.builder(
+                    controller: cubit.scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.62,
                         ),
-                      );
-                    }
-                    return const ProductCardSkeleton();
-                  },
+                    itemCount: itemCount,
+                    itemBuilder: (context, index) {
+                      if (index < products.length) {
+                        final product = products[index];
+                        final tinted = index % 5 == 0;
+                        return ProductCard(
+                          key: E2eKeys.productCard(product.id),
+                          product: product,
+                          tinted: tinted,
+                          onTap: () => onProductTap(context, product.id),
+                        );
+                      }
+                      if (showErrorFooter) {
+                        return Center(
+                          child: TextButton(
+                            onPressed: cubit.retryLoadMore,
+                            child: Text(
+                              'Reintentar',
+                              style: SwText.body(
+                                size: 13,
+                                color: SwColors.link,
+                                weight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      return const ProductCardSkeleton();
+                    },
+                  ),
                 ),
         ),
       ],

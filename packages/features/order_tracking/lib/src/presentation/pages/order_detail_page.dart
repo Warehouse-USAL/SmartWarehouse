@@ -6,7 +6,11 @@ import 'package:order_tracking/src/domain/entities/order_item_detail.dart';
 import 'package:order_tracking/src/presentation/widgets/order_status_timeline.dart';
 
 class OrderDetailPage extends StatelessWidget {
-  const OrderDetailPage({required this.cubit, required this.orderId, super.key});
+  const OrderDetailPage({
+    required this.cubit,
+    required this.orderId,
+    super.key,
+  });
 
   final OrderDetailCubit cubit;
   final String orderId;
@@ -16,8 +20,9 @@ class OrderDetailPage extends StatelessWidget {
     return BlocBuilder<OrderDetailCubit, OrderDetailState>(
       bloc: cubit,
       builder: (context, state) {
-        final placedDate =
-            state is OrderDetailReady ? _formatDate(state.order.createdAt) : null;
+        final placedDate = state is OrderDetailReady
+            ? _formatDate(state.order.createdAt)
+            : null;
 
         return BottomNavigationBarFeatureBuilder.buildScaffold(
           context,
@@ -40,33 +45,18 @@ class OrderDetailPage extends StatelessWidget {
                 ],
               ],
             ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: SwColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.help_outline_rounded,
-                    size: 20,
-                    color: SwColors.text,
-                  ),
-                ),
-              ),
-            ],
           ),
           child: switch (state) {
             OrderDetailLoading() => const Center(child: SwLoadingSpinner()),
             OrderDetailError(:final message) => SwErrorView(
-                message: message,
-                onRetry: () => cubit.load(orderId),
-              ),
-            OrderDetailReady(:final order, :final items) =>
-              _DetailContent(order: order, items: items),
+              message: message,
+              onRetry: () => cubit.load(orderId),
+            ),
+            OrderDetailReady(:final order, :final items) => RefreshIndicator(
+              color: SwColors.yellow,
+              onRefresh: () async => cubit.load(orderId),
+              child: _DetailContent(order: order, items: items),
+            ),
           },
         );
       },
@@ -83,6 +73,7 @@ class _DetailContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       children: [
         Padding(
@@ -200,7 +191,11 @@ class _StripedPlaceholderPainter extends CustomPainter {
 
     const step = 8.0;
     for (double i = -size.height; i < size.width + size.height; i += step) {
-      canvas.drawLine(Offset(i, 0), Offset(i + size.height, size.height), stripe);
+      canvas.drawLine(
+        Offset(i, 0),
+        Offset(i + size.height, size.height),
+        stripe,
+      );
     }
   }
 

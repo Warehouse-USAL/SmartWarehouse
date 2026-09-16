@@ -6,58 +6,55 @@ import 'package:smart_warehouse/application/navigation/guards/auth/authenticated
 import 'package:smart_warehouse/application/navigation/guards/auth/not_authenticated_guard.dart';
 
 class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
+  // Cacheado: cada BeamerDelegate() nuevo es un router distinto — quien
+  // resuelva el helper después de que la app montó el suyo navegaría sobre
+  // un router fantasma (así estaba roto el "Ver" del snackbar de órdenes).
   @override
-  BeamerDelegate get delegate => BeamerDelegate(
-        locationBuilder: RoutesLocationBuilder(
-          routes: _buildRoutes(),
-        ).call,
-        guards: [
-          AuthenticatedGuard().guard,
-          NotAuthenticatedGuard().guard,
-        ],
-        notFoundPage: _buildNotFoundPage('not-found'),
-        initialPath: Routes.login,
-      );
+  late final BeamerDelegate delegate = BeamerDelegate(
+    locationBuilder: RoutesLocationBuilder(routes: _buildRoutes()).call,
+    guards: [AuthenticatedGuard().guard, NotAuthenticatedGuard().guard],
+    notFoundPage: _buildNotFoundPage('not-found'),
+    initialPath: Routes.login,
+  );
 
   BeamPage _buildNotFoundPage(String route) {
     return _beamerPage(
       title: 'Not Found',
       key: 'not-found',
-      child: const Scaffold(
-        body: Center(child: Text('404 - Page not found')),
-      ),
+      child: const Scaffold(body: Center(child: Text('404 - Page not found'))),
     );
   }
 
-  Map<Pattern, dynamic Function(BuildContext, BeamState, Object?)> _buildRoutes() {
+  Map<Pattern, dynamic Function(BuildContext, BeamState, Object?)>
+  _buildRoutes() {
     return {
       Routes.login: (_, __, ___) => _beamerPage(
-            title: 'Login',
-            key: 'login',
-            child: LoginFeatureBuilder.buildPage(
-              onLoginSuccess: (context, tokens) async {
-                await AuthFeatureBuilder.login(
-                  token: tokens.accessToken,
-                  refreshToken: tokens.refreshToken,
-                );
-              },
-            ),
-          ),
+        title: 'Login',
+        key: 'login',
+        child: LoginFeatureBuilder.buildPage(
+          onLoginSuccess: (context, tokens) async {
+            await AuthFeatureBuilder.login(
+              token: tokens.accessToken,
+              refreshToken: tokens.refreshToken,
+            );
+          },
+        ),
+      ),
       Routes.profile: (_, __, ___) => _beamerPage(
-            title: 'Perfil',
-            key: 'profile',
-            child: ProfileFeatureBuilder.buildProfilePage(),
-          ),
+        title: 'Perfil',
+        key: 'profile',
+        child: ProfileFeatureBuilder.buildProfilePage(),
+      ),
       Routes.profileEditAddress: (_, __, ___) => _beamerPage(
-            title: 'Dirección',
-            key: 'profile-edit-address',
-            child: ProfileFeatureBuilder.buildEditAddressPage(),
-          ),
+        title: 'Dirección',
+        key: 'profile-edit-address',
+        child: ProfileFeatureBuilder.buildEditAddressPage(),
+      ),
       Routes.catalog: (_, __, ___) => _beamerPage(
-            title: 'Catálogo',
-            key: 'catalog',
-            child: CatalogFeatureBuilder.buildCatalogPage(),
-          ),
+        title: 'Catálogo',
+        key: 'catalog',
+        child: CatalogFeatureBuilder.buildCatalogPage(),
+      ),
       Routes.catalogDetailPattern: (_, state, __) {
         final id = state.pathParameters['id'] ?? '';
         return _beamerPage(
@@ -70,10 +67,10 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
         );
       },
       Routes.cart: (_, __, ___) => _beamerPage(
-            title: 'Carrito',
-            key: 'cart',
-            child: CartFeatureBuilder.buildCartPage(),
-          ),
+        title: 'Carrito',
+        key: 'cart',
+        child: CartFeatureBuilder.buildCartPage(),
+      ),
       Routes.orderSuccessPattern: (_, state, __) {
         final id = state.pathParameters['id'] ?? '';
         return _beamerPage(
@@ -83,10 +80,10 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
         );
       },
       Routes.orders: (_, __, ___) => _beamerPage(
-            title: 'Mis órdenes',
-            key: 'orders',
-            child: OrderTrackingFeatureBuilder.buildOrderListPage(),
-          ),
+        title: 'Mis órdenes',
+        key: 'orders',
+        child: OrderTrackingFeatureBuilder.buildOrderListPage(),
+      ),
       Routes.orderDetailPattern: (_, state, __) {
         final id = state.pathParameters['id'] ?? '';
         return _beamerPage(
@@ -96,10 +93,10 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
         );
       },
       Routes.notifications: (_, __, ___) => _beamerPage(
-            title: 'Notificaciones',
-            key: 'notifications',
-            child: OrderTrackingFeatureBuilder.buildNotificationsPage(),
-          ),
+        title: 'Notificaciones',
+        key: 'notifications',
+        child: OrderTrackingFeatureBuilder.buildNotificationsPage(),
+      ),
     };
   }
 
@@ -115,11 +112,6 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
     // 'Failed assertion: _debugLocked && !_debugUpdatingPage'.
     // El upgrade check, si se reactivara, debería ir al root de la app
     // (en MaterialApp.builder), NO envolviendo cada page.
-    return BeamPage(
-      title: title,
-      key: ValueKey(key),
-      name: key,
-      child: child,
-    );
+    return BeamPage(title: title, key: ValueKey(key), name: key, child: child);
   }
 }

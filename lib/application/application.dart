@@ -15,7 +15,9 @@ class SmartWarehouseApp extends StatefulWidget {
 }
 
 class _SmartWarehouseAppState extends State<SmartWarehouseApp> {
-  final _routerDelegate = Injector.i.resolve<NavigationConfigHelper<BeamerDelegate>>().delegate;
+  final _routerDelegate = Injector.i
+      .resolve<NavigationConfigHelper<BeamerDelegate>>()
+      .delegate;
   bool _showSplashMinTimer = true;
   bool _splashDismissed = false;
 
@@ -26,13 +28,26 @@ class _SmartWarehouseAppState extends State<SmartWarehouseApp> {
   @override
   void initState() {
     super.initState();
+    // El "Ver" del snackbar de órdenes navega con el router real de la app;
+    // el contexto del scaffoldMessenger queda fuera del árbol de Beamer.
+    OrderTrackingFeatureBuilder.onOpenOrder = (orderId) {
+      final ctx = _navigatorContext;
+      if (ctx == null) return;
+      Injector.i.resolve<NavigationHelper>().pushNamed(
+        ctx,
+        routeName: Routes.orderDetail(orderId),
+      );
+    };
     Timer(const Duration(milliseconds: _splashMs), () {
       setState(() => _showSplashMinTimer = false);
       _removeSplashIfNeeded();
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _removeSplashIfNeeded();
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.top]);
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual,
+        overlays: [SystemUiOverlay.top],
+      );
       SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
     });
   }
@@ -91,5 +106,6 @@ class _SmartWarehouseAppState extends State<SmartWarehouseApp> {
     OrderTrackingFeatureBuilder.startNotifications();
   }
 
-  BuildContext? get _navigatorContext => _routerDelegate.navigatorKey.currentContext;
+  BuildContext? get _navigatorContext =>
+      _routerDelegate.navigatorKey.currentContext;
 }

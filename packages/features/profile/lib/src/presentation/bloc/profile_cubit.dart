@@ -14,7 +14,11 @@ class ProfileCubit extends Cubit<ProfileState> {
   final ProfileRepository _repository;
 
   Future<void> load() async {
-    emit(const ProfileLoading());
+    // Refresh silencioso: si ya hay datos, se mantienen en pantalla mientras
+    // se re-fetchea — la rueda de carga solo aparece en la primera entrada.
+    if (state is! ProfileReady) {
+      emit(const ProfileLoading());
+    }
 
     final results = await Future.wait([
       _repository.getProfile(),
@@ -29,8 +33,9 @@ class ProfileCubit extends Cubit<ProfileState> {
       (failure) =>
           emit(ProfileError(failure.message ?? 'Error al cargar el perfil')),
       (user) => ordersResult.fold(
-        (failure) =>
-            emit(ProfileError(failure.message ?? 'Error al cargar los pedidos')),
+        (failure) => emit(
+          ProfileError(failure.message ?? 'Error al cargar los pedidos'),
+        ),
         (orders) {
           final list = orders as List<OrderSummary>;
           final composed = _composeStats(user as ProfileUser, list);
@@ -50,21 +55,20 @@ class ProfileCubit extends Cubit<ProfileState> {
       address: address,
     );
     if (isClosed) return false;
-    return result.fold(
-      (_) => false,
-      (updated) {
-        final composed = _composeStats(updated, current.orders);
-        emit(ProfileReady(user: composed, orders: current.orders));
-        return true;
-      },
-    );
+    return result.fold((_) => false, (updated) {
+      final composed = _composeStats(updated, current.orders);
+      emit(ProfileReady(user: composed, orders: current.orders));
+      return true;
+    });
   }
 
   ProfileUser _composeStats(ProfileUser user, List<OrderSummary> orders) {
     final open = orders
-        .where((o) =>
-            o.status != OrderStatus.delivered &&
-            o.status != OrderStatus.cancelled)
+        .where(
+          (o) =>
+              o.status != OrderStatus.delivered &&
+              o.status != OrderStatus.cancelled,
+        )
         .length;
     // "Gastado este mes": solo órdenes del mes en curso, y solo si todas
     // tienen total confiable en la misma moneda. Si no, null → "—".
@@ -79,7 +83,8 @@ class ProfileCubit extends Cubit<ProfileState> {
         continue;
       }
       final total = o.total;
-      if (total == null || (spent != null && total.currency != spent.currency)) {
+      if (total == null ||
+          (spent != null && total.currency != spent.currency)) {
         reliable = false;
         break;
       }
