@@ -9,6 +9,7 @@ environment:
 dependencies:
   catalog:
     path: ../features/catalog
+  dartz: ^0.10.1
   flutter:
     sdk: flutter
 
