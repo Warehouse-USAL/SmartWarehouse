@@ -23,13 +23,13 @@ void main() {
   setUp(() => repo = FakeOrderTrackingRepository());
   tearDown(() => repo.dispose());
 
-  test('arranca vacio y no escucha hasta que se llama start', () {
+  test('arranca vacio y no escucha hasta que se llama start', () async {
     final cubit = OrderNotificationCubit(repo);
 
     expect(cubit.state.notifications, isEmpty);
     expect(cubit.state.lastReceived, isNull);
 
-    cubit.close();
+    await cubit.close();
   });
 
   test('emite una notificacion por cada cambio del WS', () async {

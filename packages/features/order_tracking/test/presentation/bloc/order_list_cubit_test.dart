@@ -24,12 +24,12 @@ void main() {
 
   OrderListCubit build() => OrderListCubit(repo, catalog);
 
-  test('el estado inicial es OrderListLoading', () {
+  test('el estado inicial es OrderListLoading', () async {
     final cubit = build();
 
     expect(cubit.state, isA<OrderListLoading>());
 
-    cubit.close();
+    await cubit.close();
   });
 
   blocTest<OrderListCubit, OrderListState>(
@@ -277,7 +277,11 @@ void main() {
       build: () => OrderListCubit(repo, catalog),
       act: (cubit) => cubit.silentRefresh(),
       wait: const Duration(milliseconds: 10),
-      verify: (_) => expect(repo.getOrdersCalls, greaterThanOrEqualTo(1)),
+      // El constructor dispara `load()` via scheduleMicrotask y, como el
+      // cubit todavia esta en Loading cuando corre `act`, `silentRefresh()`
+      // cae en la rama `if (state is! OrderListReady) return load()`: dos
+      // `load()` completos, dos llamadas a `getOrders`.
+      verify: (_) => expect(repo.getOrdersCalls, 2),
     );
 
     blocTest<OrderListCubit, OrderListState>(
@@ -311,5 +315,6 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     expect(cubit.isClosed, isTrue);
+    expect(repo.statusChangeController.hasListener, isFalse);
   });
 }

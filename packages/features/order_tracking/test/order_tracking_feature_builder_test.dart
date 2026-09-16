@@ -124,8 +124,8 @@ void main() {
       );
     });
 
-    test('buildOrderListPage usa el OrderListCubit registrado', () {
-      _injectWithMockSource();
+    test('buildOrderListPage usa el OrderListCubit registrado', () async {
+      final repo = _injectWithMockSource();
 
       final page = OrderTrackingFeatureBuilder.buildOrderListPage();
 
@@ -134,15 +134,19 @@ void main() {
         (page as OrderListPage).cubit,
         same(Injector.i.resolve<OrderListCubit>()),
       );
+
+      await _tearDownFeature(repo);
     });
 
-    test('buildOrderDetailPage propaga el id de la orden', () {
-      _injectWithMockSource();
+    test('buildOrderDetailPage propaga el id de la orden', () async {
+      final repo = _injectWithMockSource();
 
       final page = OrderTrackingFeatureBuilder.buildOrderDetailPage('WH-49202');
 
       expect(page, isA<OrderDetailPage>());
       expect((page as OrderDetailPage).orderId, 'WH-49202');
+
+      await _tearDownFeature(repo);
     });
   });
 

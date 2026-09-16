@@ -10,6 +10,8 @@ import 'package:test_support/test_support.dart';
 
 import '../../support/fake_order_tracking_repository.dart';
 
+class _FakeBuildContext extends Fake implements BuildContext {}
+
 OrderStatusChange _change(String orderId) => OrderStatusChange(
       orderId: orderId,
       oldStatus: OrderStatus.pending,
@@ -22,7 +24,7 @@ void main() {
   late MockNavigationHelper nav;
 
   setUpAll(() {
-    registerFallbackValue(FakeBuildContext());
+    registerFallbackValue(_FakeBuildContext());
     // `SwText.body` (el numero del badge) se construye sobre `google_fonts`;
     // sin apagar `allowRuntimeFetching` el widget intenta bajar la tipografia
     // por red durante el test (mismo patron que
@@ -130,5 +132,3 @@ void main() {
         )).called(1);
   });
 }
-
-class FakeBuildContext extends Fake implements BuildContext {}

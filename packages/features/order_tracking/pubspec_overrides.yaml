@@ -10,7 +10,7 @@ dependency_overrides:
   catalog:
     path: ../catalog
   catalog_test_builders:
-    path: ..\\..\\catalog_test_builders
+    path: ../../catalog_test_builders
   commons:
     path: ../../commons
   core:
@@ -22,10 +22,10 @@ dependency_overrides:
   orders:
     path: ../orders
   orders_test_builders:
-    path: ..\\..\\orders_test_builders
+    path: ../../orders_test_builders
   profile:
     path: ../profile
   test_support:
-    path: ..\\..\\test_support
+    path: ../../test_support
   token_repository:
     path: ../repositories/token_repository

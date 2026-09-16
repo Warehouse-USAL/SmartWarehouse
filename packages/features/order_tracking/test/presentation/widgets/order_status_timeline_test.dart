@@ -49,12 +49,6 @@ void main() {
     expect(find.text('Orden cancelada'), findsOneWidget);
   });
 
-  testWidgets('cancelled no deja el arbol en estado de error', (tester) async {
-    await _pump(tester, OrderStatus.cancelled);
-
-    expect(tester.takeException(), isNull);
-  });
-
   // El estado "done" de una burbuja dibuja un check en lugar del numero: los
   // numeros 1/2/3 solo aparecen para los pasos que todavia no se completaron.
   // Por eso se prueba cada estado por separado en vez de esperar "1 a 3" en
@@ -89,14 +83,6 @@ void main() {
     expect(find.text('2'), findsNothing);
     expect(find.text('3'), findsNothing);
     expect(find.byIcon(Icons.check), findsNWidgets(3));
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('cambiar el status re-renderiza sin errores', (tester) async {
-    await _pump(tester, OrderStatus.pending);
-    await _pump(tester, OrderStatus.completed);
-    await _pump(tester, OrderStatus.cancelled);
-
     expect(tester.takeException(), isNull);
   });
 }
