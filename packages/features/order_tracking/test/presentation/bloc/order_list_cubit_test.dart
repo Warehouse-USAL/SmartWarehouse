@@ -122,7 +122,7 @@ void main() {
     );
 
     blocTest<OrderListCubit, OrderListState>(
-      'deja el total en cero si algun producto no se pudo hidratar',
+      'no sobrescribe el total original si algun producto no se pudo hidratar',
       setUp: () {
         repo.onGetOrders = () => Right([
               anOrder(
@@ -131,7 +131,11 @@ void main() {
                   anOrderItem(productId: 'p-1', quantity: 2),
                   anOrderItem(productId: 'p-2', quantity: 1),
                 ],
-                total: aMoney(amount: 0),
+                // Valor distinguible: si `_applyPrices` alguna vez calculara
+                // 0 a proposito para el caso incompleto (en vez de dejar el
+                // total original intacto), este fixture lo distingue de un
+                // total "0 porque nadie lo tocó".
+                total: aMoney(amount: 4242),
               ),
             ]);
         catalog.onGetProductById = (id) => id == 'p-1'
@@ -143,12 +147,12 @@ void main() {
       expect: () => [
         isA<OrderListLoading>(),
         isA<OrderListReady>()
-            .having((s) => s.orders.single.total.amount, 'total', 0),
+            .having((s) => s.orders.single.total.amount, 'total', 4242),
       ],
     );
 
     blocTest<OrderListCubit, OrderListState>(
-      'deja el total en cero si los items mezclan monedas',
+      'no sobrescribe el total original si los items mezclan monedas',
       setUp: () {
         repo.onGetOrders = () => Right([
               anOrder(
@@ -157,7 +161,7 @@ void main() {
                   anOrderItem(productId: 'p-1', quantity: 1),
                   anOrderItem(productId: 'p-2', quantity: 1),
                 ],
-                total: aMoney(amount: 0),
+                total: aMoney(amount: 4242),
               ),
             ]);
         catalog.onGetProductById = (id) => Right(
@@ -175,7 +179,7 @@ void main() {
       expect: () => [
         isA<OrderListLoading>(),
         isA<OrderListReady>()
-            .having((s) => s.orders.single.total.amount, 'total', 0),
+            .having((s) => s.orders.single.total.amount, 'total', 4242),
       ],
     );
 
@@ -239,9 +243,9 @@ void main() {
       verify: (_) => expect(catalog.requestedIds, ['p-1']),
       expect: () => [
         isA<OrderListLoading>(),
-        isA<OrderListReady>(),
+        isA<OrderListReady>().having((s) => s.orders, 'orders', hasLength(2)),
         isA<OrderListLoading>(),
-        isA<OrderListReady>(),
+        isA<OrderListReady>().having((s) => s.orders, 'orders', hasLength(2)),
       ],
     );
   });
