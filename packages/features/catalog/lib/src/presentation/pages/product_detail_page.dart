@@ -22,21 +22,25 @@ class ProductDetailPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: SwColors.white,
       bottomNavigationBar: BottomNavigationBarFeatureBuilder.build(
-          context, const NavigationBarOption.products()),
+        context,
+        const NavigationBarOption.products(),
+      ),
       body: SafeArea(
         child: BlocBuilder<ProductDetailCubit, ProductDetailState>(
           bloc: cubit,
           builder: (context, state) {
             return switch (state) {
-              ProductDetailLoading() =>
-                const Center(child: CircularProgressIndicator()),
-              ProductDetailError(:final message) =>
-                Center(child: Text(message, style: SwText.body())),
+              ProductDetailLoading() => const Center(
+                child: CircularProgressIndicator(),
+              ),
+              ProductDetailError(:final message) => Center(
+                child: Text(message, style: SwText.body()),
+              ),
               ProductDetailReady() => _DetailView(
-                  state: state,
-                  cubit: cubit,
-                  onAddToCart: onAddToCart,
-                ),
+                state: state,
+                cubit: cubit,
+                onAddToCart: onAddToCart,
+              ),
             };
           },
         ),
@@ -78,72 +82,91 @@ class _DetailView extends StatelessWidget {
       children: [
         _AppBar(sku: p.sku, onBack: () => Navigator.of(context).maybePop()),
         Expanded(
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 12),
-                _ImageCarousel(
-                  gallery: gallery,
-                  activeIndex: state.activeImage,
-                  controller: cubit.pageController,
-                  onPageChanged: cubit.onPageChanged,
-                  onThumbnailTap: cubit.jumpToImage,
-                ),
-                const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        p.category.name.toUpperCase(),
-                        style: SwText.mono(size: 12, color: SwColors.text3, letterSpacing: 0.08),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(p.name, style: SwText.display(size: 22, height: 1.2)),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Flexible(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                p.price.formatted,
-                                key: E2eKeys.productDetailPrice,
-                                style: SwText.display(size: 30),
+          // Pull-to-refresh: el stock puede cambiar en el backend mientras
+          // se mira el detalle (vehículos moviendo mercadería).
+          child: RefreshIndicator(
+            color: SwColors.yellow,
+            onRefresh: cubit.load,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 12),
+                  _ImageCarousel(
+                    gallery: gallery,
+                    activeIndex: state.activeImage,
+                    controller: cubit.pageController,
+                    onPageChanged: cubit.onPageChanged,
+                    onThumbnailTap: cubit.jumpToImage,
+                  ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          p.category.name.toUpperCase(),
+                          style: SwText.mono(
+                            size: 12,
+                            color: SwColors.text3,
+                            letterSpacing: 0.08,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          p.name,
+                          style: SwText.display(size: 22, height: 1.2),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  p.price.formatted,
+                                  key: E2eKeys.productDetailPrice,
+                                  style: SwText.display(size: 30),
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerRight,
-                              child: StockBadge(stock: p.stock),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerRight,
+                                child: StockBadge(stock: p.stock),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _Tabs(active: state.activeTab, onChanged: cubit.setActiveTab),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-                  child: switch (state.activeTab) {
-                    0 => Text(
-                      p.description ?? 'Sin descripción disponible. Producto del catálogo SmartWarehouse.',
-                      style: SwText.body(size: 14, color: SwColors.text2, height: 1.55),
+                          ],
+                        ),
+                      ],
                     ),
-                    _ => _Specs(product: p),
-                  },
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 16),
+                  _Tabs(active: state.activeTab, onChanged: cubit.setActiveTab),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                    child: switch (state.activeTab) {
+                      0 => Text(
+                        p.description ??
+                            'Sin descripción disponible. Producto del catálogo SmartWarehouse.',
+                        style: SwText.body(
+                          size: 14,
+                          color: SwColors.text2,
+                          height: 1.55,
+                        ),
+                      ),
+                      _ => _Specs(product: p),
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -302,7 +325,14 @@ class _AppBar extends StatelessWidget {
           SwIconButton(icon: Icons.chevron_left, onPressed: onBack),
           Expanded(
             child: Center(
-              child: Text(sku, style: SwText.mono(size: 13, color: SwColors.text3, letterSpacing: 0.05)),
+              child: Text(
+                sku,
+                style: SwText.mono(
+                  size: 13,
+                  color: SwColors.text3,
+                  letterSpacing: 0.05,
+                ),
+              ),
             ),
           ),
           // Espaciador para mantener el SKU centrado (mismo ancho que el botón back).
@@ -330,13 +360,20 @@ class _Tabs extends StatelessWidget {
         children: List.generate(_DetailView._tabs.length, (i) {
           final isActive = i == active;
           return Padding(
-            padding: EdgeInsets.only(right: i < _DetailView._tabs.length - 1 ? 24 : 0),
+            padding: EdgeInsets.only(
+              right: i < _DetailView._tabs.length - 1 ? 24 : 0,
+            ),
             child: GestureDetector(
               onTap: () => onChanged(i),
               child: Container(
                 padding: const EdgeInsets.only(bottom: 10),
                 decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: isActive ? SwColors.yellow : Colors.transparent, width: 2)),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: isActive ? SwColors.yellow : Colors.transparent,
+                      width: 2,
+                    ),
+                  ),
                 ),
                 child: Text(
                   _DetailView._tabs[i],
@@ -378,14 +415,22 @@ class _Specs extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                border: i < entries.length - 1 ? const Border(bottom: BorderSide(color: SwColors.border)) : null,
+                border: i < entries.length - 1
+                    ? const Border(bottom: BorderSide(color: SwColors.border))
+                    : null,
               ),
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(e.$1, style: SwText.body(size: 14, color: SwColors.text3)),
+                    child: Text(
+                      e.$1,
+                      style: SwText.body(size: 14, color: SwColors.text3),
+                    ),
                   ),
-                  Text(e.$2, style: SwText.body(size: 14, weight: FontWeight.w600)),
+                  Text(
+                    e.$2,
+                    style: SwText.body(size: 14, weight: FontWeight.w600),
+                  ),
                 ],
               ),
             ),
@@ -426,7 +471,13 @@ class _StickyFooter extends StatelessWidget {
         top: false,
         child: Row(
           children: [
-            QtyStepper(value: qty, onChanged: onQtyChanged, min: 1, max: maxQty, large: true),
+            QtyStepper(
+              value: qty,
+              onChanged: onQtyChanged,
+              min: 1,
+              max: maxQty,
+              large: true,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: SwButton(

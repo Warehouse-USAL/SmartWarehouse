@@ -188,20 +188,24 @@ class _CheckoutAddressSheetState extends State<CheckoutAddressSheet> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                SwButton(
-                  key: E2eKeys.checkoutAddressSubmit,
-                  label: 'Confirmar y crear orden',
-                  onPressed: _submit,
-                ),
-                const SizedBox(height: 8),
-                Center(
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text(
-                      'Cancelar',
-                      style: SwText.body(size: 14, color: SwColors.text3),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(
+                        'Cancelar',
+                        style: SwText.body(size: 14, color: SwColors.text3),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SwButton(
+                        key: E2eKeys.checkoutAddressSubmit,
+                        label: 'Confirmar y crear orden',
+                        onPressed: _submit,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
