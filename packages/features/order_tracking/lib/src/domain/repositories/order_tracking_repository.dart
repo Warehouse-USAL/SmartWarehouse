@@ -3,8 +3,12 @@ import 'package:order_tracking/src/domain/entities/order_status_change.dart';
 import 'package:orders/orders.dart';
 
 class OrderTrackingFailure {
-  const OrderTrackingFailure([this.message]);
+  const OrderTrackingFailure([this.message, this.notFound = false]);
   final String? message;
+
+  /// True cuando el backend respondió 404: la orden ya no existe (no es un
+  /// error transitorio de red) y el caller puede podarla del historial.
+  final bool notFound;
 }
 
 abstract class OrderTrackingRepository {

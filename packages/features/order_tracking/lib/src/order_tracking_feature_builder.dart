@@ -46,6 +46,15 @@ class OrderTrackingFeatureBuilder {
   static void startNotifications() =>
       Injector.i.resolve<OrderNotificationCubit>().start();
 
+  /// Limpieza de sesión en logout: corta el WS de notificaciones (corría
+  /// con el token del usuario saliente), vacía la campana y borra el
+  /// historial local de órdenes — si entra otro usuario en este device no
+  /// tiene que ver las órdenes del anterior.
+  static Future<void> onLogout() async {
+    Injector.i.resolve<OrderNotificationCubit>().stop();
+    await Injector.i.resolve<OrderHistoryStore>().clear();
+  }
+
   /// Navegación del botón "Ver" del snackbar. La setea la capa de aplicación
   /// con el router real: el contexto del scaffoldMessengerKey vive FUERA del
   /// árbol de Beamer, así que navegar desde acá con ese contexto no funciona.

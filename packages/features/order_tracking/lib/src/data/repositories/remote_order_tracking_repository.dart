@@ -21,8 +21,8 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
     required this.historyStore,
     WebSocketChannel Function(Uri uri)? connector,
     List<Duration>? retryDelays,
-  })  : _connect = connector ?? WebSocketChannel.connect,
-        _retryDelays = retryDelays ?? _defaultRetryDelays;
+  }) : _connect = connector ?? WebSocketChannel.connect,
+       _retryDelays = retryDelays ?? _defaultRetryDelays;
 
   static const _defaultRetryDelays = [
     Duration(seconds: 1),
@@ -71,14 +71,29 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
       // No usamos GET /orders global: en su lugar, leemos los IDs de las
       // órdenes que el usuario creó en este device (persisted via
       // OrderHistoryStore) y hacemos GET /orders/{id} por cada uno en
-      // paralelo. Las que fallen (404, etc.) las filtramos.
+      // paralelo.
       final ids = await historyStore.getOrderIds();
       if (ids.isEmpty) return const Right([]);
 
       final results = await Future.wait(ids.map(getOrderById));
       final orders = <Order>[];
-      for (final r in results) {
-        r.fold((_) {}, orders.add);
+      var transientFailures = 0;
+      for (var i = 0; i < ids.length; i++) {
+        results[i].fold((failure) {
+          if (failure.notFound) {
+            // 404 definitivo: la orden ya no existe en el backend; se poda
+            // del historial local para no re-consultarla en cada refresh.
+            unawaited(historyStore.removeOrderId(ids[i]));
+          } else {
+            transientFailures++;
+          }
+        }, orders.add);
+      }
+      // Si había órdenes y no se pudo traer NINGUNA por errores que no son
+      // 404, es un problema de red/permisos: devolver Left para que la UI
+      // muestre error con reintento, no el empty state "Sin órdenes".
+      if (orders.isEmpty && transientFailures > 0) {
+        return const Left(OrderTrackingFailure('Error de red'));
       }
       orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return Right(orders);
@@ -93,7 +108,9 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
     try {
       final result = await httpHelper.get('/orders/$id');
       return await result.fold(
-        (error) => Left(OrderTrackingFailure(_mapError(error))),
+        (error) => Left(
+          OrderTrackingFailure(_mapError(error), error.statusCode == 404),
+        ),
         (response) {
           final data = response.data;
           if (data is! Map<String, dynamic>) {
@@ -176,11 +193,9 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
           // corta enseguida deja el backoff clavado en el mínimo.
           attempt = 0;
           try {
-            final json =
-                jsonDecode(message as String) as Map<String, dynamic>;
+            final json = jsonDecode(message as String) as Map<String, dynamic>;
             final event = WsOrderEventDto.fromJson(json);
-            if (event.event == 'order.updated' &&
-                event.payload.id == id) {
+            if (event.event == 'order.updated' && event.payload.id == id) {
               final updated = await getOrderById(id);
               updated.fold((_) {}, (order) {
                 if (!controller.isClosed) controller.add(order);
@@ -241,11 +256,13 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
                 old != null &&
                 old != o.status &&
                 !controller.isClosed) {
-              controller.add(OrderStatusChange(
-                orderId: o.id,
-                oldStatus: old,
-                newStatus: o.status,
-              ));
+              controller.add(
+                OrderStatusChange(
+                  orderId: o.id,
+                  oldStatus: old,
+                  newStatus: o.status,
+                ),
+              );
             }
             cache[o.id] = o.status;
           }
@@ -277,8 +294,7 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
           // corta enseguida deja el backoff clavado en el mínimo.
           attempt = 0;
           try {
-            final json =
-                jsonDecode(message as String) as Map<String, dynamic>;
+            final json = jsonDecode(message as String) as Map<String, dynamic>;
             final event = WsOrderEventDto.fromJson(json);
             if (event.event == 'order.updated') {
               final orderId = event.payload.id;
@@ -289,11 +305,13 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
               // tragaba por el guard de oldStatus == null).
               final oldStatus = cache[orderId] ?? OrderStatus.pending;
               if (oldStatus != newStatus) {
-                controller.add(OrderStatusChange(
-                  orderId: orderId,
-                  oldStatus: oldStatus,
-                  newStatus: newStatus,
-                ));
+                controller.add(
+                  OrderStatusChange(
+                    orderId: orderId,
+                    oldStatus: oldStatus,
+                    newStatus: newStatus,
+                  ),
+                );
               }
               cache[orderId] = newStatus;
             }

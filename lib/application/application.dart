@@ -94,6 +94,11 @@ class _SmartWarehouseAppState extends State<SmartWarehouseApp> {
   }
 
   void _onUserLoggedOut() {
+    // Estado de sesión del usuario saliente: carrito, historial de órdenes
+    // y notificaciones. Sin esta limpieza, otro usuario que entre en este
+    // device veía el carrito y las órdenes del anterior.
+    CartFeatureBuilder.onLogout();
+    unawaited(OrderTrackingFeatureBuilder.onLogout());
     final context = _navigatorContext;
     if (context == null) return;
     OnLoginNavigationUseCase.call(context);

@@ -31,6 +31,11 @@ class CartFeatureBuilder {
 
   static CartCubit cartCubit() => Injector.i.resolve<CartCubit>();
 
+  /// Limpieza de sesión en logout: el carrito es estado del usuario — si
+  /// entra otro usuario en este device no tiene que encontrarse los items
+  /// del anterior.
+  static void onLogout() => Injector.i.resolve<CartCubit>().clear();
+
   static Widget buildCartPage() {
     return CartPage(
       cartCubit: Injector.i.resolve<CartCubit>(),

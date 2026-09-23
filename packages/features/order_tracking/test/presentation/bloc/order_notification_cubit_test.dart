@@ -130,6 +130,25 @@ void main() {
     await cubit.close();
   });
 
+  test('stop corta el listener y vacía las notificaciones', () async {
+    // Camino del logout: sin el stop, el WS seguía corriendo con el token
+    // del usuario saliente y el siguiente veía la campana con
+    // notificaciones ajenas.
+    final cubit = OrderNotificationCubit(repo)..start();
+    repo.statusChangeController.add(_change);
+    await Future<void>.delayed(Duration.zero);
+    expect(cubit.state.notifications, hasLength(1));
+
+    cubit.stop();
+
+    repo.statusChangeController.add(_change);
+    await Future<void>.delayed(Duration.zero);
+    expect(cubit.state.notifications, isEmpty);
+    expect(cubit.state.lastReceived, isNull);
+
+    await cubit.close();
+  });
+
   test('start dos veces no duplica las notificaciones', () async {
     final cubit = OrderNotificationCubit(repo)
       ..start()

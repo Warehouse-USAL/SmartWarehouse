@@ -48,6 +48,10 @@ class _FakeHistoryStore implements OrderHistoryStore {
   Future<void> addOrderId(String id) async => ids = [id, ...ids];
 
   @override
+  Future<void> removeOrderId(String id) async =>
+      ids = ids.where((i) => i != id).toList();
+
+  @override
   Future<void> clear() async => ids = const [];
 }
 

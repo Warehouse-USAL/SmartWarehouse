@@ -15,6 +15,10 @@ abstract class OrderHistoryStore {
   /// duplica ni reordena).
   Future<void> addOrderId(String id);
 
+  /// Saca un ID puntual — para podar órdenes que el backend ya no conoce
+  /// (404 definitivo), sin tocar el resto del historial.
+  Future<void> removeOrderId(String id);
+
   /// Borra la historia. Útil en logout.
   Future<void> clear();
 }
@@ -29,7 +33,10 @@ class HiveOrderHistoryStore implements OrderHistoryStore {
   @override
   Future<List<String>> getOrderIds() async {
     if (!await _persistence.exists(_key)) return [];
-    final result = await _persistence.get(_key, PersistableOrderHistory.fromJson);
+    final result = await _persistence.get(
+      _key,
+      PersistableOrderHistory.fromJson,
+    );
     return result.fold((_) => <String>[], (data) => data.ids);
   }
 
@@ -37,7 +44,20 @@ class HiveOrderHistoryStore implements OrderHistoryStore {
   Future<void> addOrderId(String id) async {
     final current = await getOrderIds();
     if (current.contains(id)) return;
-    await _persistence.set(_key, PersistableOrderHistory(ids: [id, ...current]));
+    await _persistence.set(
+      _key,
+      PersistableOrderHistory(ids: [id, ...current]),
+    );
+  }
+
+  @override
+  Future<void> removeOrderId(String id) async {
+    final current = await getOrderIds();
+    if (!current.contains(id)) return;
+    await _persistence.set(
+      _key,
+      PersistableOrderHistory(ids: current.where((i) => i != id).toList()),
+    );
   }
 
   @override

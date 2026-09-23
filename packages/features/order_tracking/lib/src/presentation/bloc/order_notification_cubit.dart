@@ -11,7 +11,7 @@ export 'order_notification_state.dart';
 
 class OrderNotificationCubit extends Cubit<OrderNotificationState> {
   OrderNotificationCubit(this._repository, {this.onEvent})
-      : super(const OrderNotificationState());
+    : super(const OrderNotificationState());
 
   final OrderTrackingRepository _repository;
 
@@ -33,10 +33,12 @@ class OrderNotificationCubit extends Cubit<OrderNotificationState> {
           change: change,
           receivedAt: now,
         );
-        emit(OrderNotificationState(
-          notifications: [notification, ...state.notifications],
-          lastReceived: notification,
-        ));
+        emit(
+          OrderNotificationState(
+            notifications: [notification, ...state.notifications],
+            lastReceived: notification,
+          ),
+        );
         onEvent?.call(change);
       },
       onError: (Object e, StackTrace st) =>
@@ -44,8 +46,19 @@ class OrderNotificationCubit extends Cubit<OrderNotificationState> {
     );
   }
 
+  /// Corta el listener del WS y vacía las notificaciones. Para el logout:
+  /// sin esto el loop seguía corriendo con el token del usuario saliente y
+  /// el usuario siguiente veía la campana con notificaciones ajenas.
+  void stop() {
+    _subscription?.cancel();
+    _subscription = null;
+    emit(const OrderNotificationState());
+  }
+
   void markAllAsRead() {
-    final updated = state.notifications.map((n) => n.copyWith(read: true)).toList();
+    final updated = state.notifications
+        .map((n) => n.copyWith(read: true))
+        .toList();
     emit(OrderNotificationState(notifications: updated));
   }
 

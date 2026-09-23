@@ -94,6 +94,10 @@ class _FakeHistoryStore implements OrderHistoryStore {
   Future<void> addOrderId(String id) async => ids = [id, ...ids];
 
   @override
+  Future<void> removeOrderId(String id) async =>
+      ids = ids.where((i) => i != id).toList();
+
+  @override
   Future<void> clear() async => ids = const [];
 }
 
@@ -147,6 +151,43 @@ void main() {
           expect(orders.any((o) => o.status == OrderStatus.inProgress), true);
         },
       );
+    });
+
+    test('si todos los GET fallan por red devuelve Left, no lista vacía',
+        () async {
+      // Antes esto devolvía Right([]) y la UI mostraba el empty state
+      // "Sin órdenes" con la red caída, en vez de un error con reintento.
+      store.ids = ['o1', 'o2'];
+      fakeHttp.getHandler = (_) => Left(HttpResponseError(
+          errorType: 'timeout', message: 'timeout', statusCode: 500));
+
+      final result = await repo.getOrders();
+
+      expect(result.isLeft(), true);
+    });
+
+    test('un 404 puntual poda el id del historial y no rompe el resto',
+        () async {
+      store.ids = ['o1', 'gone'];
+      fakeHttp.getHandler = (path) {
+        if (path == '/orders/o1') {
+          return Right(HttpResponse(data: <String, dynamic>{
+            'order': {'id': 'o1', 'status': 'pending', 'items': []},
+          }));
+        }
+        return Left(HttpResponseError(
+            errorType: 'nf', message: 'Not found', statusCode: 404));
+      };
+
+      final result = await repo.getOrders();
+
+      result.fold(
+        (_) => fail('Expected Right'),
+        (orders) => expect(orders.single.id, 'o1'),
+      );
+      // El id inexistente se saca del store para no re-consultarlo siempre.
+      await Future<void>.delayed(Duration.zero);
+      expect(store.ids, ['o1']);
     });
 
     test('drops orders cuyo GET /orders/{id} falla', () async {
