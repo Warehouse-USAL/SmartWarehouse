@@ -25,6 +25,11 @@ class _CartPageState extends State<CartPage> {
   CartCubit get cartCubit => widget.cartCubit;
   CreateOrderCubit get createOrderCubit => widget.createOrderCubit;
 
+  // Guard del flujo completo de confirmación (diálogo + sheet + submit):
+  // el guard del CreateOrderCubit recién actúa en el POST, y un doble-tap
+  // antes de eso abría dos diálogos apilados (y podía crear dos órdenes).
+  bool _confirming = false;
+
   @override
   void initState() {
     super.initState();
@@ -81,6 +86,16 @@ class _CartPageState extends State<CartPage> {
   }
 
   Future<void> _onCreateOrderPressed(BuildContext context, Cart cart) async {
+    if (_confirming) return;
+    _confirming = true;
+    try {
+      await _confirmFlow(context, cart);
+    } finally {
+      _confirming = false;
+    }
+  }
+
+  Future<void> _confirmFlow(BuildContext context, Cart cart) async {
     if (cart.hasMixedCurrencies) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

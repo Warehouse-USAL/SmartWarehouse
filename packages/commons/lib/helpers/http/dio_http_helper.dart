@@ -9,7 +9,8 @@ import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 
 typedef OnRefreshTokenCallback = Future<bool> Function();
-typedef IsExpiredTokenCheckCallback = bool Function(int errorStatusCode, String? message);
+typedef IsExpiredTokenCheckCallback =
+    bool Function(int errorStatusCode, String? message);
 
 class DioHttpHelper implements HttpHelper {
   DioHttpHelper({
@@ -71,7 +72,8 @@ class DioHttpHelper implements HttpHelper {
       return _onDioError(
         external: external,
         error: error,
-        onRetry: () => get(path, noCache: noCache, queryParameters: queryParameters),
+        onRetry: () =>
+            get(path, noCache: noCache, queryParameters: queryParameters),
       );
     }
   }
@@ -89,7 +91,12 @@ class DioHttpHelper implements HttpHelper {
     try {
       final dioResponse = await _execute(
         headers: headers ?? {},
-        query: () => _dio.post(path, data: data, queryParameters: queryParameters, options: options),
+        query: () => _dio.post(
+          path,
+          data: data,
+          queryParameters: queryParameters,
+          options: options,
+        ),
         external: external,
       );
 
@@ -99,7 +106,19 @@ class DioHttpHelper implements HttpHelper {
         external: external,
         error: error,
         onRetry: () async {
-          if (!retryOnTokenExpired) return post(path, data: data, queryParameters: queryParameters, options: options);
+          // onRetry solo se invoca cuando el refresh de token SALIÓ BIEN:
+          // hay que reintentar el request. La condición estaba invertida y
+          // post() devolvía el 401 original con la sesión ya renovada
+          // ("No tenés permisos" al crear una orden con token expirado).
+          // get/put/patch siempre lo tuvieron bien.
+          if (retryOnTokenExpired) {
+            return post(
+              path,
+              data: data,
+              queryParameters: queryParameters,
+              options: options,
+            );
+          }
           return Left(_onResponseError(error));
         },
       );
@@ -117,11 +136,8 @@ class DioHttpHelper implements HttpHelper {
     try {
       final dioResponse = await _execute(
         headers: headers ?? {},
-        query: () => _dio.put(
-          path,
-          data: data,
-          queryParameters: queryParameters,
-        ),
+        query: () =>
+            _dio.put(path, data: data, queryParameters: queryParameters),
         external: external,
       );
 
@@ -146,7 +162,8 @@ class DioHttpHelper implements HttpHelper {
     try {
       final dioResponse = await _execute(
         headers: headers ?? {},
-        query: () => _dio.delete(path, queryParameters: queryParameters, data: data),
+        query: () =>
+            _dio.delete(path, queryParameters: queryParameters, data: data),
         external: external,
       );
       return Right(_buildHttpResponse(dioResponse));
@@ -154,7 +171,8 @@ class DioHttpHelper implements HttpHelper {
       return _onDioError(
         external: external,
         error: error,
-        onRetry: () => delete(path, data: data, queryParameters: queryParameters),
+        onRetry: () =>
+            delete(path, data: data, queryParameters: queryParameters),
       );
     }
   }
@@ -170,14 +188,16 @@ class DioHttpHelper implements HttpHelper {
     try {
       final dioResponse = await _execute(
         headers: headers ?? {},
-        query: () => _dio.patch(path, data: data, queryParameters: queryParameters),
+        query: () =>
+            _dio.patch(path, data: data, queryParameters: queryParameters),
         external: external,
       );
       return Right(_buildHttpResponse(dioResponse));
     } on DioException catch (error) {
       return _onDioError(
         error: error,
-        onRetry: () => patch(path, data: data, queryParameters: queryParameters),
+        onRetry: () =>
+            patch(path, data: data, queryParameters: queryParameters),
         external: external,
       );
     }
@@ -193,18 +213,16 @@ class DioHttpHelper implements HttpHelper {
   }) async {
     try {
       final multipartFiles = await Future.wait(
-        filesData.files.map((file) async => MultipartFile.fromFile(file.path, filename: file.filename)),
+        filesData.files.map(
+          (file) async =>
+              MultipartFile.fromFile(file.path, filename: file.filename),
+        ),
       );
-      final formData = FormData.fromMap(
-        {
-          filesData.filesNameParameter: multipartFiles,
-          ...data,
-        },
-      );
-      final dioResponse = await _dio.post(
-        path,
-        data: formData,
-      );
+      final formData = FormData.fromMap({
+        filesData.filesNameParameter: multipartFiles,
+        ...data,
+      });
+      final dioResponse = await _dio.post(path, data: formData);
       return Right(_buildHttpResponse(dioResponse));
     } on DioException catch (error) {
       return _onDioError(
@@ -221,7 +239,11 @@ class DioHttpHelper implements HttpHelper {
     required Future<Either<HttpResponseError, HttpResponse>> Function() onRetry,
   }) async {
     final httpResponseError = _onResponseError(error);
-    if (!external && isExpiredToken(httpResponseError.statusCode, httpResponseError.message)) {
+    if (!external &&
+        isExpiredToken(
+          httpResponseError.statusCode,
+          httpResponseError.message,
+        )) {
       final refreshTokenSuccess = await onRefreshToken();
       if (refreshTokenSuccess) return onRetry();
     }
@@ -245,7 +267,8 @@ class DioHttpHelper implements HttpHelper {
         reason = (err['code'] ?? err['reason'])?.toString();
       }
       message ??= data['message']?.toString();
-      errorType = data['error_type']?.toString() ?? data['errorType']?.toString();
+      errorType =
+          data['error_type']?.toString() ?? data['errorType']?.toString();
     } else if (data is String && data.isNotEmpty) {
       message = data;
     }
@@ -260,7 +283,10 @@ class DioHttpHelper implements HttpHelper {
   }
 
   HttpResponse<dynamic> _buildHttpResponse(Response<dynamic> dioResponse) =>
-      HttpResponse(data: dioResponse.data, status: dioResponse.statusCode.toString());
+      HttpResponse(
+        data: dioResponse.data,
+        status: dioResponse.statusCode.toString(),
+      );
 
   Future<Response> _execute({
     required Future<Response> Function() query,
