@@ -28,7 +28,10 @@ class QuantityStepper extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _Btn(icon: Icons.remove, onTap: canDec ? () => onChanged(quantity - 1) : null),
+          _Btn(
+            icon: Icons.remove,
+            onTap: canDec ? () => onChanged(quantity - 1) : null,
+          ),
           SizedBox(
             width: 36,
             child: Text(
@@ -37,7 +40,10 @@ class QuantityStepper extends StatelessWidget {
               style: SwText.body(size: 15, weight: FontWeight.w600),
             ),
           ),
-          _Btn(icon: Icons.add, onTap: canInc ? () => onChanged(quantity + 1) : null),
+          _Btn(
+            icon: Icons.add,
+            onTap: canInc ? () => onChanged(quantity + 1) : null,
+          ),
         ],
       ),
     );
@@ -56,7 +62,11 @@ class _Btn extends StatelessWidget {
       child: SizedBox(
         width: 36,
         height: 36,
-        child: Icon(icon, size: 18, color: onTap == null ? SwColors.text3 : SwColors.text),
+        child: Icon(
+          icon,
+          size: 18,
+          color: onTap == null ? SwColors.text3 : SwColors.text,
+        ),
       ),
     );
   }

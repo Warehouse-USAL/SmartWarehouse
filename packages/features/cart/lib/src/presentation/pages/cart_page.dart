@@ -7,18 +7,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:profile/profile.dart';
 
-class CartPage extends StatelessWidget {
-  const CartPage({required this.cartCubit, required this.createOrderCubit, super.key});
+class CartPage extends StatefulWidget {
+  const CartPage({
+    required this.cartCubit,
+    required this.createOrderCubit,
+    super.key,
+  });
 
   final CartCubit cartCubit;
   final CreateOrderCubit createOrderCubit;
 
   @override
+  State<CartPage> createState() => _CartPageState();
+}
+
+class _CartPageState extends State<CartPage> {
+  CartCubit get cartCubit => widget.cartCubit;
+  CreateOrderCubit get createOrderCubit => widget.createOrderCubit;
+
+  @override
+  void initState() {
+    super.initState();
+    // El stock pudo cambiar en el backend desde que se agregaron los items:
+    // revalidar contra el catálogo al entrar (y en cada pull-to-refresh).
+    cartCubit.revalidate();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: SwColors.white,
-      bottomNavigationBar:
-          BottomNavigationBarFeatureBuilder.build(context, const NavigationBarOption.cart()),
+      bottomNavigationBar: BottomNavigationBarFeatureBuilder.build(
+        context,
+        const NavigationBarOption.cart(),
+      ),
       body: SafeArea(
         bottom: false,
         child: BlocListener<CreateOrderCubit, CreateOrderState>(
@@ -33,10 +55,14 @@ class CartPage extends StatelessWidget {
                   Expanded(
                     child: cart.isEmpty
                         ? _EmptyView(onContinue: () => _goCatalog(context))
-                        : _CartBody(
-                            cart: cart,
-                            onQty: cartCubit.updateQuantity,
-                            onRemove: cartCubit.remove,
+                        : RefreshIndicator(
+                            color: SwColors.yellow,
+                            onRefresh: cartCubit.revalidate,
+                            child: _CartBody(
+                              cart: cart,
+                              onQty: cartCubit.updateQuantity,
+                              onRemove: cartCubit.remove,
+                            ),
                           ),
                   ),
                   if (cart.isNotEmpty)
@@ -67,8 +93,14 @@ class CartPage extends StatelessWidget {
       return;
     }
     if (cart.hasInvalidQuantities) {
+      final names = cart.invalidItems.map((i) => i.product.name).join(', ');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hay items con cantidad inválida o sin stock')),
+        SnackBar(
+          content: Text(
+            'Sin stock suficiente de: $names. '
+            'Quitá esos productos o bajá la cantidad para continuar.',
+          ),
+        ),
       );
       return;
     }
@@ -78,8 +110,7 @@ class CartPage extends StatelessWidget {
     // Abre el sheet de confirmación de entrega. Pre-popula con el address
     // guardado en el perfil (si lo hay) y permite tickear "Guardar en mi
     // perfil" para persistir vía PATCH /users/me. Si cancela, abortamos.
-    final result =
-        await ProfileFeatureBuilder.collectCheckoutAddress(context);
+    final result = await ProfileFeatureBuilder.collectCheckoutAddress(context);
     if (result == null) return;
     // El future del sheet se completa cuando arranca el pop, no cuando termina
     // la animación de salida. Si el submit resuelve antes de que el sheet
@@ -107,11 +138,14 @@ class CartPage extends StatelessWidget {
         cartCubit.clear();
         createOrderCubit.reset();
         Injector.i.resolve<NavigationHelper>().pushNamed(
-              context,
-              routeName: Routes.orderSuccess(order.id),
-              replace: true,
-            );
+          context,
+          routeName: Routes.orderSuccess(order.id),
+          replace: true,
+        );
       case CreateOrderFailure(:final message):
+        // La causa típica es stock que cambió entre agregar y confirmar:
+        // revalidamos para que el carrito muestre qué línea quedó inválida.
+        cartCubit.revalidate();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
@@ -127,9 +161,11 @@ class CartPage extends StatelessWidget {
     }
   }
 
-
   void _goCatalog(BuildContext context) {
-    Injector.i.resolve<NavigationHelper>().pushNamed(context, routeName: Routes.catalog);
+    Injector.i.resolve<NavigationHelper>().pushNamed(
+      context,
+      routeName: Routes.catalog,
+    );
   }
 }
 
@@ -141,7 +177,9 @@ class _CartAppBar extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Center(child: Text('Tu pedido', style: SwText.display(size: 20))),
+            child: Center(
+              child: Text('Tu pedido', style: SwText.display(size: 20)),
+            ),
           ),
         ],
       ),
@@ -161,9 +199,16 @@ class _EmptyView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.shopping_cart_outlined, size: 48, color: SwColors.text3),
+            const Icon(
+              Icons.shopping_cart_outlined,
+              size: 48,
+              color: SwColors.text3,
+            ),
             const SizedBox(height: 12),
-            Text('Tu pedido está vacío', style: SwText.body(size: 14, color: SwColors.text3)),
+            Text(
+              'Tu pedido está vacío',
+              style: SwText.body(size: 14, color: SwColors.text3),
+            ),
             const SizedBox(height: 16),
             SizedBox(
               width: 220,
@@ -181,7 +226,11 @@ class _EmptyView extends StatelessWidget {
 }
 
 class _CartBody extends StatelessWidget {
-  const _CartBody({required this.cart, required this.onQty, required this.onRemove});
+  const _CartBody({
+    required this.cart,
+    required this.onQty,
+    required this.onRemove,
+  });
 
   final Cart cart;
   final void Function(String productId, int quantity) onQty;
@@ -191,6 +240,7 @@ class _CartBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final total = cart.total;
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,7 +255,9 @@ class _CartBody extends StatelessWidget {
                     Container(
                       decoration: BoxDecoration(
                         border: idx < cart.items.length - 1
-                            ? const Border(bottom: BorderSide(color: SwColors.border))
+                            ? const Border(
+                                bottom: BorderSide(color: SwColors.border),
+                              )
                             : null,
                       ),
                       child: CartItemTile(
@@ -235,8 +287,18 @@ class _CartBody extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Total', style: SwText.body(size: 15, weight: FontWeight.w700)),
-                          Text(total.formatted, key: E2eKeys.cartTotal, style: SwText.display(size: 22)),
+                          Text(
+                            'Total',
+                            style: SwText.body(
+                              size: 15,
+                              weight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            total.formatted,
+                            key: E2eKeys.cartTotal,
+                            style: SwText.display(size: 22),
+                          ),
                         ],
                       ),
                     ),
@@ -278,7 +340,12 @@ class _SummaryRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(child: Text(label, style: SwText.body(size: 14, color: SwColors.text3))),
+          Expanded(
+            child: Text(
+              label,
+              style: SwText.body(size: 14, color: SwColors.text3),
+            ),
+          ),
           Text(value, style: SwText.body(size: 14, weight: FontWeight.w600)),
         ],
       ),
@@ -287,7 +354,11 @@ class _SummaryRow extends StatelessWidget {
 }
 
 class _Footer extends StatelessWidget {
-  const _Footer({required this.cart, required this.onConfirm, required this.onContinue});
+  const _Footer({
+    required this.cart,
+    required this.onConfirm,
+    required this.onContinue,
+  });
   final Cart cart;
   final VoidCallback onConfirm;
   final VoidCallback onContinue;
@@ -295,7 +366,9 @@ class _Footer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final total = cart.total;
-    final label = total == null ? 'Confirmar pedido' : 'Confirmar pedido · ${total.formatted}';
+    final label = total == null
+        ? 'Confirmar pedido'
+        : 'Confirmar pedido · ${total.formatted}';
     return Container(
       decoration: const BoxDecoration(
         color: SwColors.white,
@@ -312,7 +385,10 @@ class _Footer extends StatelessWidget {
           const SizedBox(height: 8),
           GestureDetector(
             onTap: onContinue,
-            child: Text('Seguir comprando', style: SwText.body(size: 14, color: SwColors.link)),
+            child: Text(
+              'Seguir comprando',
+              style: SwText.body(size: 14, color: SwColors.link),
+            ),
           ),
         ],
       ),

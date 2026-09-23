@@ -4,8 +4,12 @@ import 'package:catalog/src/domain/entities/products_page.dart';
 import 'package:dartz/dartz.dart';
 
 class CatalogFailure {
-  const CatalogFailure([this.message]);
+  const CatalogFailure([this.message, this.notFound = false]);
   final String? message;
+
+  /// True cuando el backend respondió 404: el producto ya no existe (o fue
+  /// desactivado). Distinto de un error de red, donde no se sabe nada.
+  final bool notFound;
 }
 
 abstract class CatalogRepository {

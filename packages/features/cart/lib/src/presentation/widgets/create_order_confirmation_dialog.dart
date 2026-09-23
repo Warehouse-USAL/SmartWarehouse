@@ -25,7 +25,9 @@ class CreateOrderConfirmationDialog extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('${cart.itemCount} ${cart.itemCount == 1 ? 'unidad' : 'unidades'}'),
+          Text(
+            '${cart.itemCount} ${cart.itemCount == 1 ? 'unidad' : 'unidades'}',
+          ),
           if (total != null) ...[
             const SizedBox(height: 4),
             Text(

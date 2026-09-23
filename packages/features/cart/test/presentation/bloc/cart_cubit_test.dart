@@ -1,4 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:catalog/catalog.dart';
+import 'package:dartz/dartz.dart';
 import 'package:cart/src/data/repositories/in_memory_cart_repository.dart';
 import 'package:cart/src/domain/entities/cart.dart';
 import 'package:cart/src/presentation/bloc/cart_cubit.dart';
@@ -112,4 +114,114 @@ void main() {
     act: (cubit) => cubit.remove('p-inexistente'),
     expect: () => [cartWith(itemCount: 0, lineCount: 0)],
   );
+
+  revalidateTests();
+}
+
+/// Catálogo fake para revalidate: responde por id según el mapa configurado.
+class _FakeCatalogRepository implements CatalogRepository {
+  _FakeCatalogRepository(this.byId);
+
+  /// id -> Right(producto fresco) | Left(failure)
+  final Map<String, Either<CatalogFailure, Product>> byId;
+
+  @override
+  Future<Either<CatalogFailure, Product>> getProductById(String id) async =>
+      byId[id] ?? const Left(CatalogFailure('sin configurar'));
+
+  @override
+  Future<Either<CatalogFailure, List<ProductCategory>>> getCategories() =>
+      throw UnimplementedError();
+
+  @override
+  Future<Either<CatalogFailure, ProductsPage>> getProducts({
+    int page = 1,
+    int pageSize = 20,
+    String? search,
+    ProductCategory? category,
+  }) => throw UnimplementedError();
+}
+
+void revalidateTests() {
+  group('revalidate', () {
+    late InMemoryCartRepository repo;
+
+    setUp(() => repo = InMemoryCartRepository());
+
+    test('refresca el stock del producto con la versión del catálogo', () async {
+      repo.add(aProduct(id: 'p-1', stock: aStock(available: 10)), quantity: 4);
+      final fresh = aProduct(id: 'p-1', stock: aStock(available: 2));
+      final cubit = CartCubit(
+        repo,
+        catalogRepository: _FakeCatalogRepository({'p-1': Right(fresh)}),
+      );
+
+      await cubit.revalidate();
+
+      // La cantidad pedida NO se ajusta sola: la línea pasa a bloquear.
+      expect(cubit.state.items.single.quantity, 4);
+      expect(cubit.state.items.single.product.stock.available, 2);
+      expect(cubit.state.hasInvalidQuantities, isTrue);
+      expect(cubit.state.invalidItems.single.product.id, 'p-1');
+      await cubit.close();
+    });
+
+    test('marca no disponible cuando el catálogo devuelve 404', () async {
+      repo.add(aProduct(id: 'p-1'), quantity: 1);
+      final cubit = CartCubit(
+        repo,
+        catalogRepository: _FakeCatalogRepository({
+          'p-1': const Left(CatalogFailure('Producto no encontrado', true)),
+        }),
+      );
+
+      await cubit.revalidate();
+
+      expect(cubit.state.items.single.unavailable, isTrue);
+      expect(cubit.state.hasInvalidQuantities, isTrue);
+      await cubit.close();
+    });
+
+    test('un error de red NO castiga la línea', () async {
+      repo.add(aProduct(id: 'p-1', stock: aStock(available: 10)), quantity: 2);
+      final cubit = CartCubit(
+        repo,
+        catalogRepository: _FakeCatalogRepository({
+          'p-1': const Left(CatalogFailure('timeout')),
+        }),
+      );
+
+      await cubit.revalidate();
+
+      expect(cubit.state.items.single.unavailable, isFalse);
+      expect(cubit.state.hasInvalidQuantities, isFalse);
+      await cubit.close();
+    });
+
+    test('una revalidación posterior exitosa limpia el no disponible', () async {
+      repo.add(aProduct(id: 'p-1'), quantity: 1);
+      repo.markUnavailable('p-1');
+      final fresh = aProduct(id: 'p-1', stock: aStock(available: 5));
+      final cubit = CartCubit(
+        repo,
+        catalogRepository: _FakeCatalogRepository({'p-1': Right(fresh)}),
+      );
+
+      await cubit.revalidate();
+
+      expect(cubit.state.items.single.unavailable, isFalse);
+      expect(cubit.state.hasInvalidQuantities, isFalse);
+      await cubit.close();
+    });
+
+    test('sin catálogo inyectado es un no-op', () async {
+      repo.add(aProduct(id: 'p-1'), quantity: 1);
+      final cubit = CartCubit(repo);
+
+      await cubit.revalidate();
+
+      expect(cubit.state.itemCount, 1);
+      await cubit.close();
+    });
+  });
 }

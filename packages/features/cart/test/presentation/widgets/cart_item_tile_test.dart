@@ -40,6 +40,35 @@ void main() {
     expect(removed, isTrue);
   });
 
+  testWidgets('un item marcado unavailable se atenua y muestra el chip', (tester) async {
+    final item = CartItem(product: aProduct(), quantity: 1, unavailable: true);
+
+    await tester.pumpWidget(wrap(CartItemTile(
+      item: item,
+      onQuantityChanged: (_) {},
+      onRemove: () {},
+    )));
+
+    expect(find.text('Ya no disponible'), findsOneWidget);
+    final opacity = tester.widget<Opacity>(find.byType(Opacity).first);
+    expect(opacity.opacity, 0.55);
+  });
+
+  testWidgets('cantidad mayor al stock muestra cuantas unidades quedan', (tester) async {
+    final item = CartItem(
+      product: aProduct(stock: aStock(available: 2)),
+      quantity: 5,
+    );
+
+    await tester.pumpWidget(wrap(CartItemTile(
+      item: item,
+      onQuantityChanged: (_) {},
+      onRemove: () {},
+    )));
+
+    expect(find.text('Sin stock suficiente (quedan 2)'), findsOneWidget);
+  });
+
   testWidgets('the embedded stepper reports quantity changes for this item', (tester) async {
     int? received;
     final item = CartItem(product: aProduct(), quantity: 2);
