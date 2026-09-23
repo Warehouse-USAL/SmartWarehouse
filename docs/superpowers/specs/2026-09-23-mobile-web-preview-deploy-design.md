@@ -49,25 +49,31 @@ No entra:
 
 ### 1. Imagen Docker (`Dockerfile` en la raíz del repo)
 
-Dos etapas:
+La imagen no compila Flutter: solo empaqueta un `build/web` ya construido.
+Razones: el workflow ya compila web con `subosito/flutter-action` pineado al
+mismo SDK que CI, y las imágenes públicas de Flutter (`cirruslabs/flutter`)
+no ofrecen la 3.47.0 que usa el equipo. Así el build es uno solo, rápido y
+reproducible en local con los mismos comandos.
 
-1. `ghcr.io/cirruslabs/flutter:3.47.0` (misma versión que usa el equipo):
-   `dart pub global activate melos`, `melos bootstrap`,
-   `flutter build web --release --base-href /mobile/app/`.
-   Acepta `ARG APP_VERSION` para inyectar la versión en la página de preview.
-2. `nginx:alpine`: copia `build/web` a `/usr/share/nginx/html/app/`, copia
-   `web/preview/index.html` a `/usr/share/nginx/html/index.html` reemplazando
-   el placeholder `__APP_VERSION__` con `sed`, y un `nginx.conf` con:
-   - `location /app/ { try_files $uri $uri/ /app/index.html; }` (fallback SPA)
-   - `location / { try_files $uri /index.html; }` (la página de preview)
+- Etapa única `nginx:alpine`. Copia `build/web` a `/usr/share/nginx/html/app/`,
+  copia `deploy/preview.html` a `/usr/share/nginx/html/index.html`
+  reemplazando el placeholder `__APP_VERSION__` con `sed` (`ARG APP_VERSION`,
+  default `dev`), y `deploy/nginx.conf` con:
+  - `location /app/ { try_files $uri $uri/ /app/index.html; }` (fallback SPA)
+  - `location / { try_files $uri $uri/ /index.html; }` (la página de preview)
+- El `build/web` se genera antes con
+  `flutter build web --release --base-href /mobile/app/`, sin
+  `--dart-define=API_BASE_URL` (la URL se resuelve por mismo origen, sección
+  3). El APK sigue recibiendo `API_BASE_URL` como hoy.
+- Los archivos de la página viven en `deploy/`, no en `web/`, porque Flutter
+  copia todo `web/` dentro de `build/web` y quedarían servidos bajo la app.
 
 Caddy hace `handle_path /mobile/*`, o sea quita el prefijo antes de llegar al
 contenedor. Por eso nginx sirve desde la raíz pero el build usa
 `--base-href /mobile/app/`: los assets se piden como `/mobile/app/...`,
 Caddy los enruta acá y sobreviven al strip.
 
-`.dockerignore` excluye `build/`, `.dart_tool/`, `android/`, `ios/`,
-`linux/`, `macos/`, `windows/`, `coverage/`, `integration_test/`.
+`.dockerignore` deja pasar solo `build/web` y `deploy/`.
 
 ### 2. Página de preview (`web/preview/index.html`)
 
@@ -104,11 +110,19 @@ String host, String port})` con test unitario en `test/config/`.
 - `docker-compose.prod.yml`: servicio `mobile`, imagen
   `ghcr.io/warehouse-usal/smartwarehouse:latest`, `restart: always`, red
   externa `wh-proxy`, sin puertos de host.
-- `Makefile`: target `deploy` que hace
-  `docker compose -f docker-compose.prod.yml pull && up -d`.
-- `stable-release.yml`: job `build-image` (needs `gate`) que hace login a
-  GHCR con `GITHUB_TOKEN`, `docker build --build-arg APP_VERSION=<tag>` con
-  tags `<version>` y `latest`, y push. El paso "Derive stable version tag"
+- `Makefile`: targets `up-prod` (`docker compose -f docker-compose.prod.yml
+  up -d`), `deploy` (`pull` y luego `up -d`) y `build-web-image` (build web
+  con el base-href y `docker build`), siguiendo el Makefile de
+  `smarthouse_webapp`. `reconcile.sh` invoca `make up-prod` y `make deploy`.
+- `.env.example` vacío salvo comentarios: `reconcile.sh` se niega a
+  desplegar una app sin `.env` en el server, así que hay que dejar uno para
+  copiar aunque la app no lea variables.
+- `stable-release.yml`: el job `build-web` pasa a compilar con
+  `--base-href /mobile/app/` y sin `API_BASE_URL`. Nuevo job `build-image`
+  (needs `gate` y `build-web`) que descarga el artifact `web-build`, lo
+  descomprime en `build/web`, hace login a GHCR con `GITHUB_TOKEN`,
+  `docker build --build-arg APP_VERSION=<tag>` con tags `<version>` y
+  `latest`, y push. El paso "Derive stable version tag"
   se mueve del job `stable-release` al job `gate`, que lo expone como output
   `version`; `build-image` y `stable-release` lo consumen desde ahí. El job
   `stable-release` pasa a depender también de `build-image`. `build-web` y
@@ -125,7 +139,8 @@ String host, String port})` con test unitario en `test/config/`.
 - `docker-compose.yml`: servicio `runner-mobile` igual a `runner-webapp` con
   `REPO_URL=.../SmartWarehouse` y `RUNNER_WORKDIR=/opt/wh/_work/SmartWarehouse`.
 - `scripts/reconcile.sh`: agregar `SmartWarehouse` a `APPS`.
-- README: fila para `/mobile/*` y nota de que la app no necesita `.env`.
+- README: fila para `/mobile/*` y línea `cp /opt/wh/SmartWarehouse/.env.example
+  /opt/wh/SmartWarehouse/.env` en la sección de app config.
 
 ## Manejo de errores
 
@@ -140,9 +155,11 @@ String host, String port})` con test unitario en `test/config/`.
 
 1. `flutter test test/config/` verde con casos: override absoluto, host/port,
    web en localhost, web en otro host, Android, desktop.
-2. `docker build` local de la imagen y `docker run` detrás de un Caddy mínimo
-   con el backend local (`docker-compose.yml` de `wh-backend`), reproduciendo
-   el ruteo `/mobile/*` y raíz. Screenshot de login y de catálogo cargado.
+2. `make build-web-image` local y `docker run -p 8090:80`: `curl` a `/`,
+   `/app/` y a una ruta profunda como `/app/orders/1` devuelven 200 con HTML.
+   Luego, detrás de un Caddy mínimo con el backend local (`docker-compose.yml`
+   de `wh-backend`) reproduciendo el ruteo `/mobile/*` y raíz: screenshot de
+   login y de catálogo cargado.
 3. CI del repo verde. Después del primer release, el `deploy.yml` comenta
    éxito en el PR y `http://<server>/mobile/` responde.
 
