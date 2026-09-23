@@ -31,11 +31,14 @@ class Cart {
     return sum;
   }
 
-  /// True si hay items con cantidad inválida: cero/negativa o mayor al stock
-  /// disponible. Un carrito así no puede confirmarse (sería sobreventa).
-  bool get hasInvalidQuantities => items.any(
-        (i) => i.quantity <= 0 || i.quantity > i.product.stock.available,
-      );
+  /// Items que impiden confirmar la orden: producto eliminado del catálogo,
+  /// cantidad inválida o mayor al stock disponible actual (revalidado).
+  List<CartItem> get invalidItems =>
+      items.where((i) => i.blocksCheckout).toList();
+
+  /// True si hay items que bloquean el checkout (ver [invalidItems]). Un
+  /// carrito así no puede confirmarse (sería sobreventa o producto fantasma).
+  bool get hasInvalidQuantities => items.any((i) => i.blocksCheckout);
 
   bool get isEmpty => items.isEmpty;
 

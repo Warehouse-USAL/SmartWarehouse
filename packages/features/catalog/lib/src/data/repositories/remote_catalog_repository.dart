@@ -39,7 +39,8 @@ class RemoteCatalogRepository implements CatalogRepository {
       };
       final result = await httpHelper.get('/products', queryParameters: query);
       return await result.fold(
-        (error) => Left(CatalogFailure(error.message ?? 'Error obteniendo productos')),
+        (error) =>
+            Left(CatalogFailure(error.message ?? 'Error obteniendo productos')),
         (response) {
           final data = response.data;
           if (data is! Map<String, dynamic>) {
@@ -64,25 +65,28 @@ class RemoteCatalogRepository implements CatalogRepository {
   Future<Either<CatalogFailure, List<ProductCategory>>> getCategories() async {
     try {
       final result = await httpHelper.get('/products/categories');
-      return await result.fold(
-        (_) => Right(ProductCategory.values),
-        (response) {
-          final data = response.data;
-          if (data is! Map<String, dynamic>) return Right(ProductCategory.values);
-          final raw = data['categories'];
-          if (raw is! List) return Right(ProductCategory.values);
-          final parsed = raw
-              .whereType<String>()
-              .map(ProductCategory.tryParse)
-              .whereType<ProductCategory>()
-              .toList(growable: false);
-          // Si el back devolvió una lista vacía o todos strings desconocidos,
-          // preferimos el enum local antes que dejar la UI sin filtros.
-          return Right(parsed.isEmpty ? ProductCategory.values : parsed);
-        },
-      );
+      return await result.fold((_) => Right(ProductCategory.values), (
+        response,
+      ) {
+        final data = response.data;
+        if (data is! Map<String, dynamic>) return Right(ProductCategory.values);
+        final raw = data['categories'];
+        if (raw is! List) return Right(ProductCategory.values);
+        final parsed = raw
+            .whereType<String>()
+            .map(ProductCategory.tryParse)
+            .whereType<ProductCategory>()
+            .toList(growable: false);
+        // Si el back devolvió una lista vacía o todos strings desconocidos,
+        // preferimos el enum local antes que dejar la UI sin filtros.
+        return Right(parsed.isEmpty ? ProductCategory.values : parsed);
+      });
     } catch (e, st) {
-      log('getCategories error (fallback to local enum)', error: e, stackTrace: st);
+      log(
+        'getCategories error (fallback to local enum)',
+        error: e,
+        stackTrace: st,
+      );
       return Right(ProductCategory.values);
     }
   }
@@ -94,9 +98,11 @@ class RemoteCatalogRepository implements CatalogRepository {
       return await result.fold(
         (error) {
           if (error.statusCode == 404) {
-            return const Left(CatalogFailure('Producto no encontrado'));
+            return const Left(CatalogFailure('Producto no encontrado', true));
           }
-          return Left(CatalogFailure(error.message ?? 'Error obteniendo producto'));
+          return Left(
+            CatalogFailure(error.message ?? 'Error obteniendo producto'),
+          );
         },
         (response) {
           final data = response.data;

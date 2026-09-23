@@ -13,7 +13,10 @@ class CartFeatureBuilder {
     Injector.i
       ..registerLazySingleton<CartRepository>(InMemoryCartRepository.new)
       ..registerLazySingleton<CartCubit>(
-        () => CartCubit(Injector.i.resolve<CartRepository>()),
+        () => CartCubit(
+          Injector.i.resolve<CartRepository>(),
+          catalogRepository: Injector.i.resolve<CatalogRepository>(),
+        ),
       );
   }
 

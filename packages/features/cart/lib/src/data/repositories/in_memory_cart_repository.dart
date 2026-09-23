@@ -14,11 +14,14 @@ class InMemoryCartRepository implements CartRepository {
     if (quantity <= 0) return;
     final index = _items.indexWhere((i) => i.product.id == product.id);
     if (index == -1) {
-      _items.add(CartItem(product: product, quantity: _clamp(product, quantity)));
+      _items.add(
+        CartItem(product: product, quantity: _clamp(product, quantity)),
+      );
     } else {
       final existing = _items[index];
       _items[index] = existing.copyWith(
-          quantity: _clamp(product, existing.quantity + quantity));
+        quantity: _clamp(product, existing.quantity + quantity),
+      );
     }
   }
 
@@ -35,8 +38,9 @@ class InMemoryCartRepository implements CartRepository {
       _items.removeAt(index);
       return;
     }
-    _items[index] = _items[index]
-        .copyWith(quantity: _clamp(_items[index].product, quantity));
+    _items[index] = _items[index].copyWith(
+      quantity: _clamp(_items[index].product, quantity),
+    );
   }
 
   /// Limita la cantidad a [1, maxOrderableQuantity] (stock disponible y
@@ -45,6 +49,23 @@ class InMemoryCartRepository implements CartRepository {
     final max = product.maxOrderableQuantity;
     if (max < 1 || quantity < 1) return 1;
     return quantity > max ? max : quantity;
+  }
+
+  @override
+  void applyProductUpdate(String productId, Product product) {
+    final index = _items.indexWhere((i) => i.product.id == productId);
+    if (index == -1) return;
+    _items[index] = _items[index].copyWith(
+      product: product,
+      unavailable: false,
+    );
+  }
+
+  @override
+  void markUnavailable(String productId) {
+    final index = _items.indexWhere((i) => i.product.id == productId);
+    if (index == -1) return;
+    _items[index] = _items[index].copyWith(unavailable: true);
   }
 
   @override
