@@ -19,11 +19,29 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
     required this.getToken,
     required this.baseUrl,
     required this.historyStore,
-  });
+    WebSocketChannel Function(Uri uri)? connector,
+    List<Duration>? retryDelays,
+  })  : _connect = connector ?? WebSocketChannel.connect,
+        _retryDelays = retryDelays ?? _defaultRetryDelays;
+
+  static const _defaultRetryDelays = [
+    Duration(seconds: 1),
+    Duration(seconds: 2),
+    Duration(seconds: 4),
+    Duration(seconds: 8),
+    Duration(seconds: 16),
+    Duration(seconds: 30),
+  ];
 
   final HttpHelper httpHelper;
   final String? Function() getToken;
   final OrderHistoryStore historyStore;
+
+  /// Inyectable para tests; por defecto abre un WebSocket real.
+  final WebSocketChannel Function(Uri uri) _connect;
+
+  /// Backoff de reconexión; inyectable para que los tests no duerman.
+  final List<Duration> _retryDelays;
 
   /// HTTP base URL (e.g. `http://10.0.2.2:8080`).
   /// watchOrder replaces the scheme to ws:// internally.
@@ -94,18 +112,30 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
   @override
   Stream<Order> watchOrder(String id) {
     final controller = StreamController<Order>();
-    controller.onCancel = controller.close;
-    _connectWithRetry(id, controller);
+    final holder = _ChannelHolder();
+    controller.onCancel = () {
+      // Cerrar el socket activo rompe el `await for` del loop; sin esto la
+      // conexión quedaba abierta hasta el próximo mensaje del server.
+      holder.closeChannel();
+      return controller.close();
+    };
+    _connectWithRetry(id, controller, holder);
     return controller.stream;
   }
 
-  void _connectWithRetry(String id, StreamController<Order> controller) async {
-    const delays = [1, 2, 4, 8, 16, 30];
+  void _connectWithRetry(
+    String id,
+    StreamController<Order> controller,
+    _ChannelHolder holder,
+  ) async {
     int attempt = 0;
 
     while (!controller.isClosed) {
       try {
-        // Backend guideline: REST fetch before subscribing to WS
+        // Backend guideline: REST fetch before subscribing to WS. Correr
+        // esto en cada reconexión además re-sincroniza el estado perdido
+        // durante la desconexión y, si el token expiró en el medio, el GET
+        // dispara el refresh vía HTTP antes de reabrir el socket.
         final restResult = await getOrderById(id);
         restResult.fold(
           (failure) {
@@ -134,13 +164,17 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
         }
 
         final wsUrl = baseUrl.replaceFirst(RegExp(r'^http'), 'ws');
-        final channel = WebSocketChannel.connect(
+        final channel = _connect(
           Uri.parse('$wsUrl/ws/v1/orders/$userId?token=$token'),
         );
-        attempt = 0;
+        holder.channel = channel;
 
         await for (final message in channel.stream) {
           if (controller.isClosed) break;
+          // Recién un mensaje recibido prueba que la conexión sirve: si el
+          // reset se hace al conectar, un backend que acepta el socket y lo
+          // corta enseguida deja el backoff clavado en el mínimo.
+          attempt = 0;
           try {
             final json =
                 jsonDecode(message as String) as Map<String, dynamic>;
@@ -158,13 +192,15 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
         }
       } catch (_) {
         // Error path falls through to the shared backoff below
+      } finally {
+        holder.closeChannel();
       }
 
       // Apply backoff on both clean server-close and error to prevent busy-loop
       if (!controller.isClosed) {
-        final delay = delays[attempt.clamp(0, delays.length - 1)];
+        final delay = _retryDelays[attempt.clamp(0, _retryDelays.length - 1)];
         attempt++;
-        await Future<void>.delayed(Duration(seconds: delay));
+        await Future<void>.delayed(delay);
       }
     }
   }
@@ -172,28 +208,51 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
   @override
   Stream<OrderStatusChange> watchOrderStatusChanges() {
     final controller = StreamController<OrderStatusChange>();
-    controller.onCancel = controller.close;
-    _watchStatusChangesLoop(controller);
+    final holder = _ChannelHolder();
+    controller.onCancel = () {
+      holder.closeChannel();
+      return controller.close();
+    };
+    _watchStatusChangesLoop(controller, holder);
     return controller.stream;
   }
 
   void _watchStatusChangesLoop(
     StreamController<OrderStatusChange> controller,
+    _ChannelHolder holder,
   ) async {
-    const delays = [1, 2, 4, 8, 16, 30];
     int attempt = 0;
     final Map<String, OrderStatus> cache = {};
-
-    // Seed cache with current order statuses before opening WS.
-    final seedResult = await getOrders();
-    seedResult.fold((_) {}, (orders) {
-      for (final o in orders) {
-        cache[o.id] = o.status;
-      }
-    });
+    var seeded = false;
 
     while (!controller.isClosed) {
       try {
+        // Re-sincronizar contra HTTP en CADA (re)conexión, no solo al
+        // arrancar: los cambios de estado ocurridos mientras el WS estuvo
+        // caído se recuperan acá (antes se perdían para siempre) y, si el
+        // token expiró durante la desconexión, este GET dispara el refresh
+        // antes de reabrir el socket. En la primera pasada solo se llena
+        // el cache: no hay "cambios" que avisar.
+        final seedResult = await getOrders();
+        seedResult.fold((_) {}, (orders) {
+          for (final o in orders) {
+            final old = cache[o.id];
+            if (seeded &&
+                old != null &&
+                old != o.status &&
+                !controller.isClosed) {
+              controller.add(OrderStatusChange(
+                orderId: o.id,
+                oldStatus: old,
+                newStatus: o.status,
+              ));
+            }
+            cache[o.id] = o.status;
+          }
+          seeded = true;
+        });
+        if (controller.isClosed) break;
+
         final token = getToken();
         if (token == null) {
           await Future<void>.delayed(const Duration(seconds: 5));
@@ -206,13 +265,17 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
         }
 
         final wsUrl = baseUrl.replaceFirst(RegExp(r'^http'), 'ws');
-        final channel = WebSocketChannel.connect(
+        final channel = _connect(
           Uri.parse('$wsUrl/ws/v1/orders/$userId?token=$token'),
         );
-        attempt = 0;
+        holder.channel = channel;
 
         await for (final message in channel.stream) {
           if (controller.isClosed) break;
+          // Recién un mensaje recibido prueba que la conexión sirve: si el
+          // reset se hace al conectar, un backend que acepta el socket y lo
+          // corta enseguida deja el backoff clavado en el mínimo.
+          attempt = 0;
           try {
             final json =
                 jsonDecode(message as String) as Map<String, dynamic>;
@@ -220,8 +283,12 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
             if (event.event == 'order.updated') {
               final orderId = event.payload.id;
               final newStatus = parseOrderStatus(event.payload.status);
-              final oldStatus = cache[orderId];
-              if (oldStatus != null && oldStatus != newStatus) {
+              // Una orden que no está en el cache es nueva (creada después
+              // del último seed): su estado inicial real es pending, así
+              // que la primera transición también se avisa (antes se
+              // tragaba por el guard de oldStatus == null).
+              final oldStatus = cache[orderId] ?? OrderStatus.pending;
+              if (oldStatus != newStatus) {
                 controller.add(OrderStatusChange(
                   orderId: orderId,
                   oldStatus: oldStatus,
@@ -236,12 +303,14 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
         }
       } catch (_) {
         // Error path falls through to shared backoff below
+      } finally {
+        holder.closeChannel();
       }
 
       if (!controller.isClosed) {
-        final delay = delays[attempt.clamp(0, delays.length - 1)];
+        final delay = _retryDelays[attempt.clamp(0, _retryDelays.length - 1)];
         attempt++;
-        await Future<void>.delayed(Duration(seconds: delay));
+        await Future<void>.delayed(delay);
       }
     }
   }
@@ -252,5 +321,17 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
       return 'Sin permisos para ver órdenes';
     }
     return error.message ?? 'Error de red';
+  }
+}
+
+/// Referencia mutable al socket activo de un loop de conexión: permite que
+/// el `onCancel` del stream cierre el canal vigente (que cambia en cada
+/// reconexión) y así corte el `await for` en curso.
+class _ChannelHolder {
+  WebSocketChannel? channel;
+
+  void closeChannel() {
+    unawaited(channel?.sink.close());
+    channel = null;
   }
 }
