@@ -1,0 +1,10 @@
+# Réplica mínima del Caddyfile de wh-autodeploys para probar en local:
+# /mobile/* -> este contenedor, el resto -> backend en el host (:8080).
+:80 {
+	handle_path /mobile/* {
+		reverse_proxy mobile:80
+	}
+	handle {
+		reverse_proxy host.docker.internal:8080
+	}
+}

@@ -48,3 +48,26 @@ O un archivo puntual: `patrol test -t integration_test/cart_checkout_test.dart`.
 Los finders usan las keys centralizadas en `packages/design_system/lib/testing/e2e_keys.dart` (`E2eKeys`). Si agregás pantallas nuevas, agregá ahí las keys.
 
 Todos los precios visibles se parsean con el formato único de `Money.formatted` (`$1.234,56`); cualquier moneda o formato distinto entre catálogo, carrito y checkout hace fallar el test (guardia de regresión del bug de moneda en el carrito).
+
+## Preview web en el server
+
+Cada release estable publica la app compilada para web como imagen
+`ghcr.io/warehouse-usal/smartwarehouse` y el server del equipo la sirve en
+`http://<server>/mobile/`: una página con un celular embebido donde corre la
+app real contra el backend, sin instalar el APK. `http://<server>/mobile/app/`
+es la app a pantalla completa. El APK sigue adjunto al release como siempre.
+
+- La URL del backend en web es el origen de la página (`lib/config/backend_url.dart`),
+  así que no hay CORS ni configuración por host.
+- Flujo: `stable-release.yml` compila web con `--base-href /mobile/app/`,
+  arma la imagen (`Dockerfile`, `deploy/`) y la pushea a GHCR; al terminar,
+  `deploy.yml` corre en el runner del server y hace `make deploy`.
+- Infra (Caddy, runner, reconcile) vive en `Warehouse-USAL/wh-autodeploys`.
+
+Probar en local igual que en el server (backend de wh-backend en `:8080`):
+
+```bash
+make build-web-image
+docker compose -f deploy/local/docker-compose.yml up -d
+open http://localhost:8088/mobile/
+```
