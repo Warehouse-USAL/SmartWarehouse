@@ -5,7 +5,6 @@ import 'package:commons/commons.dart';
 import 'package:commons/helpers/http/entities/http_response.dart';
 import 'package:commons/helpers/http/entities/http_response_error.dart';
 import 'package:dartz/dartz.dart' hide Order;
-import 'package:dio/dio.dart' show Options;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:order_tracking/src/data/repositories/remote_order_tracking_repository.dart';
 import 'package:order_tracking/src/domain/entities/order_status_change.dart';
