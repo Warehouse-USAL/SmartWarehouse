@@ -255,6 +255,16 @@ void main() {
 
     testWidgets('el boton Ver navega al detalle de esa orden', (tester) async {
       final repo = _injectWithMockSource();
+      // El snackbar vive fuera del arbol de Beamer, asi que "Ver" no navega
+      // directo: dispara el callback estatico `onOpenOrder`, que la capa de
+      // aplicacion cablea al router real. Aca lo cableamos al mock de
+      // navegacion para cubrir el flujo completo tap -> callback -> pushNamed.
+      final nav = Injector.i.resolve<NavigationHelper>();
+      OrderTrackingFeatureBuilder.onOpenOrder = (orderId) => nav.pushNamed(
+            _FakeBuildContext(),
+            routeName: Routes.orderDetail(orderId),
+          );
+      addTearDown(() => OrderTrackingFeatureBuilder.onOpenOrder = null);
 
       await tester.pumpWidget(_appWithMessenger());
 
@@ -274,7 +284,6 @@ void main() {
       await tester.tap(find.text('Ver'));
       await tester.pump();
 
-      final nav = Injector.i.resolve<NavigationHelper>();
       verify(
         () => nav.pushNamed(any(), routeName: Routes.orderDetail('WH-49281')),
       ).called(1);

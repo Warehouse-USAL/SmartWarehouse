@@ -6,6 +6,15 @@ on:
       - develop
       - master
     types: [opened, synchronize, reopened, ready_for_review]
+  # También en cada push directo (merge) a develop/master: el CI de un PR
+  # corre contra el merge-ref del momento, así que dos PRs verdes en paralelo
+  # pueden romper develop al combinarse (conflicto semántico, como el test de
+  # "Ver" de #203 vs el cambio de #204). Este trigger detecta esa rotura en el
+  # merge mismo, no en el CI del siguiente PR ajeno.
+  push:
+    branches:
+      - develop
+      - master
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -14,7 +23,8 @@ concurrency:
 jobs:
   skip-drafts:
     name: Skip draft PRs
-    if: github.event.pull_request.draft == false
+    # En push no hay PR: el check pasa directo para no frenar el resto.
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Not a draft
@@ -29,6 +39,12 @@ jobs:
         env:
           BRANCH: ${{ github.head_ref }}
         run: |
+          # En push a develop/master no hay head_ref que validar; se deja el
+          # job en verde para no frenar los jobs que dependen de él.
+          if [ -z "$BRANCH" ]; then
+            echo "Push a ${{ github.ref_name }} — sin branch de PR que validar."
+            exit 0
+          fi
           echo "Branch: $BRANCH"
           if ! echo "$BRANCH" | grep -qE '^(feature|fix|enhancement|refactor|hotfix|beta|backport|dependabot)/'; then
             echo "ERROR: Branch '$BRANCH' does not match naming conventions."
