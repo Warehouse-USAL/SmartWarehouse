@@ -7,7 +7,7 @@ Fecha: 2026-09-23
 Que cada release estable de SmartWarehouse quede accesible en el server del
 equipo como Flutter web, dentro de una página con marco de celular, para
 probar la app sin instalar el APK. El APK sigue generándose y adjuntándose al
-release como hoy; la página de preview además ofrece el link de descarga.
+release como hoy; esto no lo reemplaza.
 
 ## Contexto (cómo despliegan los otros repos)
 
@@ -32,7 +32,7 @@ release como hoy; la página de preview además ofrece el link de descarga.
 Entra:
 
 1. Imagen Docker de la app web publicada en GHCR en cada release estable.
-2. Página de preview con marco de celular y link "Descargar APK".
+2. Página de preview: la app corriendo dentro de un marco de celular.
 3. Resolución de la URL del backend por mismo origen cuando corre en web.
 4. `docker-compose.prod.yml`, `deploy.yml` y target `make deploy` en este
    repo, calcados de `smarthouse_webapp`.
@@ -73,11 +73,11 @@ Caddy los enruta acá y sobreviven al strip.
 
 HTML y CSS puros, sin frameworks. Contiene:
 
-- Barra superior con "Smart Warehouse · vX.Y.Z" (placeholder
-  `__APP_VERSION__`) y un botón "Descargar APK" que apunta a
-  `https://github.com/Warehouse-USAL/SmartWarehouse/releases/latest`.
-- Marco de celular de 390x844 con bordes redondeados y notch, y un `iframe`
-  con `src="app/"` (relativo, así funciona bajo `/mobile/`).
+- Solo el marco de celular de 390x844, centrado, con bordes redondeados y
+  notch, y un `iframe` con `src="app/"` (relativo, así funciona bajo
+  `/mobile/`). La app real corre adentro. Sin barra ni links.
+- Un texto discreto con la versión desplegada (placeholder `__APP_VERSION__`)
+  en una esquina, para saber qué release se está probando.
 - En viewports angostos (menos de 430px de ancho) el marco desaparece y el
   iframe ocupa toda la pantalla, para que también sirva desde un teléfono.
 
