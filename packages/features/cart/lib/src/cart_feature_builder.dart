@@ -13,9 +13,14 @@ class CartFeatureBuilder {
     Injector.i
       ..registerLazySingleton<CartRepository>(InMemoryCartRepository.new)
       ..registerLazySingleton<CartCubit>(
+        // El catálogo se resuelve defensivo: en la app siempre está, pero
+        // los harnesses de test de otras features inyectan el cart solo y
+        // el cubit debe funcionar (sin revalidación) igual.
         () => CartCubit(
           Injector.i.resolve<CartRepository>(),
-          catalogRepository: Injector.i.resolve<CatalogRepository>(),
+          catalogRepository: Injector.i.isRegistered<CatalogRepository>()
+              ? Injector.i.resolve<CatalogRepository>()
+              : null,
         ),
       );
   }
