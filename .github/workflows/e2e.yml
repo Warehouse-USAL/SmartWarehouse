@@ -57,14 +57,24 @@ jobs:
           repository: Warehouse-USAL/wh-backend
           path: wh-backend
 
-      # Docker Hub dejó de servir minio/minio (pull access denied desde
-      # 2026-09-12). Se pre-carga desde quay.io (registry oficial de MinIO) y
-      # se taggea con el nombre que espera el compose del backend. Sacar
-      # cuando Warehouse-USAL/wh-backend#118 mergee.
-      - name: Preload MinIO image from quay.io
+      # MinIO discontinuó la distribución pública (sept 2026): minio/minio en
+      # Docker Hub no existe, quay.io/minio/minio devuelve unauthorized desde
+      # el 2026-09-25 (rompió las nightlies) y hasta el binario de dl.min.io
+      # da 410. La única fuente pública que queda es el archivo de Bitnami
+      # (bitnamilegacy, congelado en 2025.7.23, pineado por tag). Se
+      # construye un shim para que se comporte como la imagen oficial que el
+      # compose del backend espera: ENTRYPOINT minio (respeta su `command:
+      # server /data ...`) + alias `local` de mc (respeta su healthcheck
+      # `mc ready local`), taggeado como minio/minio:latest.
+      - name: Build MinIO image (distribución pública discontinuada)
         run: |
-          docker pull quay.io/minio/minio:latest
-          docker tag quay.io/minio/minio:latest minio/minio:latest
+          cat > /tmp/Dockerfile.minio <<'EOF'
+          FROM docker.io/bitnamilegacy/minio:2025.7.23-debian-12-r5
+          USER 0
+          RUN mkdir -p /root/.mc && printf '%s' '{"version":"10","aliases":{"local":{"url":"http://localhost:9000","accessKey":"","secretKey":"","api":"S3v4","path":"auto"}}}' > /root/.mc/config.json
+          ENTRYPOINT ["minio"]
+          EOF
+          docker build -t minio/minio:latest -f /tmp/Dockerfile.minio /tmp
 
       - name: Start backend stack
         working-directory: wh-backend
