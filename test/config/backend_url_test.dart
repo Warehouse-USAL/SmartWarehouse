@@ -98,6 +98,35 @@ void main() {
       );
     });
 
+    test('sameOrigin fuerza el origen en web aunque sea localhost (build para el proxy)', () {
+      expect(
+        resolveBackendUrl(
+          isWeb: true,
+          isAndroid: false,
+          base: Uri.parse('http://localhost:8088/mobile/app/'),
+          sameOrigin: true,
+        ),
+        'http://localhost:8088',
+      );
+    });
+
+    test('sameOrigin no afecta a Android ni a los overrides', () {
+      expect(
+        resolveBackendUrl(isWeb: false, isAndroid: true, base: serverBase, sameOrigin: true),
+        'http://10.0.2.2:8080',
+      );
+      expect(
+        resolveBackendUrl(
+          isWeb: true,
+          isAndroid: false,
+          base: serverBase,
+          sameOrigin: true,
+          fullOverride: 'https://api.example.com',
+        ),
+        'https://api.example.com',
+      );
+    });
+
     test('iOS/desktop usa localhost', () {
       expect(
         resolveBackendUrl(isWeb: false, isAndroid: false, base: serverBase),

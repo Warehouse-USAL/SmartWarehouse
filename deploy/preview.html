@@ -8,8 +8,10 @@
     :root { color-scheme: dark; }
     html, body { margin: 0; height: 100%; background: #111; font-family: system-ui, sans-serif; }
     body { display: flex; align-items: center; justify-content: center; }
+    /* 390x844 a escala real; en pantallas bajas se achica manteniendo la proporción. */
     .phone {
-      position: relative; width: 390px; height: 844px; padding: 14px;
+      position: relative; height: min(844px, calc(100vh - 32px)); aspect-ratio: 390 / 844;
+      padding: 14px; box-sizing: border-box;
       background: #000; border-radius: 48px;
       box-shadow: 0 30px 80px rgba(0, 0, 0, .6);
     }
@@ -20,8 +22,8 @@
     iframe { width: 100%; height: 100%; border: 0; border-radius: 36px; background: #fff; }
     .version { position: fixed; right: 12px; bottom: 10px; color: #666; font-size: 12px; }
     /* En un celular real no tiene sentido el marco: la app ocupa todo. */
-    @media (max-width: 430px), (max-height: 880px) {
-      .phone { width: 100%; height: 100%; padding: 0; border-radius: 0; box-shadow: none; }
+    @media (max-width: 430px) {
+      .phone { width: 100%; height: 100%; aspect-ratio: auto; padding: 0; border-radius: 0; box-shadow: none; }
       .notch, .version { display: none; }
       iframe { border-radius: 0; }
     }

@@ -33,7 +33,7 @@ dev: ## Start the Flutter web dev server with hot reload
 # ─── Preview web en el server (ver docs/superpowers/specs/2026-09-23-mobile-web-preview-deploy-design.md)
 
 build-web-image: ## Build web con base /mobile/app/ y la imagen nginx local (sw-mobile:local)
-	flutter build web --release --base-href /mobile/app/
+	flutter build web --release --base-href /mobile/app/ --dart-define=WEB_SAME_ORIGIN=true
 	docker build -t sw-mobile:local --build-arg APP_VERSION=local .
 	@echo "Probar con: docker run --rm -p 8090:80 sw-mobile:local  ->  http://localhost:8090/"
 

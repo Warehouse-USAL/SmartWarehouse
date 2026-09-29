@@ -79,4 +79,5 @@ String _localBackendUrl() => resolveBackendUrl(
   fullOverride: const String.fromEnvironment('API_BASE_URL'),
   hostOverride: const String.fromEnvironment('API_HOST'),
   port: const String.fromEnvironment('API_PORT', defaultValue: '8080'),
+  sameOrigin: const String.fromEnvironment('WEB_SAME_ORIGIN') == 'true',
 );

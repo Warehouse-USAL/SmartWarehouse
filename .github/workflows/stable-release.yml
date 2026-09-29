@@ -71,9 +71,10 @@ jobs:
         run: melos bootstrap
 
       # Base href fijo: el server sirve la app en /mobile/app/ (ver Dockerfile
-      # y deploy/nginx.conf). Sin API_BASE_URL: mismo origen que el proxy.
+      # y deploy/nginx.conf). Sin API_BASE_URL: WEB_SAME_ORIGIN hace que la app
+      # llame al backend por el origen de la página, que el proxy rutea.
       - name: Build web
-        run: flutter build web --release --base-href /mobile/app/
+        run: flutter build web --release --base-href /mobile/app/ --dart-define=WEB_SAME_ORIGIN=true
 
       - name: Zip web build
         run: zip -r smart-warehouse-web.zip build/web

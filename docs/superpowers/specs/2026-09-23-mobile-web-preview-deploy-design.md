@@ -55,7 +55,9 @@ mismo SDK que CI, y las imágenes públicas de Flutter (`cirruslabs/flutter`)
 no ofrecen la 3.47.0 que usa el equipo. Así el build es uno solo, rápido y
 reproducible en local con los mismos comandos.
 
-- Etapa única `nginx:alpine`. Copia `build/web` a `/usr/share/nginx/html/app/`,
+- Etapa única `nginx:alpine`. `Cache-Control: no-cache` en todo: Flutter web
+  usa nombres fijos (`main.dart.js`, `index.html`) y sin eso el navegador
+  puede mostrar la release anterior horas después del deploy. Copia `build/web` a `/usr/share/nginx/html/app/`,
   copia `deploy/preview.html` a `/usr/share/nginx/html/index.html`
   reemplazando el placeholder `__APP_VERSION__` con `sed` (`ARG APP_VERSION`,
   default `dev`), y `deploy/nginx.conf` con:
@@ -84,8 +86,10 @@ HTML y CSS puros, sin frameworks. Contiene:
   `/mobile/`). La app real corre adentro. Sin barra ni links.
 - Un texto discreto con la versión desplegada (placeholder `__APP_VERSION__`)
   en una esquina, para saber qué release se está probando.
-- En viewports angostos (menos de 430px de ancho) el marco desaparece y el
-  iframe ocupa toda la pantalla, para que también sirva desde un teléfono.
+- El marco se achica manteniendo la proporción si la ventana es más baja
+  que 844px (laptops), así nunca desaparece en desktop. Solo en viewports
+  angostos (menos de 430px de ancho) el marco se quita y el iframe ocupa
+  toda la pantalla, para que también sirva desde un teléfono.
 
 ### 3. URL del backend en web (`lib/config/ioc_manager.dart`)
 
@@ -94,7 +98,10 @@ HTML y CSS puros, sin frameworks. Contiene:
 
 - Si `Uri.base.host` es `localhost` o `127.0.0.1`, se conserva
   `http://localhost:$overridePort` (desarrollo con `flutter run -d chrome`).
-- En cualquier otro host, se usa `Uri.base.origin`. En el server la página
+- En cualquier otro host, o si el build lleva
+  `--dart-define=WEB_SAME_ORIGIN=true` (la imagen para el proxy lo lleva
+  siempre, así el smoke test local en `localhost:8088` y un túnel ssh también
+  pasan por Caddy), se usa `Uri.base.origin`. En el server la página
   vive en `http://<host>/mobile/app/`, así que las llamadas van a
   `http://<host>/auth` y Caddy las manda al backend. Mismo origen, sin CORS.
 
@@ -114,6 +121,8 @@ String host, String port})` con test unitario en `test/config/`.
   up -d`), `deploy` (`pull` y luego `up -d`) y `build-web-image` (build web
   con el base-href y `docker build`), siguiendo el Makefile de
   `smarthouse_webapp`. `reconcile.sh` invoca `make up-prod` y `make deploy`.
+- `.env` en `.gitignore`: `deploy.yml` hace `git clean -fd` en el server y
+  sin esto borraría el `.env` que reconcile exige.
 - `.env.example` vacío salvo comentarios: `reconcile.sh` se niega a
   desplegar una app sin `.env` en el server, así que hay que dejar uno para
   copiar aunque la app no lea variables.
