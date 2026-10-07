@@ -1,0 +1,14 @@
+# Producción: docker compose -f docker-compose.prod.yml up -d
+# El proxy Caddy (wh-autodeploys) es el único con puerto de host: rutea
+# /mobile/* acá quitando el prefijo. La app llama al backend con paths
+# relativos al origen (/auth, /products, /ws), que Caddy manda al backend.
+services:
+  mobile:
+    image: ghcr.io/warehouse-usal/smartwarehouse:latest
+    restart: always
+    networks:
+      - wh-proxy
+
+networks:
+  wh-proxy:
+    external: true

@@ -1,0 +1,13 @@
+# Uso: make build-web-image && docker compose -f deploy/local/docker-compose.yml up
+# Abre http://localhost:8088/mobile/ con el backend de wh-backend en :8080.
+services:
+  caddy:
+    image: caddy:2
+    ports:
+      - "8088:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  mobile:
+    image: sw-mobile:local

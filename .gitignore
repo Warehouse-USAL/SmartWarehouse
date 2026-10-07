@@ -50,3 +50,6 @@ app.*.map.json
 # tambien matchea tool/coverage/, que es codigo fuente, no output.
 /coverage/
 packages/**/coverage/
+
+# Config de runtime del server (copiar de .env.example). deploy.yml hace git clean -fd.
+.env

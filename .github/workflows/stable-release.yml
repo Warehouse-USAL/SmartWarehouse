@@ -15,10 +15,11 @@ on:
         required: false
         type: string
 
-# URL del backend a la que apunta el build estable. Configurar el secret
-# API_BASE_URL en el repo. Si está vacío, los builds usan los defaults
-# locales hardcoded en el código (10.0.2.2:8080 / localhost:8080) — útil
-# solo para builds de desarrollo, NO para release público.
+# URL del backend a la que apunta el APK estable. Configurar el secret
+# API_BASE_URL en el repo. Si está vacío, el APK usa los defaults locales
+# hardcoded (10.0.2.2:8080) — útil solo para desarrollo, NO para release.
+# El build web NO la usa: resuelve el backend por el origen de la página
+# (lib/config/backend_url.dart) porque se sirve detrás del mismo proxy.
 env:
   API_BASE_URL: ${{ secrets.API_BASE_URL }}
 
@@ -31,9 +32,25 @@ jobs:
       contains(github.event.head_commit.message, 'beta/') ||
       contains(github.event.head_commit.message, 'hotfix/')
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.tag.outputs.version }}
     steps:
-      - name: Release conditions verified
-        run: echo "Merged from release branch — proceeding with stable release"
+      - name: Derive stable version tag
+        id: tag
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          if [[ -n "$INPUT_VERSION" ]]; then
+            VERSION="${INPUT_VERSION#v}"
+          else
+            # El merge commit de master dice "... from <owner>/beta/vX.Y.Z"
+            VERSION=$(echo "$COMMIT_MSG" | grep -oE '(beta|hotfix)/[^ ]+' | head -1 | cut -d/ -f2-)
+            [[ -n "$VERSION" ]] || { echo "ERROR: no pude derivar la version del commit: $COMMIT_MSG" >&2; exit 1; }
+            VERSION="${VERSION#v}"
+          fi
+          echo "version=v${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Stable version: v${VERSION}"
 
   build-web:
     name: Build Web
@@ -53,14 +70,11 @@ jobs:
       - name: Bootstrap packages
         run: melos bootstrap
 
+      # Base href fijo: el server sirve la app en /mobile/app/ (ver Dockerfile
+      # y deploy/nginx.conf). Sin API_BASE_URL: WEB_SAME_ORIGIN hace que la app
+      # llame al backend por el origen de la página, que el proxy rutea.
       - name: Build web
-        run: |
-          ARGS=""
-          if [ -n "${API_BASE_URL}" ]; then
-            ARGS="--dart-define=API_BASE_URL=${API_BASE_URL}"
-            echo "Building with API_BASE_URL=${API_BASE_URL}"
-          fi
-          flutter build web --release $ARGS
+        run: flutter build web --release --base-href /mobile/app/ --dart-define=WEB_SAME_ORIGIN=true
 
       - name: Zip web build
         run: zip -r smart-warehouse-web.zip build/web
@@ -70,6 +84,42 @@ jobs:
         with:
           name: web-build
           path: smart-warehouse-web.zip
+
+  build-image:
+    name: Build and push web image
+    needs: [gate, build-web]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download web artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: .
+
+      - name: Unzip web build
+        run: unzip -q smart-warehouse-web.zip && test -f build/web/index.html
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        env:
+          VERSION: ${{ needs.gate.outputs.version }}
+        run: |
+          IMAGE="ghcr.io/$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')/smartwarehouse"
+          docker build --build-arg APP_VERSION="${VERSION}" \
+                       -t "${IMAGE}:${VERSION}" -t "${IMAGE}:latest" .
+          docker push "${IMAGE}:${VERSION}"
+          docker push "${IMAGE}:latest"
 
   build-android:
     name: Build Android
@@ -111,35 +161,18 @@ jobs:
 
   stable-release:
     name: Publish stable release
-    needs: [build-web, build-android]
+    needs: [gate, build-web, build-image, build-android]
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     outputs:
-      version: ${{ steps.tag.outputs.version }}
+      version: ${{ needs.gate.outputs.version }}
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Derive stable version tag
-        id: tag
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
-          COMMIT_MSG: ${{ github.event.head_commit.message }}
-        run: |
-          if [[ -n "$INPUT_VERSION" ]]; then
-            VERSION="${INPUT_VERSION#v}"
-          else
-            # El merge commit de master dice "... from <owner>/beta/vX.Y.Z"
-            VERSION=$(echo "$COMMIT_MSG" | grep -oE '(beta|hotfix)/[^ ]+' | head -1 | cut -d/ -f2-)
-            [[ -n "$VERSION" ]] || { echo "ERROR: no pude derivar la version del commit: $COMMIT_MSG" >&2; exit 1; }
-            VERSION="${VERSION#v}"
-          fi
-          echo "version=v${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "Stable version: v${VERSION}"
 
       - name: Download web artifact
         uses: actions/download-artifact@v4
@@ -155,7 +188,7 @@ jobs:
 
       - name: Create git tag
         env:
-          VERSION: ${{ steps.tag.outputs.version }}
+          VERSION: ${{ needs.gate.outputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -165,8 +198,8 @@ jobs:
       - name: Create stable release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.tag.outputs.version }}
-          name: Release ${{ steps.tag.outputs.version }}
+          tag_name: ${{ needs.gate.outputs.version }}
+          name: Release ${{ needs.gate.outputs.version }}
           prerelease: false
           files: |
             smart-warehouse-web.zip
