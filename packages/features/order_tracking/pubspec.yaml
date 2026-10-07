@@ -33,3 +33,11 @@ dev_dependencies:
   freezed: ^3.2.3
   json_serializable: ^6.10.0
   dio: ^5.9.2
+  mocktail: ^1.0.4
+  bloc_test: ^10.0.0
+  orders_test_builders:
+    path: ../../orders_test_builders
+  catalog_test_builders:
+    path: ../../catalog_test_builders
+  test_support:
+    path: ../../test_support

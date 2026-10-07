@@ -18,7 +18,22 @@ scripts:
     packageFilters:
       dependsOn: build_runner
   test:
-    exec: |
-      if [ -d "test" ]; then
-        flutter test --no-pub
-      fi
+    exec: flutter test --no-pub
+    packageFilters:
+      dirExists:
+        - test
+  test:coverage:
+    run: |
+      set -e
+      dart run tool/gen_coverage_imports.dart
+      # exit 79 = "No tests were found". Es esperado en packages que todavia no
+      # tienen tests propios: el archivo generado igual instrumenta todo lib/ y
+      # el package cuenta 0% en el denominador. Cualquier otro codigo distinto
+      # de 0 es una falla real y tiene que cortar la corrida.
+      #
+      # La logica de tolerancia vive en tool/package_coverage.sh y no inline
+      # aca: `melos exec` reconstruye y evalua el comando, y su forma de
+      # agrupar comillas cambia entre versiones de melos (probado con 6.3.3).
+      # Un script no depende de eso.
+      melos exec --dir-exists=test -- sh "$MELOS_ROOT_PATH/tool/package_coverage.sh"
+      dart run tool/check_coverage.dart

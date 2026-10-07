@@ -46,14 +46,23 @@ void main() {
       expect(product.createdAt, isNotNull);
     });
 
-    test('falls back to defaults when fields are missing', () {
+    test('rejects a product without price (contract error)', () {
       final dto = ProductDto.fromJson(<String, dynamic>{
         'id': 'x',
         'sku': 'X',
         'name': 'X',
       });
+      expect(dto.toEntity, throwsFormatException);
+    });
+
+    test('falls back to defaults when optional fields are missing', () {
+      final dto = ProductDto.fromJson(<String, dynamic>{
+        'id': 'x',
+        'sku': 'X',
+        'name': 'X',
+        'price': {'amount_cents': 100, 'currency': 'ARS'},
+      });
       final product = dto.toEntity();
-      expect(product.price, Money.zero('ARS'));
       expect(product.stock, Stock.empty);
       expect(product.orderConstraints.maxQuantityPerOrder,
           OrderConstraints.defaults.maxQuantityPerOrder);
@@ -67,6 +76,7 @@ void main() {
         'id': 'x',
         'sku': 'X',
         'name': 'X',
+        'price': {'amount_cents': 100, 'currency': 'ARS'},
         'images': [
           {'url': 'https://a.jpg', 'is_primary': false},
           {'url': 'https://primary.jpg', 'is_primary': true},

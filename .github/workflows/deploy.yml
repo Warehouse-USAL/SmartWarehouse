@@ -1,0 +1,97 @@
+name: Deploy
+
+# Se dispara cuando termina "Stable Release". workflow_run (no
+# release:published) porque los releases creados con GITHUB_TOKEN no emiten
+# eventos de release. workflow_dispatch permite redeploys manuales.
+# Calcado de smarthouse_webapp/.github/workflows/deploy.yml.
+on:
+  workflow_run:
+    workflows: ["Stable Release"]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-mobile
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy mobile web preview to server
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: [self-hosted, prod]
+    environment: production
+    permissions:
+      contents: read
+      packages: read
+      pull-requests: write
+      issues: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Resolve commit, tag, and PR
+        id: ctx
+        run: |
+          cd /opt/wh/SmartWarehouse
+          git fetch --tags --force --prune origin
+          # Deploy del master publicado. workflow_run.head_sha es el commit de la
+          # rama del PR, que ya no existe después del merge: resolver master.
+          SHA=$(git rev-parse origin/master)
+          TAG=$(git tag --points-at "$SHA" | grep -E '^v' | head -1)
+          [ -n "$TAG" ] || TAG="${SHA:0:7}"
+          PR=$(curl -fsS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+                "https://api.github.com/repos/$REPO/commits/$SHA/pulls" | jq -r '.[0].number // empty')
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "pr=$PR"   >> "$GITHUB_OUTPUT"
+          echo "deploying $SHA ($TAG); PR=${PR:-none}"
+
+      - name: Comment — deploy started
+        if: steps.ctx.outputs.pr != ''
+        run: |
+          body=$(printf '🚀 **Deploy started** — `%s` → server (/mobile/).\n\n[Watch the run](%s)' "${{ steps.ctx.outputs.tag }}" "$RUN_URL")
+          jq -nc --arg b "$body" '{body:$b}' | curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/$REPO/issues/${{ steps.ctx.outputs.pr }}/comments" -d @-
+
+      - name: Log in to GHCR
+        run: echo "$GH_TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Deploy
+        id: deploy
+        run: |
+          cd /opt/wh/SmartWarehouse
+          set -o pipefail
+          # reset --hard al commit publicado para que drift local nunca bloquee.
+          { git reset --hard "${{ steps.ctx.outputs.sha }}" \
+              && git clean -fd \
+              && make deploy; } 2>&1 | tee /tmp/wh-deploy-mobile.log
+
+      - name: Verify preview and app are serving
+        run: |
+          for i in $(seq 1 18); do
+            if docker run --rm --network wh-proxy curlimages/curl:latest -sf -o /dev/null http://mobile/ \
+               && docker run --rm --network wh-proxy curlimages/curl:latest -sf -o /dev/null http://mobile/app/; then
+              echo "mobile web serving"; exit 0
+            fi
+            sleep 5
+          done
+          echo "mobile web did not serve within timeout — appending logs:" | tee -a /tmp/wh-deploy-mobile.log
+          docker logs --tail 60 "$(docker ps -qf name=mobile | head -1)" 2>&1 | tail -50 >> /tmp/wh-deploy-mobile.log
+          exit 1
+
+      - name: Comment — deploy succeeded
+        if: success() && steps.ctx.outputs.pr != ''
+        run: |
+          img=$(docker inspect -f '{{.Image}}' "$(docker ps -qf name=mobile | head -1)" 2>/dev/null || echo unknown)
+          body=$(printf '✅ **Deploy succeeded** — `%s` is live at /mobile/.\nImage: `%s`\n\n[Run](%s)' "${{ steps.ctx.outputs.tag }}" "$img" "$RUN_URL")
+          jq -nc --arg b "$body" '{body:$b}' | curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/$REPO/issues/${{ steps.ctx.outputs.pr }}/comments" -d @-
+
+      - name: Comment — deploy failed
+        if: failure() && steps.ctx.outputs.pr != ''
+        run: |
+          log=$(tail -c 2500 /tmp/wh-deploy-mobile.log 2>/dev/null || echo 'no deploy log captured')
+          body=$(printf '❌ **Deploy FAILED** — `%s`.\n\n```\n%s\n```\n\n[Run](%s)' "${{ steps.ctx.outputs.tag }}" "$log" "$RUN_URL")
+          jq -nc --arg b "$body" '{body:$b}' | curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/$REPO/issues/${{ steps.ctx.outputs.pr }}/comments" -d @-

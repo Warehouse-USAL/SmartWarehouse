@@ -45,6 +45,13 @@ class ProfileFeatureBuilder {
     BuildContext context,
   ) async {
     final cubit = Injector.i.resolve<ProfileCubit>();
+    // Si el usuario nunca entró al perfil, el cubit no está cargado: sin esto
+    // el sheet no pre-popula el address y "Guardar en mi perfil" sería un
+    // no-op silencioso (updateProfile devuelve false si no hay ProfileReady).
+    if (cubit.state is! ProfileReady) {
+      await cubit.load();
+    }
+    if (!context.mounted) return null;
     final state = cubit.state;
     final initial = state is ProfileReady ? state.user.address : null;
     final result = await showModalBottomSheet<CheckoutAddressResult>(
@@ -58,9 +65,16 @@ class ProfileFeatureBuilder {
     );
     if (result == null) return null;
     if (result.saveToProfile) {
-      // Fire and await — si falla, no abortamos la orden: igual la creamos
-      // con el address del form, solo no quedó persistido al perfil.
-      await cubit.updateProfile(address: result.address);
+      // Si falla, no abortamos la orden: igual la creamos con el address del
+      // form — pero avisamos que no quedó guardado en el perfil.
+      final saved = await cubit.updateProfile(address: result.address);
+      if (!saved && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo guardar la dirección en tu perfil'),
+          ),
+        );
+      }
     }
     return result;
   }

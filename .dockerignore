@@ -1,0 +1,6 @@
+# Solo entra lo que la imagen copia.
+*
+!build/web
+!build/web/**
+!deploy/
+!deploy/**

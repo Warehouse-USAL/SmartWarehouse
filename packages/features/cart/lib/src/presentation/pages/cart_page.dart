@@ -1,3 +1,4 @@
+import 'package:cart/src/data/mappers/cart_order_mapper.dart';
 import 'package:cart/src/presentation/widgets/cart_item_tile.dart';
 import 'package:cart/src/presentation/widgets/create_order_confirmation_dialog.dart';
 import 'package:core/core.dart';
@@ -6,18 +7,45 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:profile/profile.dart';
 
-class CartPage extends StatelessWidget {
-  const CartPage({required this.cartCubit, required this.createOrderCubit, super.key});
+class CartPage extends StatefulWidget {
+  const CartPage({
+    required this.cartCubit,
+    required this.createOrderCubit,
+    super.key,
+  });
 
   final CartCubit cartCubit;
   final CreateOrderCubit createOrderCubit;
 
   @override
+  State<CartPage> createState() => _CartPageState();
+}
+
+class _CartPageState extends State<CartPage> {
+  CartCubit get cartCubit => widget.cartCubit;
+  CreateOrderCubit get createOrderCubit => widget.createOrderCubit;
+
+  // Guard del flujo completo de confirmación (diálogo + sheet + submit):
+  // el guard del CreateOrderCubit recién actúa en el POST, y un doble-tap
+  // antes de eso abría dos diálogos apilados (y podía crear dos órdenes).
+  bool _confirming = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // El stock pudo cambiar en el backend desde que se agregaron los items:
+    // revalidar contra el catálogo al entrar (y en cada pull-to-refresh).
+    cartCubit.revalidate();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: SwColors.white,
-      bottomNavigationBar:
-          BottomNavigationBarFeatureBuilder.build(context, const NavigationBarOption.cart()),
+      bottomNavigationBar: BottomNavigationBarFeatureBuilder.build(
+        context,
+        const NavigationBarOption.cart(),
+      ),
       body: SafeArea(
         bottom: false,
         child: BlocListener<CreateOrderCubit, CreateOrderState>(
@@ -32,10 +60,14 @@ class CartPage extends StatelessWidget {
                   Expanded(
                     child: cart.isEmpty
                         ? _EmptyView(onContinue: () => _goCatalog(context))
-                        : _CartBody(
-                            cart: cart,
-                            onQty: cartCubit.updateQuantity,
-                            onRemove: cartCubit.remove,
+                        : RefreshIndicator(
+                            color: SwColors.yellow,
+                            onRefresh: cartCubit.revalidate,
+                            child: _CartBody(
+                              cart: cart,
+                              onQty: cartCubit.updateQuantity,
+                              onRemove: cartCubit.remove,
+                            ),
                           ),
                   ),
                   if (cart.isNotEmpty)
@@ -54,13 +86,36 @@ class CartPage extends StatelessWidget {
   }
 
   Future<void> _onCreateOrderPressed(BuildContext context, Cart cart) async {
-    final invalid = cart.items.any((i) {
-      final available = i.product.stock.available;
-      return i.quantity <= 0 || i.quantity > available;
-    });
-    if (invalid) {
+    if (_confirming) return;
+    _confirming = true;
+    try {
+      await _confirmFlow(context, cart);
+    } finally {
+      _confirming = false;
+    }
+  }
+
+  Future<void> _confirmFlow(BuildContext context, Cart cart) async {
+    if (cart.hasMixedCurrencies) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hay items con cantidad inválida o sin stock')),
+        const SnackBar(
+          content: Text(
+            'Hay productos con monedas distintas en el pedido. '
+            'Quitá los que no correspondan para continuar.',
+          ),
+        ),
+      );
+      return;
+    }
+    if (cart.hasInvalidQuantities) {
+      final names = cart.invalidItems.map((i) => i.product.name).join(', ');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Sin stock suficiente de: $names. '
+            'Quitá esos productos o bajá la cantidad para continuar.',
+          ),
+        ),
       );
       return;
     }
@@ -70,11 +125,18 @@ class CartPage extends StatelessWidget {
     // Abre el sheet de confirmación de entrega. Pre-popula con el address
     // guardado en el perfil (si lo hay) y permite tickear "Guardar en mi
     // perfil" para persistir vía PATCH /users/me. Si cancela, abortamos.
-    final result =
-        await ProfileFeatureBuilder.collectCheckoutAddress(context);
+    final result = await ProfileFeatureBuilder.collectCheckoutAddress(context);
     if (result == null) return;
+    // El future del sheet se completa cuando arranca el pop, no cuando termina
+    // la animación de salida. Si el submit resuelve antes de que el sheet
+    // termine de salir, el success reemplaza el stack de navegación con la
+    // transición todavía en curso y el Navigator lanza el assert
+    // `_debugLocked && !_debugUpdatingPage` (la app nunca llega a la pantalla
+    // de éxito). Esperamos a que el sheet cierre del todo antes de enviar.
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+    if (!context.mounted) return;
     await createOrderCubit.submit(
-      items: _toOrderItems(cart),
+      items: cart.toOrderItems(),
       destination: OrderDestination(
         area: result.destinationArea,
         street: result.address.street,
@@ -91,11 +153,14 @@ class CartPage extends StatelessWidget {
         cartCubit.clear();
         createOrderCubit.reset();
         Injector.i.resolve<NavigationHelper>().pushNamed(
-              context,
-              routeName: Routes.orderSuccess(order.id),
-              replace: true,
-            );
+          context,
+          routeName: Routes.orderSuccess(order.id),
+          replace: true,
+        );
       case CreateOrderFailure(:final message):
+        // La causa típica es stock que cambió entre agregar y confirmar:
+        // revalidamos para que el carrito muestre qué línea quedó inválida.
+        cartCubit.revalidate();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
@@ -111,19 +176,11 @@ class CartPage extends StatelessWidget {
     }
   }
 
-  List<OrderItem> _toOrderItems(Cart cart) {
-    return cart.items
-        .map((i) => OrderItem(
-              productId: i.product.id,
-              productName: i.product.name,
-              unitPrice: i.product.price,
-              quantity: i.quantity,
-            ))
-        .toList();
-  }
-
   void _goCatalog(BuildContext context) {
-    Injector.i.resolve<NavigationHelper>().pushNamed(context, routeName: Routes.catalog);
+    Injector.i.resolve<NavigationHelper>().pushNamed(
+      context,
+      routeName: Routes.catalog,
+    );
   }
 }
 
@@ -135,7 +192,9 @@ class _CartAppBar extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Center(child: Text('Tu pedido', style: SwText.display(size: 20))),
+            child: Center(
+              child: Text('Tu pedido', style: SwText.display(size: 20)),
+            ),
           ),
         ],
       ),
@@ -155,9 +214,16 @@ class _EmptyView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.shopping_cart_outlined, size: 48, color: SwColors.text3),
+            const Icon(
+              Icons.shopping_cart_outlined,
+              size: 48,
+              color: SwColors.text3,
+            ),
             const SizedBox(height: 12),
-            Text('Tu pedido está vacío', style: SwText.body(size: 14, color: SwColors.text3)),
+            Text(
+              'Tu pedido está vacío',
+              style: SwText.body(size: 14, color: SwColors.text3),
+            ),
             const SizedBox(height: 16),
             SizedBox(
               width: 220,
@@ -175,7 +241,11 @@ class _EmptyView extends StatelessWidget {
 }
 
 class _CartBody extends StatelessWidget {
-  const _CartBody({required this.cart, required this.onQty, required this.onRemove});
+  const _CartBody({
+    required this.cart,
+    required this.onQty,
+    required this.onRemove,
+  });
 
   final Cart cart;
   final void Function(String productId, int quantity) onQty;
@@ -185,6 +255,7 @@ class _CartBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final total = cart.total;
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,10 +270,13 @@ class _CartBody extends StatelessWidget {
                     Container(
                       decoration: BoxDecoration(
                         border: idx < cart.items.length - 1
-                            ? const Border(bottom: BorderSide(color: SwColors.border))
+                            ? const Border(
+                                bottom: BorderSide(color: SwColors.border),
+                              )
                             : null,
                       ),
                       child: CartItemTile(
+                        key: E2eKeys.cartItem(item.product.id),
                         item: item,
                         onQuantityChanged: (q) => onQty(item.product.id, q),
                         onRemove: () => onRemove(item.product.id),
@@ -228,8 +302,18 @@ class _CartBody extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Total', style: SwText.body(size: 15, weight: FontWeight.w700)),
-                          Text(total.formatted, style: SwText.display(size: 22)),
+                          Text(
+                            'Total',
+                            style: SwText.body(
+                              size: 15,
+                              weight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            total.formatted,
+                            key: E2eKeys.cartTotal,
+                            style: SwText.display(size: 22),
+                          ),
                         ],
                       ),
                     ),
@@ -271,7 +355,12 @@ class _SummaryRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(child: Text(label, style: SwText.body(size: 14, color: SwColors.text3))),
+          Expanded(
+            child: Text(
+              label,
+              style: SwText.body(size: 14, color: SwColors.text3),
+            ),
+          ),
           Text(value, style: SwText.body(size: 14, weight: FontWeight.w600)),
         ],
       ),
@@ -280,7 +369,11 @@ class _SummaryRow extends StatelessWidget {
 }
 
 class _Footer extends StatelessWidget {
-  const _Footer({required this.cart, required this.onConfirm, required this.onContinue});
+  const _Footer({
+    required this.cart,
+    required this.onConfirm,
+    required this.onContinue,
+  });
   final Cart cart;
   final VoidCallback onConfirm;
   final VoidCallback onContinue;
@@ -288,7 +381,9 @@ class _Footer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final total = cart.total;
-    final label = total == null ? 'Confirmar pedido' : 'Confirmar pedido · ${total.formatted}';
+    final label = total == null
+        ? 'Confirmar pedido'
+        : 'Confirmar pedido · ${total.formatted}';
     return Container(
       decoration: const BoxDecoration(
         color: SwColors.white,
@@ -298,13 +393,17 @@ class _Footer extends StatelessWidget {
       child: Column(
         children: [
           SwButton(
+            key: E2eKeys.cartCheckoutButton,
             label: label,
             onPressed: onConfirm,
           ),
           const SizedBox(height: 8),
           GestureDetector(
             onTap: onContinue,
-            child: Text('Seguir comprando', style: SwText.body(size: 14, color: SwColors.link)),
+            child: Text(
+              'Seguir comprando',
+              style: SwText.body(size: 14, color: SwColors.link),
+            ),
           ),
         ],
       ),

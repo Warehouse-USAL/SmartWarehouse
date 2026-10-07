@@ -64,6 +64,7 @@ class ProductCard extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         product.price.formatted,
+                        key: E2eKeys.productCardPrice(product.id),
                         style: SwText.display(size: 16),
                       ),
                     ),

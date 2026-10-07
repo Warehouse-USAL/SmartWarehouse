@@ -14,14 +14,25 @@ extension OrderDtoMapper on OrderDto {
         ? 'ARS'
         : fallbackItems.first.unitPrice.currency;
     var total = Money.zero(currency);
-    for (final i in fallbackItems) {
-      total = total + i.subtotal;
+    // Defensivo: el carrito ya bloquea monedas mezcladas antes de crear la
+    // orden, pero si igual llegaran, dejamos total en cero (la UI lo muestra
+    // como "—") en vez de crashear en `Money.+`.
+    final uniform =
+        fallbackItems.every((i) => i.unitPrice.currency == currency);
+    if (uniform) {
+      for (final i in fallbackItems) {
+        total = total + i.subtotal;
+      }
     }
     return Order(
       id: id,
       items: fallbackItems,
       status: _parseStatus(status),
-      createdAt: _parseDate(timestamps?.createdAt) ?? DateTime.now(),
+      // Fecha ilegible → epoch (queda al final de la lista ordenada por
+      // fecha) en vez de "ahora", que la subiría arriba de todo como si
+      // fuera reciente.
+      createdAt: _parseDate(timestamps?.createdAt) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
       total: total,
     );
   }

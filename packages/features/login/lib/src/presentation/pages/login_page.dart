@@ -65,6 +65,7 @@ class LoginPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 26),
                       SwTextField(
+                        key: E2eKeys.loginEmailField,
                         controller: formCubit.emailController,
                         label: 'Email',
                         placeholder: 'vos@empresa.com',
@@ -74,6 +75,7 @@ class LoginPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 14),
                       SwTextField(
+                        key: E2eKeys.loginPasswordField,
                         controller: formCubit.passwordController,
                         label: 'Contraseña',
                         placeholder: '••••••••',
@@ -91,10 +93,11 @@ class LoginPage extends StatelessWidget {
                       ),
                       if (failureMessage != null) ...[
                         const SizedBox(height: 12),
-                        _ErrorBanner(message: failureMessage),
+                        _ErrorBanner(key: E2eKeys.loginErrorBanner, message: failureMessage),
                       ],
                       const SizedBox(height: 22),
                       SwButton(
+                        key: E2eKeys.loginSubmitButton,
                         label: 'Iniciar sesión',
                         isLoading: isSubmitting,
                         onPressed: () {
@@ -173,7 +176,7 @@ class _PasswordVisibilityToggle extends StatelessWidget {
 }
 
 class _ErrorBanner extends StatelessWidget {
-  const _ErrorBanner({required this.message});
+  const _ErrorBanner({required this.message, super.key});
   final String message;
 
   @override

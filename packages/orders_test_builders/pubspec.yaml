@@ -1,0 +1,28 @@
+name: orders_test_builders
+description: Builders de entities de orders para tests. No se publica ni entra en el bundle de la app.
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: '>=3.8.0 <4.0.0'
+
+dependencies:
+  orders:
+    path: ../features/orders
+  # `Order.total` y `OrderItem.unitPrice` son `Money`, que vive en `catalog`.
+  # Se declara explicito porque `orders.dart` no lo reexporta y el lint
+  # `depend_on_referenced_packages` lo exige.
+  catalog:
+    path: ../features/catalog
+  # Reusa `aMoney` en vez de redefinirlo. La regla de >=2 consumidores del
+  # spec 4.3 ya lo puso en un package compartido; duplicarlo aca seria
+  # justo lo que esa regla evita.
+  catalog_test_builders:
+    path: ../catalog_test_builders
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0

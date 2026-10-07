@@ -15,20 +15,39 @@ class SmartWarehouseApp extends StatefulWidget {
 }
 
 class _SmartWarehouseAppState extends State<SmartWarehouseApp> {
-  final _routerDelegate = Injector.i.resolve<NavigationConfigHelper<BeamerDelegate>>().delegate;
+  final _routerDelegate = Injector.i
+      .resolve<NavigationConfigHelper<BeamerDelegate>>()
+      .delegate;
   bool _showSplashMinTimer = true;
   bool _splashDismissed = false;
+
+  /// Duración mínima del splash. Overrideable por dart-define para que los
+  /// tests e2e no tengan que esperar los 3s (--dart-define=SPLASH_MS=0).
+  static const _splashMs = int.fromEnvironment('SPLASH_MS', defaultValue: 3000);
 
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 3), () {
+    // El "Ver" del snackbar de órdenes navega con el router real de la app;
+    // el contexto del scaffoldMessenger queda fuera del árbol de Beamer.
+    OrderTrackingFeatureBuilder.onOpenOrder = (orderId) {
+      final ctx = _navigatorContext;
+      if (ctx == null) return;
+      Injector.i.resolve<NavigationHelper>().pushNamed(
+        ctx,
+        routeName: Routes.orderDetail(orderId),
+      );
+    };
+    Timer(const Duration(milliseconds: _splashMs), () {
       setState(() => _showSplashMinTimer = false);
       _removeSplashIfNeeded();
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _removeSplashIfNeeded();
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.top]);
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual,
+        overlays: [SystemUiOverlay.top],
+      );
       SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
     });
   }
@@ -75,6 +94,11 @@ class _SmartWarehouseAppState extends State<SmartWarehouseApp> {
   }
 
   void _onUserLoggedOut() {
+    // Estado de sesión del usuario saliente: carrito, historial de órdenes
+    // y notificaciones. Sin esta limpieza, otro usuario que entre en este
+    // device veía el carrito y las órdenes del anterior.
+    CartFeatureBuilder.onLogout();
+    unawaited(OrderTrackingFeatureBuilder.onLogout());
     final context = _navigatorContext;
     if (context == null) return;
     OnLoginNavigationUseCase.call(context);
@@ -87,5 +111,6 @@ class _SmartWarehouseAppState extends State<SmartWarehouseApp> {
     OrderTrackingFeatureBuilder.startNotifications();
   }
 
-  BuildContext? get _navigatorContext => _routerDelegate.navigatorKey.currentContext;
+  BuildContext? get _navigatorContext =>
+      _routerDelegate.navigatorKey.currentContext;
 }

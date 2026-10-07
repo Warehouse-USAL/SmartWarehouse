@@ -77,13 +77,13 @@ void main() {
       expect(entity.items.first.quantity, 3);
     });
 
-    test('uses empty string for line item name when null', () {
+    test('uses explicit placeholder for line item name when null', () {
       final dto = OrderTrackingItemDto(
         id: 'o1',
         status: 'pending',
         items: [OrderTrackingLineItemDto(productId: 'p1', quantity: 1)],
       );
-      expect(dto.toEntity().items.first.productName, '');
+      expect(dto.toEntity().items.first.productName, 'Producto no disponible');
     });
   });
 

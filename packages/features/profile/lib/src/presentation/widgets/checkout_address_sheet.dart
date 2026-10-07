@@ -26,10 +26,7 @@ class CheckoutAddressResult {
 ///   - checkbox "Guardar en mi perfil" para que el address quede
 ///     persistido para próximas órdenes.
 class CheckoutAddressSheet extends StatefulWidget {
-  const CheckoutAddressSheet({
-    required this.initialAddress,
-    super.key,
-  });
+  const CheckoutAddressSheet({required this.initialAddress, super.key});
 
   /// Address actual del usuario (si tiene). Pre-popula los campos del form.
   final UserAddress? initialAddress;
@@ -71,8 +68,15 @@ class _CheckoutAddressSheetState extends State<CheckoutAddressSheet> {
     super.dispose();
   }
 
+  // Guard de doble-tap: el segundo tap llegaba con la animación de salida
+  // del sheet en curso y su pop() desmontaba la página de ABAJO (el carrito),
+  // dejando la orden creada sin limpiar el carrito → orden duplicada.
+  bool _submitted = false;
+
   void _submit() {
+    if (_submitted) return;
     if (!_formKey.currentState!.validate()) return;
+    _submitted = true;
     Navigator.of(context).pop(
       CheckoutAddressResult(
         destinationArea: _area.text.trim(),
@@ -113,10 +117,7 @@ class _CheckoutAddressSheetState extends State<CheckoutAddressSheet> {
                     ),
                   ),
                 ),
-                Text(
-                  'Confirmar entrega',
-                  style: SwText.display(size: 20),
-                ),
+                Text('Confirmar entrega', style: SwText.display(size: 20)),
                 const SizedBox(height: 6),
                 Text(
                   widget.initialAddress != null
@@ -126,6 +127,7 @@ class _CheckoutAddressSheetState extends State<CheckoutAddressSheet> {
                 ),
                 const SizedBox(height: 18),
                 _Field(
+                  fieldKey: E2eKeys.checkoutAddressStreet,
                   label: 'Calle y altura',
                   controller: _street,
                   hint: 'Ej. Av. Corrientes 1234',
@@ -133,6 +135,7 @@ class _CheckoutAddressSheetState extends State<CheckoutAddressSheet> {
                 ),
                 const SizedBox(height: 12),
                 _Field(
+                  fieldKey: E2eKeys.checkoutAddressPostalCode,
                   label: 'Código postal',
                   controller: _postal,
                   hint: 'Ej. C1043',
@@ -160,8 +163,7 @@ class _CheckoutAddressSheetState extends State<CheckoutAddressSheet> {
                 ),
                 const SizedBox(height: 14),
                 InkWell(
-                  onTap: () =>
-                      setState(() => _saveToProfile = !_saveToProfile),
+                  onTap: () => setState(() => _saveToProfile = !_saveToProfile),
                   borderRadius: BorderRadius.circular(8),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6),
@@ -186,19 +188,28 @@ class _CheckoutAddressSheetState extends State<CheckoutAddressSheet> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                SwButton(
-                  label: 'Confirmar y crear orden',
-                  onPressed: _submit,
-                ),
-                const SizedBox(height: 8),
-                Center(
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text(
-                      'Cancelar',
-                      style: SwText.body(size: 14, color: SwColors.text3),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        if (_submitted) return;
+                        _submitted = true;
+                        Navigator.of(context).pop();
+                      },
+                      child: Text(
+                        'Cancelar',
+                        style: SwText.body(size: 14, color: SwColors.text3),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SwButton(
+                        key: E2eKeys.checkoutAddressSubmit,
+                        label: 'Confirmar y crear orden',
+                        onPressed: _submit,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -215,8 +226,10 @@ class _Field extends StatelessWidget {
     required this.controller,
     this.hint,
     this.required = false,
+    this.fieldKey,
   });
 
+  final Key? fieldKey;
   final String label;
   final TextEditingController controller;
   final String? hint;
@@ -237,13 +250,16 @@ class _Field extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         TextFormField(
+          key: fieldKey,
           controller: controller,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: SwText.body(size: 14, color: SwColors.text3),
             isDense: true,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: SwColors.border),

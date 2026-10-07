@@ -23,6 +23,7 @@ class ProductDetailCubit extends Cubit<ProductDetailState> {
   Future<void> load() async {
     emit(const ProductDetailState.loading());
     final result = await _repository.getProductById(_productId);
+    if (isClosed) return;
     result.fold(
       (failure) =>
           emit(ProductDetailState.error(failure.message ?? 'Error cargando producto')),

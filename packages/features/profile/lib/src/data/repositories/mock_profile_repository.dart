@@ -1,3 +1,4 @@
+import 'package:catalog/catalog.dart';
 import 'package:dartz/dartz.dart';
 import 'package:profile/src/domain/entities/order_summary.dart';
 import 'package:profile/src/domain/entities/profile_user.dart';
@@ -11,7 +12,7 @@ class MockProfileRepository implements ProfileRepository {
     email: 'andrea.diaz@warehouse.co',
     role: 'Operador',
     openOrdersCount: 3,
-    spentThisMonth: 522.00,
+    spentThisMonth: Money(amount: 52200, currency: 'ARS'),
     address: UserAddress(
       street: 'Av. Corrientes 1234',
       postalCode: 'C1043',
@@ -26,28 +27,28 @@ class MockProfileRepository implements ProfileRepository {
       dateLabel: 'May 6',
       itemCount: 11,
       status: OrderStatus.shipped,
-      totalAmount: 96.40,
+      total: Money(amount: 9640, currency: 'ARS'),
     ),
     OrderSummary(
       id: 'WH-49108',
       dateLabel: 'May 2',
       itemCount: 4,
       status: OrderStatus.delivered,
-      totalAmount: 41.20,
+      total: Money(amount: 4120, currency: 'ARS'),
     ),
     OrderSummary(
       id: 'WH-48993',
       dateLabel: 'Apr 28',
       itemCount: 22,
       status: OrderStatus.delivered,
-      totalAmount: 312.00,
+      total: Money(amount: 31200, currency: 'ARS'),
     ),
     OrderSummary(
       id: 'WH-48870',
       dateLabel: 'Apr 24',
       itemCount: 6,
       status: OrderStatus.delivered,
-      totalAmount: 73.10,
+      total: Money(amount: 7310, currency: 'ARS'),
     ),
   ];
 

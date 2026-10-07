@@ -70,6 +70,7 @@ class _OrderListPageState extends State<OrderListPage> {
                             children: [
                               for (int i = 0; i < orders.length; i++) ...[
                                 OrderCard(
+                                  key: E2eKeys.orderCard(orders[i].id),
                                   order: orders[i],
                                   onTap: () => Injector.i
                                       .resolve<NavigationHelper>()

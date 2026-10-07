@@ -31,7 +31,12 @@ class QtyStepper extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _Btn(size: size, icon: Icons.remove, onTap: value > min ? () => onChanged(value - 1) : null),
+          _Btn(
+            key: E2eKeys.productDetailQtyDecrement,
+            size: size,
+            icon: Icons.remove,
+            onTap: value > min ? () => onChanged(value - 1) : null,
+          ),
           SizedBox(
             width: size,
             child: Text(
@@ -41,6 +46,7 @@ class QtyStepper extends StatelessWidget {
             ),
           ),
           _Btn(
+            key: E2eKeys.productDetailQtyIncrement,
             size: size,
             icon: Icons.add,
             onTap: max == null || value < max! ? () => onChanged(value + 1) : null,
@@ -52,7 +58,7 @@ class QtyStepper extends StatelessWidget {
 }
 
 class _Btn extends StatelessWidget {
-  const _Btn({required this.size, required this.icon, required this.onTap});
+  const _Btn({required this.size, required this.icon, required this.onTap, super.key});
   final double size;
   final IconData icon;
   final VoidCallback? onTap;

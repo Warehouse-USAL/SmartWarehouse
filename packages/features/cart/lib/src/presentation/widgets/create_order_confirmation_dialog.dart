@@ -1,4 +1,5 @@
 import 'package:cart/src/domain/entities/cart.dart';
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
 class CreateOrderConfirmationDialog extends StatelessWidget {
@@ -24,11 +25,14 @@ class CreateOrderConfirmationDialog extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('${cart.itemCount} ${cart.itemCount == 1 ? 'unidad' : 'unidades'}'),
+          Text(
+            '${cart.itemCount} ${cart.itemCount == 1 ? 'unidad' : 'unidades'}',
+          ),
           if (total != null) ...[
             const SizedBox(height: 4),
             Text(
               'Total: ${total.formatted}',
+              key: E2eKeys.orderConfirmDialogTotal,
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ],
@@ -41,10 +45,12 @@ class CreateOrderConfirmationDialog extends StatelessWidget {
       ),
       actions: [
         TextButton(
+          key: E2eKeys.orderConfirmCancel,
           onPressed: () => Navigator.of(context).pop(false),
           child: const Text('Cancelar'),
         ),
         ElevatedButton(
+          key: E2eKeys.orderConfirmAccept,
           onPressed: () => Navigator.of(context).pop(true),
           child: const Text('Confirmar'),
         ),

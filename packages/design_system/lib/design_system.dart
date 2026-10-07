@@ -16,3 +16,4 @@ export 'package:design_system/widgets/sw_img_placeholder.dart';
 export 'package:design_system/widgets/sw_loading_skeleton.dart';
 export 'package:design_system/widgets/sw_logo.dart';
 export 'package:design_system/widgets/text/custom_text.dart';
+export 'package:design_system/testing/e2e_keys.dart';
