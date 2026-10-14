@@ -35,10 +35,7 @@ void main() {
 
   Material materialOf(WidgetTester tester) => tester.widget<Material>(
     find
-        .descendant(
-          of: find.byType(SwButton),
-          matching: find.byType(Material),
-        )
+        .descendant(of: find.byType(SwButton), matching: find.byType(Material))
         .first,
   );
 
@@ -117,11 +114,7 @@ void main() {
     });
 
     testWidgets('secondary pinta blanco', (tester) async {
-      await pumpButton(
-        tester,
-        variant: SwButtonVariant.secondary,
-        taps: [],
-      );
+      await pumpButton(tester, variant: SwButtonVariant.secondary, taps: []);
       expect(materialOf(tester).color, SwColors.white);
     });
 
@@ -173,10 +166,8 @@ void main() {
   });
 
   group('compact', () {
-    double labelSizeOf(WidgetTester tester) => tester
-        .widget<Text>(find.text('Guardar'))
-        .style!
-        .fontSize!;
+    double labelSizeOf(WidgetTester tester) =>
+        tester.widget<Text>(find.text('Guardar')).style!.fontSize!;
 
     testWidgets('baja la tipografia a 14', (tester) async {
       await pumpButton(tester, compact: true, taps: []);
@@ -191,6 +182,57 @@ void main() {
     testWidgets('sigue disparando el callback', (tester) async {
       final taps = <int>[];
       await pumpButton(tester, compact: true, taps: taps);
+
+      await tester.tap(find.byType(SwButton));
+      await tester.pump();
+
+      expect(taps, hasLength(1));
+    });
+  });
+
+  group('variantes destructivas', () {
+    Material materialOf(WidgetTester tester) => tester.widget<Material>(
+      find
+          .descendant(
+            of: find.byType(SwButton),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+
+    testWidgets('danger: fondo rojo y texto blanco', (tester) async {
+      await pumpButton(tester, taps: [], variant: SwButtonVariant.danger);
+
+      expect(materialOf(tester).color, SwColors.danger);
+      final text = tester.widget<Text>(find.text('Guardar'));
+      expect(text.style?.color, SwColors.white);
+    });
+
+    testWidgets('dangerGhost: transparente con texto rojo', (tester) async {
+      await pumpButton(tester, taps: [], variant: SwButtonVariant.dangerGhost);
+
+      expect(materialOf(tester).color, Colors.transparent);
+      final text = tester.widget<Text>(find.text('Guardar'));
+      expect(text.style?.color, SwColors.danger);
+    });
+
+    testWidgets('danger en loading muestra el spinner blanco', (tester) async {
+      await pumpButton(
+        tester,
+        taps: [],
+        variant: SwButtonVariant.danger,
+        isLoading: true,
+      );
+
+      final spinner = tester.widget<SwLoadingSpinner>(
+        find.byType(SwLoadingSpinner),
+      );
+      expect(spinner.color, SwColors.white);
+    });
+
+    testWidgets('danger dispara el callback', (tester) async {
+      final taps = <int>[];
+      await pumpButton(tester, taps: taps, variant: SwButtonVariant.danger);
 
       await tester.tap(find.byType(SwButton));
       await tester.pump();

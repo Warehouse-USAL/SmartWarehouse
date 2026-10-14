@@ -3,11 +3,13 @@ import 'package:design_system/theme/sw_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-enum SwButtonVariant { primary, secondary, ghost }
+enum SwButtonVariant { primary, secondary, ghost, danger, dangerGhost }
 
 /// Brand-styled button. Primary = yellow on dark text; secondary = white with
-/// border; ghost = transparent text-only. Matches the design system spec
-/// (radius 12, 14×18 padding, Poppins 600).
+/// border; ghost = transparent text-only; danger = solid red with white text
+/// (acciones destructivas confirmadas); dangerGhost = transparent red text
+/// (disparador de una acción destructiva, p. ej. "Cancelar orden"). Matches
+/// the design system spec (radius 12, 14×18 padding, Poppins 600).
 class SwButton extends StatelessWidget {
   const SwButton({
     required this.label,
@@ -33,8 +35,14 @@ class SwButton extends StatelessWidget {
       SwButtonVariant.primary => SwColors.yellow,
       SwButtonVariant.secondary => SwColors.white,
       SwButtonVariant.ghost => Colors.transparent,
+      SwButtonVariant.danger => SwColors.danger,
+      SwButtonVariant.dangerGhost => Colors.transparent,
     };
-    final fg = SwColors.text;
+    final fg = switch (variant) {
+      SwButtonVariant.danger => SwColors.white,
+      SwButtonVariant.dangerGhost => SwColors.danger,
+      _ => SwColors.text,
+    };
     final border = variant == SwButtonVariant.secondary
         ? Border.all(color: SwColors.border)
         : null;
@@ -60,11 +68,7 @@ class SwButton extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (isLoading)
-                  const SwLoadingSpinner(
-                    size: 18,
-                    strokeWidth: 2,
-                    color: SwColors.text,
-                  )
+                  SwLoadingSpinner(size: 18, strokeWidth: 2, color: fg)
                 else ...[
                   if (icon != null) ...[
                     Icon(icon, size: compact ? 16 : 18, color: fg),
