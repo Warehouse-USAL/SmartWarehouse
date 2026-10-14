@@ -1,6 +1,5 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class CatalogSearchBar extends StatelessWidget {
   const CatalogSearchBar({
@@ -38,12 +37,12 @@ class CatalogSearchBar extends StatelessWidget {
                     onChanged: onChanged,
                     onSubmitted: onSubmit,
                     textInputAction: TextInputAction.search,
-                    style: GoogleFonts.inter(fontSize: 15, color: SwColors.text),
+                    style: SwText.body(size: 15),
                     decoration: InputDecoration(
                       isCollapsed: true,
                       border: InputBorder.none,
                       hintText: 'Buscar por nombre o SKU…',
-                      hintStyle: GoogleFonts.inter(fontSize: 15, color: SwColors.text3),
+                      hintStyle: SwText.body(size: 15, color: SwColors.text3),
                     ),
                   ),
                 ),
@@ -54,18 +53,18 @@ class CatalogSearchBar extends StatelessWidget {
                       onChanged('');
                       onSubmit('');
                     },
-                    child: const Icon(Icons.close, color: SwColors.text3, size: 18),
+                    child: const Icon(
+                      Icons.close,
+                      color: SwColors.text3,
+                      size: 18,
+                    ),
                   ),
               ],
             ),
           ),
         ),
         const SizedBox(width: 8),
-        SwButton(
-          label: 'Buscar',
-          compact: true,
-          onPressed: _submit,
-        ),
+        SwButton(label: 'Buscar', compact: true, onPressed: _submit),
       ],
     );
   }

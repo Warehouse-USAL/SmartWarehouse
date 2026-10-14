@@ -42,15 +42,9 @@ class _StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: SwText.mono(size: 10, color: SwColors.text3),
-          ),
+          Text(label, style: SwText.mono(size: 10, color: SwColors.text3)),
           const SizedBox(height: 6),
-          Text(
-            value,
-            style: SwText.display(size: 22),
-          ),
+          Text(value, style: SwText.display(size: 22)),
         ],
       ),
     );

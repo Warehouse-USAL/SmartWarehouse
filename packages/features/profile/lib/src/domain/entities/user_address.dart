@@ -35,11 +35,10 @@ class UserAddress {
     String? postalCode,
     String? department,
     String? floor,
-  }) =>
-      UserAddress(
-        street: street ?? this.street,
-        postalCode: postalCode ?? this.postalCode,
-        department: department ?? this.department,
-        floor: floor ?? this.floor,
-      );
+  }) => UserAddress(
+    street: street ?? this.street,
+    postalCode: postalCode ?? this.postalCode,
+    department: department ?? this.department,
+    floor: floor ?? this.floor,
+  );
 }

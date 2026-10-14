@@ -72,7 +72,8 @@ class _EditAddressPageState extends State<EditAddressPage> {
 
   @override
   Widget build(BuildContext context) {
-    final hasAddress = (widget.cubit.state is ProfileReady) &&
+    final hasAddress =
+        (widget.cubit.state is ProfileReady) &&
         (widget.cubit.state as ProfileReady).user.address != null;
     return Scaffold(
       backgroundColor: SwColors.surface,
@@ -83,10 +84,12 @@ class _EditAddressPageState extends State<EditAddressPage> {
           hasAddress ? 'Editar dirección' : 'Agregar dirección',
           style: SwText.display(size: 22),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: SwColors.text),
-          onPressed: () =>
-              Injector.i.resolve<NavigationHelper>().pop(context),
+        leading: Center(
+          child: SwIconButton(
+            icon: Icons.arrow_back,
+            onPressed: () =>
+                Injector.i.resolve<NavigationHelper>().pop(context),
+          ),
         ),
       ),
       body: SafeArea(
@@ -155,13 +158,12 @@ class _EditAddressPageState extends State<EditAddressPage> {
                 ),
                 const SizedBox(height: 8),
                 Center(
-                  child: TextButton(
+                  child: SwButton(
+                    label: 'Cancelar',
+                    variant: SwButtonVariant.ghost,
+                    compact: true,
                     onPressed: () =>
                         Injector.i.resolve<NavigationHelper>().pop(context),
-                    child: Text(
-                      'Cancelar',
-                      style: SwText.body(size: 14, color: SwColors.text3),
-                    ),
                   ),
                 ),
               ],
@@ -206,8 +208,10 @@ class _Field extends StatelessWidget {
             hintText: hint,
             hintStyle: SwText.body(size: 14, color: SwColors.text3),
             isDense: true,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: SwColors.border),

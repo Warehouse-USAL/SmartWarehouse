@@ -35,9 +35,16 @@ class StockBadge extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(width: 8, height: 8, decoration: BoxDecoration(color: dot, shape: BoxShape.circle)),
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
+        ),
         const SizedBox(width: 6),
-        Text(label, style: SwText.body(size: 12, weight: FontWeight.w600, color: color)),
+        Text(
+          label,
+          style: SwText.body(size: 12, weight: FontWeight.w600, color: color),
+        ),
       ],
     );
   }

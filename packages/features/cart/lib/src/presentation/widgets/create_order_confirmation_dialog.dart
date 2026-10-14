@@ -2,59 +2,53 @@ import 'package:cart/src/domain/entities/cart.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
-class CreateOrderConfirmationDialog extends StatelessWidget {
-  const CreateOrderConfirmationDialog({required this.cart, super.key});
+/// Confirmación previa a crear la orden. Es un [SwDialog] de marca; este
+/// wrapper arma el copy y la fila de total, y conserva las keys de e2e.
+class CreateOrderConfirmationDialog {
+  const CreateOrderConfirmationDialog._();
 
-  final Cart cart;
-
-  static Future<bool> show(BuildContext context, Cart cart) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (_) => CreateOrderConfirmationDialog(cart: cart),
-    );
-    return result ?? false;
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  static Future<bool> show(BuildContext context, Cart cart) {
     final total = cart.total;
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text('Confirmar orden'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${cart.itemCount} ${cart.itemCount == 1 ? 'unidad' : 'unidades'}',
-          ),
-          if (total != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              'Total: ${total.formatted}',
-              key: E2eKeys.orderConfirmDialogTotal,
-              style: const TextStyle(fontWeight: FontWeight.w700),
+    final units =
+        '${cart.itemCount} ${cart.itemCount == 1 ? 'unidad' : 'unidades'}';
+    return SwDialog.show(
+      context,
+      title: 'Confirmar orden',
+      message:
+          '${cart.items.length} '
+          '${cart.items.length == 1 ? 'producto' : 'productos'} · $units. '
+          'Vas a crear la orden con los productos de tu pedido.',
+      body: total == null
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Container(
+                padding: const EdgeInsets.only(top: 10),
+                decoration: const BoxDecoration(
+                  border: Border(top: BorderSide(color: SwColors.border)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      'Total',
+                      style: SwText.body(size: 13, color: SwColors.text2),
+                    ),
+                    Text(
+                      total.formatted,
+                      key: E2eKeys.orderConfirmDialogTotal,
+                      style: SwText.display(size: 22),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ],
-          const SizedBox(height: 12),
-          const Text(
-            '¿Querés crear la orden con estos items?',
-            style: TextStyle(color: Colors.black54),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          key: E2eKeys.orderConfirmCancel,
-          onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Cancelar'),
-        ),
-        ElevatedButton(
-          key: E2eKeys.orderConfirmAccept,
-          onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('Confirmar'),
-        ),
-      ],
+      confirmLabel: 'Confirmar',
+      cancelLabel: 'Cancelar',
+      confirmKey: E2eKeys.orderConfirmAccept,
+      cancelKey: E2eKeys.orderConfirmCancel,
     );
   }
 }

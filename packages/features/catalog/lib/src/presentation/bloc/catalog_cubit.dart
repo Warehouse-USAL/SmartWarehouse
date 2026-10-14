@@ -48,19 +48,22 @@ class CatalogCubit extends Cubit<CatalogState> {
     if (seq != _requestSeq) return;
 
     productsResult.fold(
-      (failure) => emit(CatalogError(failure.message ?? 'Error cargando productos')),
-      (page) => emit(CatalogReady(
-        products: page.items,
-        categories: _categoriesCache,
-        query: _query,
-        selectedCategory: _category,
-        page: page.page,
-        pageSize: page.pageSize,
-        total: page.total,
-        hasNext: page.hasNext,
-        isLoadingMore: false,
-        loadMoreError: null,
-      )),
+      (failure) =>
+          emit(CatalogError(failure.message ?? 'Error cargando productos')),
+      (page) => emit(
+        CatalogReady(
+          products: page.items,
+          categories: _categoriesCache,
+          query: _query,
+          selectedCategory: _category,
+          page: page.page,
+          pageSize: page.pageSize,
+          total: page.total,
+          hasNext: page.hasNext,
+          isLoadingMore: false,
+          loadMoreError: null,
+        ),
+      ),
     );
   }
 
@@ -83,18 +86,22 @@ class CatalogCubit extends Cubit<CatalogState> {
     if (current is! CatalogReady) return;
 
     result.fold(
-      (failure) => emit(current.copyWith(
-        isLoadingMore: false,
-        loadMoreError: failure.message ?? 'Error cargando más productos',
-      )),
-      (page) => emit(current.copyWith(
-        products: [...current.products, ...page.items],
-        page: page.page,
-        total: page.total,
-        hasNext: page.hasNext,
-        isLoadingMore: false,
-        loadMoreError: null,
-      )),
+      (failure) => emit(
+        current.copyWith(
+          isLoadingMore: false,
+          loadMoreError: failure.message ?? 'Error cargando más productos',
+        ),
+      ),
+      (page) => emit(
+        current.copyWith(
+          products: [...current.products, ...page.items],
+          page: page.page,
+          total: page.total,
+          hasNext: page.hasNext,
+          isLoadingMore: false,
+          loadMoreError: null,
+        ),
+      ),
     );
   }
 

@@ -6,10 +6,7 @@ import 'package:profile/src/domain/entities/profile_user.dart';
 import 'package:profile/src/domain/entities/user_address.dart';
 
 extension UserDtoMapper on UserDto {
-  ProfileUser toProfileUser({
-    int openOrdersCount = 0,
-    Money? spentThisMonth,
-  }) =>
+  ProfileUser toProfileUser({int openOrdersCount = 0, Money? spentThisMonth}) =>
       ProfileUser(
         id: id,
         name: name,
@@ -58,11 +55,11 @@ extension AddressDtoMapper on AddressDto {
 
 extension UserAddressMapper on UserAddress {
   AddressDto toDto() => AddressDto(
-        street: street,
-        postalCode: postalCode,
-        department: department,
-        floor: floor,
-      );
+    street: street,
+    postalCode: postalCode,
+    department: department,
+    floor: floor,
+  );
 }
 
 extension OrderToSummary on orders.Order {
@@ -105,8 +102,18 @@ extension OrderToSummary on orders.Order {
 
   String _formatDate(DateTime d) {
     const months = [
-      'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-      'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic',
     ];
     return '${months[d.month - 1]} ${d.day}';
   }

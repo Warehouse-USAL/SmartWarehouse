@@ -32,8 +32,8 @@ class PriceDto {
   final bool? taxIncluded;
 
   Map<String, dynamic> toJson() => {
-        'amount_cents': amountCents,
-        'currency': currency,
-        'tax_included': taxIncluded,
-      };
+    'amount_cents': amountCents,
+    'currency': currency,
+    'tax_included': taxIncluded,
+  };
 }

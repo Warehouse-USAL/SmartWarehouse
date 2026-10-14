@@ -9,9 +9,9 @@ class ProductDetailCubit extends Cubit<ProductDetailState> {
   ProductDetailCubit({
     required CatalogRepository repository,
     required String productId,
-  })  : _repository = repository,
-        _productId = productId,
-        super(const ProductDetailState.loading()) {
+  }) : _repository = repository,
+       _productId = productId,
+       super(const ProductDetailState.loading()) {
     pageController = PageController();
     load();
   }
@@ -25,8 +25,9 @@ class ProductDetailCubit extends Cubit<ProductDetailState> {
     final result = await _repository.getProductById(_productId);
     if (isClosed) return;
     result.fold(
-      (failure) =>
-          emit(ProductDetailState.error(failure.message ?? 'Error cargando producto')),
+      (failure) => emit(
+        ProductDetailState.error(failure.message ?? 'Error cargando producto'),
+      ),
       (product) => emit(ProductDetailState.ready(product: product)),
     );
   }

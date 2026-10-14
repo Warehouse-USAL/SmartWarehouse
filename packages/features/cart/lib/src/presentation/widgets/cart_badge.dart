@@ -1,8 +1,12 @@
 import 'package:cart/src/domain/entities/cart.dart';
 import 'package:cart/src/presentation/bloc/cart_cubit.dart';
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+/// Contador de items del pedido superpuesto al ícono del carrito. Usa el
+/// [SwBadge] del design system (pill amarilla de marca) en lugar del rojo
+/// Material que tenía antes.
 class CartBadge extends StatelessWidget {
   const CartBadge({required this.cubit, required this.child, super.key});
 
@@ -22,24 +26,7 @@ class CartBadge extends StatelessWidget {
             Positioned(
               top: -4,
               right: -4,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.redAccent,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white, width: 1.5),
-                ),
-                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                child: Text(
-                  cart.itemCount > 99 ? '99+' : '${cart.itemCount}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
+              child: SwBadge(count: cart.itemCount),
             ),
           ],
         );
