@@ -39,6 +39,11 @@ class _RecommendationsCarouselState extends State<RecommendationsCarousel> {
   Timer? _ticker;
   bool _userTouching = false;
 
+  /// True mientras corre la animación de vuelta al inicio: sin este guard el
+  /// próximo tick hacía jumpTo y cancelaba la animación — el carrusel quedaba
+  /// trabado tironeando contra sí mismo en el final.
+  bool _returning = false;
+
   @override
   void initState() {
     super.initState();
@@ -59,16 +64,28 @@ class _RecommendationsCarouselState extends State<RecommendationsCarousel> {
     // principio con un salto animado largo (no hay loop infinito de items:
     // mantener la lista real simplifica el tap y la accesibilidad).
     _ticker = Timer.periodic(const Duration(milliseconds: 50), (_) {
-      if (!mounted || _userTouching || !_controller.hasClients) return;
+      if (!mounted || _userTouching || _returning || !_controller.hasClients) {
+        return;
+      }
       final max = _controller.position.maxScrollExtent;
       if (max <= 0) return;
       final next = _controller.offset + 1.5;
       if (next >= max) {
-        _controller.animateTo(
-          0,
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeInOut,
-        );
+        // Pausa breve en el final y vuelta animada al inicio. _returning
+        // frena los ticks hasta que la animación termina.
+        _returning = true;
+        Future<void>.delayed(const Duration(milliseconds: 900), () async {
+          if (!mounted || !_controller.hasClients) {
+            _returning = false;
+            return;
+          }
+          await _controller.animateTo(
+            0,
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeInOut,
+          );
+          _returning = false;
+        });
       } else {
         _controller.jumpTo(next);
       }
@@ -131,6 +148,7 @@ class _RecommendationsCarouselState extends State<RecommendationsCarousel> {
             ),
           ),
         ),
+        const SizedBox(height: 24),
       ],
     );
   }
