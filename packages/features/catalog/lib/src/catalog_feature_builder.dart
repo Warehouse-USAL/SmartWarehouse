@@ -13,7 +13,9 @@ class CatalogFeatureBuilder {
       ..registerLazySingleton<CatalogRepository>(
         () => Injector.i.resolve<AppDataSource>().isMock
             ? MockCatalogRepository()
-            : RemoteCatalogRepository(httpHelper: Injector.i.resolve<HttpHelper>()),
+            : RemoteCatalogRepository(
+                httpHelper: Injector.i.resolve<HttpHelper>(),
+              ),
       )
       ..registerLazySingleton<CatalogCubit>(
         () => CatalogCubit(Injector.i.resolve<CatalogRepository>()),

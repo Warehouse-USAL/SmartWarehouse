@@ -30,11 +30,10 @@ class ProductDetailPage extends StatelessWidget {
           bloc: cubit,
           builder: (context, state) {
             return switch (state) {
-              ProductDetailLoading() => const Center(
-                child: CircularProgressIndicator(),
-              ),
-              ProductDetailError(:final message) => Center(
-                child: Text(message, style: SwText.body()),
+              ProductDetailLoading() => const Center(child: SwLoadingSpinner()),
+              ProductDetailError(:final message) => SwErrorView(
+                message: message,
+                onRetry: cubit.load,
               ),
               ProductDetailReady() => _DetailView(
                 state: state,

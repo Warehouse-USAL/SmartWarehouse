@@ -49,7 +49,11 @@ class ProductCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 product.name,
-                style: SwText.body(size: 13, weight: FontWeight.w600, height: 1.2),
+                style: SwText.body(
+                  size: 13,
+                  weight: FontWeight.w600,
+                  height: 1.2,
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),

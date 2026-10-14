@@ -45,7 +45,8 @@ class RemoteProfileRepository implements ProfileRepository {
       }
       final result = await httpHelper.get('/users/$userId');
       return await result.fold(
-        (error) => Left(ProfileFailure(error.message ?? 'Error obteniendo perfil')),
+        (error) =>
+            Left(ProfileFailure(error.message ?? 'Error obteniendo perfil')),
         (response) {
           final data = response.data;
           if (data is! Map<String, dynamic>) {
@@ -79,35 +80,38 @@ class RemoteProfileRepository implements ProfileRepository {
               .toList(growable: false);
           final pairs = await Future.wait(
             ids.map(
-              (id) async => MapEntry(id, await catalogRepository.getProductById(id)),
+              (id) async =>
+                  MapEntry(id, await catalogRepository.getProductById(id)),
             ),
           );
           final priceByProduct = <String, Money>{};
           for (final pair in pairs) {
             pair.value.fold((_) {}, (p) => priceByProduct[pair.key] = p.price);
           }
-          final summaries = orders.map((o) {
-            // Total solo si TODOS los items tienen precio conocido y comparten
-            // moneda; si no, null → la UI muestra "—" en vez de un total
-            // parcial o con moneda equivocada.
-            String? currency;
-            var cents = 0;
-            var complete = o.items.isNotEmpty;
-            for (final i in o.items) {
-              final price = priceByProduct[i.productId];
-              if (price == null ||
-                  (currency != null && price.currency != currency)) {
-                complete = false;
-                break;
-              }
-              currency = price.currency;
-              cents += price.amount * i.quantity;
-            }
-            final total = complete && currency != null
-                ? Money(amount: cents, currency: currency)
-                : null;
-            return o.toSummary(total: total);
-          }).toList(growable: false);
+          final summaries = orders
+              .map((o) {
+                // Total solo si TODOS los items tienen precio conocido y comparten
+                // moneda; si no, null → la UI muestra "—" en vez de un total
+                // parcial o con moneda equivocada.
+                String? currency;
+                var cents = 0;
+                var complete = o.items.isNotEmpty;
+                for (final i in o.items) {
+                  final price = priceByProduct[i.productId];
+                  if (price == null ||
+                      (currency != null && price.currency != currency)) {
+                    complete = false;
+                    break;
+                  }
+                  currency = price.currency;
+                  cents += price.amount * i.quantity;
+                }
+                final total = complete && currency != null
+                    ? Money(amount: cents, currency: currency)
+                    : null;
+                return o.toSummary(total: total);
+              })
+              .toList(growable: false);
           return Right(summaries);
         },
       );
@@ -129,7 +133,8 @@ class RemoteProfileRepository implements ProfileRepository {
         body['address'] = {
           'street': address.street,
           'postal_code': address.postalCode,
-          if (address.department != null && address.department!.trim().isNotEmpty)
+          if (address.department != null &&
+              address.department!.trim().isNotEmpty)
             'department': address.department,
           if (address.floor != null && address.floor!.trim().isNotEmpty)
             'floor': address.floor,

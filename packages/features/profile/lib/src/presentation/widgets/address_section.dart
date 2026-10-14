@@ -28,23 +28,13 @@ class AddressSection extends StatelessWidget {
                 style: SwText.mono(size: 11, color: SwColors.text3),
               ),
               const Spacer(),
-              TextButton(
+              SwButton(
+                label: address == null ? 'Configurar' : 'Editar',
+                variant: SwButtonVariant.ghost,
+                compact: true,
                 onPressed: () => Injector.i
                     .resolve<NavigationHelper>()
                     .pushNamed(context, routeName: Routes.profileEditAddress),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  address == null ? 'Configurar' : 'Editar',
-                  style: SwText.body(
-                    size: 13,
-                    weight: FontWeight.w600,
-                    color: SwColors.link,
-                  ),
-                ),
               ),
             ],
           ),

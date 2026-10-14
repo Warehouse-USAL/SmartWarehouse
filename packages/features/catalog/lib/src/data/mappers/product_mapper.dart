@@ -45,12 +45,12 @@ extension ProductDtoMapper on ProductDto {
 
 extension ProductImageDtoMapper on ProductImageDto {
   ProductImage toEntity() => ProductImage(
-        // Resolvemos cualquier URL relativa del back (MinIO devuelve
-        // `/api/v1/files/...`). Las absolutas (picsum/seed) pasan tal cual.
-        url: ImageUrlResolver.resolve(url) ?? url,
-        alt: alt,
-        isPrimary: isPrimary,
-      );
+    // Resolvemos cualquier URL relativa del back (MinIO devuelve
+    // `/api/v1/files/...`). Las absolutas (picsum/seed) pasan tal cual.
+    url: ImageUrlResolver.resolve(url) ?? url,
+    alt: alt,
+    isPrimary: isPrimary,
+  );
 }
 
 extension SpecDtoMapper on SpecDto {
@@ -64,23 +64,26 @@ extension PriceDtoMapper on PriceDto {
 
 extension StockDtoMapper on StockDto {
   Stock toEntity() => Stock(
-        available: available,
-        reserved: reserved,
-        min: min,
-        lowStockThreshold: lowStockThreshold,
-      );
+    available: available,
+    reserved: reserved,
+    min: min,
+    lowStockThreshold: lowStockThreshold,
+  );
 }
 
 extension OrderConstraintsDtoMapper on OrderConstraintsDto {
   OrderConstraints toEntity() => OrderConstraints(
-        maxQuantityPerOrder:
-            maxQuantityPerOrder ?? OrderConstraints.defaults.maxQuantityPerOrder,
-      );
+    maxQuantityPerOrder:
+        maxQuantityPerOrder ?? OrderConstraints.defaults.maxQuantityPerOrder,
+  );
 }
 
 extension ProductLocationDtoMapper on ProductLocationDto {
   ProductLocation? toEntity() {
-    if (idZone == null || idLine == null || idPosition == null || height == null) {
+    if (idZone == null ||
+        idLine == null ||
+        idPosition == null ||
+        height == null) {
       return null;
     }
     return ProductLocation(
@@ -95,9 +98,6 @@ extension ProductLocationDtoMapper on ProductLocationDto {
 String? _pickThumbUrl(List<ProductImage> imgs, String? flat) {
   if (flat != null && flat.isNotEmpty) return ImageUrlResolver.resolve(flat);
   if (imgs.isEmpty) return null;
-  final primary = imgs.firstWhere(
-    (i) => i.isPrimary,
-    orElse: () => imgs.first,
-  );
+  final primary = imgs.firstWhere((i) => i.isPrimary, orElse: () => imgs.first);
   return primary.url.isEmpty ? null : primary.url;
 }

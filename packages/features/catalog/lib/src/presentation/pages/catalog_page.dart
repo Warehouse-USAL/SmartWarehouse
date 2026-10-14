@@ -225,16 +225,11 @@ class _Results extends StatelessWidget {
                       }
                       if (showErrorFooter) {
                         return Center(
-                          child: TextButton(
+                          child: SwButton(
+                            label: 'Reintentar',
+                            variant: SwButtonVariant.ghost,
+                            compact: true,
                             onPressed: cubit.retryLoadMore,
-                            child: Text(
-                              'Reintentar',
-                              style: SwText.body(
-                                size: 13,
-                                color: SwColors.link,
-                                weight: FontWeight.w700,
-                              ),
-                            ),
                           ),
                         );
                       }

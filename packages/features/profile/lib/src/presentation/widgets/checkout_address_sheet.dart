@@ -106,17 +106,7 @@ class _CheckoutAddressSheetState extends State<CheckoutAddressSheet> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 14),
-                    decoration: BoxDecoration(
-                      color: SwColors.border,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
+                // El handle de arrastre ahora lo pone SwSheet.show.
                 Text('Confirmar entrega', style: SwText.display(size: 20)),
                 const SizedBox(height: 6),
                 Text(
@@ -173,6 +163,9 @@ class _CheckoutAddressSheetState extends State<CheckoutAddressSheet> {
                           value: _saveToProfile,
                           onChanged: (v) =>
                               setState(() => _saveToProfile = v ?? false),
+                          activeColor: SwColors.yellow,
+                          checkColor: SwColors.text,
+                          side: const BorderSide(color: SwColors.border),
                           materialTapTargetSize:
                               MaterialTapTargetSize.shrinkWrap,
                           visualDensity: VisualDensity.compact,
@@ -190,16 +183,15 @@ class _CheckoutAddressSheetState extends State<CheckoutAddressSheet> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    TextButton(
+                    SwButton(
+                      label: 'Cancelar',
+                      variant: SwButtonVariant.ghost,
+                      compact: true,
                       onPressed: () {
                         if (_submitted) return;
                         _submitted = true;
                         Navigator.of(context).pop();
                       },
-                      child: Text(
-                        'Cancelar',
-                        style: SwText.body(size: 14, color: SwColors.text3),
-                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(

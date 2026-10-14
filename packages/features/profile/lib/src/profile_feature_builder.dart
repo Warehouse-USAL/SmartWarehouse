@@ -1,3 +1,4 @@
+import 'package:design_system/design_system.dart';
 import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:profile/src/data/repositories/mock_profile_repository.dart';
@@ -17,8 +18,8 @@ class ProfileFeatureBuilder {
             : RemoteProfileRepository(
                 httpHelper: Injector.i.resolve<HttpHelper>(),
                 getToken: OnGetTokenUseCase.call,
-                orderTrackingRepository:
-                    Injector.i.resolve<OrderTrackingRepository>(),
+                orderTrackingRepository: Injector.i
+                    .resolve<OrderTrackingRepository>(),
                 catalogRepository: Injector.i.resolve<CatalogRepository>(),
               ),
       )
@@ -54,13 +55,8 @@ class ProfileFeatureBuilder {
     if (!context.mounted) return null;
     final state = cubit.state;
     final initial = state is ProfileReady ? state.user.address : null;
-    final result = await showModalBottomSheet<CheckoutAddressResult>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
+    final result = await SwSheet.show<CheckoutAddressResult>(
+      context,
       builder: (_) => CheckoutAddressSheet(initialAddress: initial),
     );
     if (result == null) return null;
@@ -69,10 +65,9 @@ class ProfileFeatureBuilder {
       // form — pero avisamos que no quedó guardado en el perfil.
       final saved = await cubit.updateProfile(address: result.address);
       if (!saved && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No se pudo guardar la dirección en tu perfil'),
-          ),
+        SwSnackBar.showError(
+          context,
+          message: 'No se pudo guardar la dirección en tu perfil',
         );
       }
     }
