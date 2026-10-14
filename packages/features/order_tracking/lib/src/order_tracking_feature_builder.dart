@@ -1,6 +1,7 @@
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:order_tracking/src/data/repositories/co_purchase_recommendations_repository.dart';
 import 'package:order_tracking/src/data/repositories/mock_order_tracking_repository.dart';
 import 'package:order_tracking/src/data/repositories/remote_order_tracking_repository.dart';
 import 'package:order_tracking/src/presentation/pages/notifications_page.dart';
@@ -32,6 +33,13 @@ class OrderTrackingFeatureBuilder {
         () => OrderListCubit(
           Injector.i.resolve<OrderTrackingRepository>(),
           Injector.i.resolve<CatalogRepository>(),
+        ),
+      )
+      ..registerLazySingleton<RecommendationsRepository>(
+        () => CoPurchaseRecommendationsRepository(
+          orderTrackingRepository: Injector.i
+              .resolve<OrderTrackingRepository>(),
+          catalogRepository: Injector.i.resolve<CatalogRepository>(),
         ),
       )
       ..registerSingleton<OrderNotificationCubit>(

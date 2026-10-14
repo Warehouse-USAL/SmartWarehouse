@@ -29,6 +29,7 @@ class CatalogFeatureBuilder {
   static Widget buildProductDetailPage(
     String productId, {
     required void Function(Product product) onAddToCart,
+    Future<List<Product>> Function(Product product)? recommendationsLoader,
   }) {
     return ProductDetailPage(
       cubit: ProductDetailCubit(
@@ -36,6 +37,7 @@ class CatalogFeatureBuilder {
         productId: productId,
       ),
       onAddToCart: onAddToCart,
+      recommendationsLoader: recommendationsLoader,
     );
   }
 }

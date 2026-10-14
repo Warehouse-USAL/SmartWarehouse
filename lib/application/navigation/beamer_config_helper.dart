@@ -63,6 +63,12 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
           child: CatalogFeatureBuilder.buildProductDetailPage(
             id,
             onAddToCart: CartFeatureBuilder.addToCart,
+            // "Suelen llevarse juntos": co-compra sobre las órdenes del
+            // device (el algoritmo del equipo reemplaza esta implementación
+            // detrás de la misma interfaz, sin tocar la pantalla).
+            recommendationsLoader: (product) => Injector.i
+                .resolve<RecommendationsRepository>()
+                .recommendedFor(product),
           ),
         );
       },

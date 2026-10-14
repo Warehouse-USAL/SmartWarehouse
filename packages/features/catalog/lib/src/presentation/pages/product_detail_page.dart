@@ -1,7 +1,7 @@
-import 'package:bottom_navigation_bar/bottom_navigation_bar.dart';
-import 'package:catalog/catalog.dart';
+import 'package:core/core.dart';
 import 'package:catalog/src/presentation/bloc/product_detail_cubit.dart';
 import 'package:catalog/src/presentation/widgets/qty_stepper.dart';
+import 'package:catalog/src/presentation/widgets/recommendations_carousel.dart';
 import 'package:catalog/src/presentation/widgets/stock_badge.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
@@ -11,11 +11,17 @@ class ProductDetailPage extends StatelessWidget {
   const ProductDetailPage({
     required this.cubit,
     required this.onAddToCart,
+    this.recommendationsLoader,
     super.key,
   });
 
   final ProductDetailCubit cubit;
   final void Function(Product product) onAddToCart;
+
+  /// Trae "suelen llevarse juntos" para el producto. Lo inyecta la capa de
+  /// aplicación (el algoritmo vive fuera de catalog); si es null la sección
+  /// no existe.
+  final Future<List<Product>> Function(Product product)? recommendationsLoader;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +45,7 @@ class ProductDetailPage extends StatelessWidget {
                 state: state,
                 cubit: cubit,
                 onAddToCart: onAddToCart,
+                recommendationsLoader: recommendationsLoader,
               ),
             };
           },
@@ -53,11 +60,13 @@ class _DetailView extends StatelessWidget {
     required this.state,
     required this.cubit,
     required this.onAddToCart,
+    this.recommendationsLoader,
   });
 
   final ProductDetailReady state;
   final ProductDetailCubit cubit;
   final void Function(Product product) onAddToCart;
+  final Future<List<Product>> Function(Product product)? recommendationsLoader;
 
   static const _tabs = ['Descripción', 'Especificaciones'];
 
@@ -164,6 +173,18 @@ class _DetailView extends StatelessWidget {
                       _ => _Specs(product: p),
                     },
                   ),
+                  if (recommendationsLoader != null)
+                    RecommendationsCarousel(
+                      // Key por producto: al navegar a un recomendado la
+                      // sección se recrea y carga las del producto nuevo.
+                      key: ValueKey('recos-${p.id}'),
+                      load: () => recommendationsLoader!(p),
+                      onProductTap: (recommended) =>
+                          Injector.i.resolve<NavigationHelper>().pushNamed(
+                            context,
+                            routeName: Routes.catalogDetail(recommended.id),
+                          ),
+                    ),
                 ],
               ),
             ),
