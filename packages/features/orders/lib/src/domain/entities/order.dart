@@ -23,12 +23,11 @@ class Order {
     OrderStatus? status,
     DateTime? createdAt,
     Money? total,
-  }) =>
-      Order(
-        id: id ?? this.id,
-        items: items ?? this.items,
-        status: status ?? this.status,
-        createdAt: createdAt ?? this.createdAt,
-        total: total ?? this.total,
-      );
+  }) => Order(
+    id: id ?? this.id,
+    items: items ?? this.items,
+    status: status ?? this.status,
+    createdAt: createdAt ?? this.createdAt,
+    total: total ?? this.total,
+  );
 }

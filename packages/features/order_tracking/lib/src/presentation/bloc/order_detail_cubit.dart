@@ -12,7 +12,7 @@ export 'order_detail_state.dart';
 
 class OrderDetailCubit extends Cubit<OrderDetailState> {
   OrderDetailCubit(this._repository, this._catalogRepository)
-      : super(const OrderDetailLoading());
+    : super(const OrderDetailLoading());
 
   final OrderTrackingRepository _repository;
   final CatalogRepository _catalogRepository;
@@ -27,20 +27,42 @@ class OrderDetailCubit extends Cubit<OrderDetailState> {
     _subscription?.cancel();
     _productCache.clear();
     emit(const OrderDetailLoading());
-    _subscription = _repository.watchOrder(orderId).listen(
-      (order) async {
-        if (isClosed) return;
-        await _hydrateMissingProducts(order);
-        if (isClosed) return;
+    _subscription = _repository
+        .watchOrder(orderId)
+        .listen(
+          (order) async {
+            if (isClosed) return;
+            await _hydrateMissingProducts(order);
+            if (isClosed) return;
+            emit(OrderDetailReady(order: order, items: _buildItems(order)));
+            if (order.status == OrderStatus.completed ||
+                order.status == OrderStatus.cancelled) {
+              _subscription?.cancel();
+              _subscription = null;
+            }
+          },
+          onError: (Object e) {
+            if (!isClosed) emit(OrderDetailError(e.toString()));
+          },
+        );
+  }
+
+  /// Cancela la orden. Devuelve null si salió bien (y re-emite el detalle
+  /// actualizado) o el mensaje de error para que la UI lo muestre.
+  ///
+  /// Nota: el watchOrder se corta solo al llegar a cancelled (ver [load]),
+  /// así que el refresco post-cancelación se fuerza acá re-emitiendo con la
+  /// orden que devuelve el repo — no dependemos del WS.
+  Future<String?> cancel(String orderId) async {
+    final result = await _repository.cancelOrder(orderId);
+    if (isClosed) return null;
+    return result.fold(
+      (failure) => failure.message ?? 'No se pudo cancelar la orden',
+      (order) {
+        _subscription?.cancel();
+        _subscription = null;
         emit(OrderDetailReady(order: order, items: _buildItems(order)));
-        if (order.status == OrderStatus.completed ||
-            order.status == OrderStatus.cancelled) {
-          _subscription?.cancel();
-          _subscription = null;
-        }
-      },
-      onError: (Object e) {
-        if (!isClosed) emit(OrderDetailError(e.toString()));
+        return null;
       },
     );
   }
@@ -64,10 +86,10 @@ class OrderDetailCubit extends Cubit<OrderDetailState> {
   }
 
   List<OrderItemDetail> _buildItems(Order order) => order.items
-      .map((item) => OrderItemDetail(
-            item: item,
-            product: _productCache[item.productId],
-          ))
+      .map(
+        (item) =>
+            OrderItemDetail(item: item, product: _productCache[item.productId]),
+      )
       .toList(growable: false);
 
   @override

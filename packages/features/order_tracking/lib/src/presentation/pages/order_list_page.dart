@@ -40,55 +40,59 @@ class _OrderListPageState extends State<OrderListPage> {
         builder: (context, state) => switch (state) {
           OrderListLoading() => const Center(child: SwLoadingSpinner()),
           OrderListError(:final message) => SwErrorView(
-              message: message,
-              onRetry: cubit.refresh,
-            ),
+            message: message,
+            onRetry: cubit.refresh,
+          ),
           OrderListReady(:final orders) => RefreshIndicator(
-              color: SwColors.yellow,
-              onRefresh: cubit.refresh,
-              child: orders.isEmpty
-                  ? const SingleChildScrollView(
-                      physics: AlwaysScrollableScrollPhysics(),
-                      child: SizedBox(
-                        height: 400,
-                        child: SwEmptyView(
-                          title: 'Sin órdenes',
-                          message:
-                              'Tus pedidos aparecerán aquí una vez que realices uno.',
-                          icon: Icons.receipt_long_outlined,
+            color: SwColors.yellow,
+            onRefresh: cubit.refresh,
+            child: orders.isEmpty
+                ? const SingleChildScrollView(
+                    physics: AlwaysScrollableScrollPhysics(),
+                    child: SizedBox(
+                      height: 400,
+                      child: SwEmptyView(
+                        title: 'Sin órdenes',
+                        message:
+                            'Tus pedidos aparecerán aquí una vez que realices uno.',
+                        icon: Icons.receipt_long_outlined,
+                      ),
+                    ),
+                  )
+                : ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    children: [
+                      SwCard(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            for (int i = 0; i < orders.length; i++) ...[
+                              OrderCard(
+                                key: E2eKeys.orderCard(orders[i].id),
+                                order: orders[i],
+                                onTap: () => Injector.i
+                                    .resolve<NavigationHelper>()
+                                    .pushNamed(
+                                      context,
+                                      routeName: Routes.orderDetail(
+                                        orders[i].id,
+                                      ),
+                                    ),
+                              ),
+                              if (i < orders.length - 1)
+                                const Divider(
+                                  height: 1,
+                                  color: SwColors.border,
+                                ),
+                            ],
+                          ],
                         ),
                       ),
-                    )
-                  : ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      children: [
-                        SwCard(
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              for (int i = 0; i < orders.length; i++) ...[
-                                OrderCard(
-                                  key: E2eKeys.orderCard(orders[i].id),
-                                  order: orders[i],
-                                  onTap: () => Injector.i
-                                      .resolve<NavigationHelper>()
-                                      .pushNamed(
-                                        context,
-                                        routeName:
-                                            Routes.orderDetail(orders[i].id),
-                                      ),
-                                ),
-                                if (i < orders.length - 1)
-                                  const Divider(height: 1, color: SwColors.border),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
+                    ],
+                  ),
+          ),
         },
       ),
     );

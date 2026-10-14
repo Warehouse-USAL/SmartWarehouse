@@ -1,5 +1,6 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:order_tracking/src/presentation/widgets/order_status_chip.dart';
 import 'package:orders/orders.dart';
 
 class OrderCard extends StatelessWidget {
@@ -34,13 +35,24 @@ class OrderCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    order.id,
-                    style: SwText.body(size: 14, weight: FontWeight.w600),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          order.id,
+                          overflow: TextOverflow.ellipsis,
+                          style: SwText.body(size: 14, weight: FontWeight.w600),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // El estado con color — antes era texto gris igual a
+                      // cualquier otro estado.
+                      OrderStatusChip(status: order.status),
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${_formatDate(order.createdAt)} · ${order.items.length} items · ${_statusLabel(order.status)}',
+                    '${_formatDate(order.createdAt)} · ${order.items.length} items',
                     style: SwText.body(size: 12, color: SwColors.text3),
                   ),
                 ],
@@ -57,7 +69,11 @@ class OrderCard extends StatelessWidget {
                   style: SwText.body(size: 14, weight: FontWeight.w600),
                 ),
                 const SizedBox(height: 2),
-                const Icon(Icons.chevron_right, size: 16, color: SwColors.text3),
+                const Icon(
+                  Icons.chevron_right,
+                  size: 16,
+                  color: SwColors.text3,
+                ),
               ],
             ),
           ],
@@ -75,11 +91,4 @@ class OrderCard extends StatelessWidget {
     if (diff == 1) return 'Ayer';
     return '${dt.day}/${dt.month}/${dt.year}';
   }
-
-  String _statusLabel(OrderStatus status) => switch (status) {
-        OrderStatus.pending => 'Pendiente',
-        OrderStatus.inProgress => 'En progreso',
-        OrderStatus.completed => 'Completado',
-        OrderStatus.cancelled => 'Cancelado',
-      };
 }

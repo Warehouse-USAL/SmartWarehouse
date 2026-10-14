@@ -18,6 +18,12 @@ abstract class OrderTrackingRepository {
   /// GET /orders/:id — detalle completo de una orden.
   Future<Either<OrderTrackingFailure, Order>> getOrderById(String id);
 
+  /// POST /orders/:id/cancel — cancela la orden y devuelve su versión
+  /// actualizada (status cancelled). El mock muta el estado compartido y
+  /// emite por los streams: salir del detalle y volver sigue mostrando la
+  /// orden cancelada.
+  Future<Either<OrderTrackingFailure, Order>> cancelOrder(String id);
+
   /// Stream en tiempo real de una orden vía WebSocket.
   /// Emite el estado actual via REST al suscribirse, luego emite en cada
   /// evento WS `order.updated` para el orderId dado.

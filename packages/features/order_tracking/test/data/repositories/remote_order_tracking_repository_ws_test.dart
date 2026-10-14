@@ -15,8 +15,13 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 class _FakeHttpHelper implements HttpHelper {
   Either<HttpResponseError, HttpResponse> Function(String path) getHandler =
-      (_) => Left(HttpResponseError(
-          errorType: 'nf', message: 'Not found', statusCode: 404));
+      (_) => Left(
+        HttpResponseError(
+          errorType: 'nf',
+          message: 'Not found',
+          statusCode: 404,
+        ),
+      );
 
   @override
   String get baseUrl => 'http://localhost:8080';
@@ -31,8 +36,7 @@ class _FakeHttpHelper implements HttpHelper {
     bool noCache = false,
     bool external = false,
     Map<String, dynamic>? headers,
-  }) async =>
-      getHandler(path);
+  }) async => getHandler(path);
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -103,10 +107,13 @@ String _jwtWithSub(String sub) {
 Either<HttpResponseError, HttpResponse> _orderResponse(
   String id,
   String status,
-) =>
-    Right(HttpResponse(data: <String, dynamic>{
+) => Right(
+  HttpResponse(
+    data: <String, dynamic>{
       'order': {'id': id, 'status': status, 'items': <dynamic>[]},
-    }));
+    },
+  ),
+);
 
 Future<void> _waitFor(bool Function() cond) async {
   final deadline = DateTime.now().add(const Duration(seconds: 3));
@@ -166,8 +173,7 @@ void main() {
       await sub.cancel();
     });
 
-    test('la primera transición de una orden nueva también se avisa',
-        () async {
+    test('la primera transición de una orden nueva también se avisa', () async {
       // Orden creada después del seed: no está en el cache. Su estado
       // inicial real es pending, así que pending -> in_progress se emite
       // (antes el guard de oldStatus == null la tragaba).

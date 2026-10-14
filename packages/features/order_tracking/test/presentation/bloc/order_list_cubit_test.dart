@@ -34,7 +34,8 @@ void main() {
 
   blocTest<OrderListCubit, OrderListState>(
     'emite Ready con las ordenes que devuelve el repo',
-    setUp: () => repo.onGetOrders = () => Right([anOrder(id: 'o-1', items: [])]),
+    setUp: () =>
+        repo.onGetOrders = () => Right([anOrder(id: 'o-1', items: [])]),
     build: build,
     wait: const Duration(milliseconds: 10),
     expect: () => [
@@ -50,8 +51,9 @@ void main() {
 
   blocTest<OrderListCubit, OrderListState>(
     'emite Error con el mensaje del failure',
-    setUp: () => repo.onGetOrders =
-        () => const Left(OrderTrackingFailure('sin conexion')),
+    setUp: () =>
+        repo.onGetOrders = () =>
+            const Left(OrderTrackingFailure('sin conexion')),
     build: build,
     wait: const Duration(milliseconds: 10),
     expect: () => [
@@ -67,8 +69,11 @@ void main() {
     wait: const Duration(milliseconds: 10),
     expect: () => [
       isA<OrderListLoading>(),
-      isA<OrderListError>()
-          .having((s) => s.message, 'message', 'Error desconocido'),
+      isA<OrderListError>().having(
+        (s) => s.message,
+        'message',
+        'Error desconocido',
+      ),
     ],
   );
 
@@ -99,25 +104,31 @@ void main() {
       'reemplaza unitPrice y calcula el total con los precios del catalogo',
       setUp: () {
         repo.onGetOrders = () => Right([
-              anOrder(
-                id: 'o-1',
-                items: [
-                  anOrderItem(productId: 'p-1', quantity: 2),
-                  anOrderItem(productId: 'p-2', quantity: 1),
-                ],
-                total: aMoney(amount: 0),
-              ),
-            ]);
+          anOrder(
+            id: 'o-1',
+            items: [
+              anOrderItem(productId: 'p-1', quantity: 2),
+              anOrderItem(productId: 'p-2', quantity: 1),
+            ],
+            total: aMoney(amount: 0),
+          ),
+        ]);
         catalog.onGetProductById = (id) => Right(
-              aProduct(id: id, price: aMoney(amount: id == 'p-1' ? 500 : 300)),
-            );
+          aProduct(
+            id: id,
+            price: aMoney(amount: id == 'p-1' ? 500 : 300),
+          ),
+        );
       },
       build: build,
       wait: const Duration(milliseconds: 10),
       expect: () => [
         isA<OrderListLoading>(),
-        isA<OrderListReady>()
-            .having((s) => s.orders.single.total.amount, 'total', 1300),
+        isA<OrderListReady>().having(
+          (s) => s.orders.single.total.amount,
+          'total',
+          1300,
+        ),
       ],
     );
 
@@ -125,19 +136,19 @@ void main() {
       'no sobrescribe el total original si algun producto no se pudo hidratar',
       setUp: () {
         repo.onGetOrders = () => Right([
-              anOrder(
-                id: 'o-1',
-                items: [
-                  anOrderItem(productId: 'p-1', quantity: 2),
-                  anOrderItem(productId: 'p-2', quantity: 1),
-                ],
-                // Valor distinguible: si `_applyPrices` alguna vez calculara
-                // 0 a proposito para el caso incompleto (en vez de dejar el
-                // total original intacto), este fixture lo distingue de un
-                // total "0 porque nadie lo tocó".
-                total: aMoney(amount: 4242),
-              ),
-            ]);
+          anOrder(
+            id: 'o-1',
+            items: [
+              anOrderItem(productId: 'p-1', quantity: 2),
+              anOrderItem(productId: 'p-2', quantity: 1),
+            ],
+            // Valor distinguible: si `_applyPrices` alguna vez calculara
+            // 0 a proposito para el caso incompleto (en vez de dejar el
+            // total original intacto), este fixture lo distingue de un
+            // total "0 porque nadie lo tocó".
+            total: aMoney(amount: 4242),
+          ),
+        ]);
         catalog.onGetProductById = (id) => id == 'p-1'
             ? Right(aProduct(id: id, price: aMoney(amount: 500)))
             : const Left(CatalogFailure('404'));
@@ -146,8 +157,11 @@ void main() {
       wait: const Duration(milliseconds: 10),
       expect: () => [
         isA<OrderListLoading>(),
-        isA<OrderListReady>()
-            .having((s) => s.orders.single.total.amount, 'total', 4242),
+        isA<OrderListReady>().having(
+          (s) => s.orders.single.total.amount,
+          'total',
+          4242,
+        ),
       ],
     );
 
@@ -155,31 +169,31 @@ void main() {
       'no sobrescribe el total original si los items mezclan monedas',
       setUp: () {
         repo.onGetOrders = () => Right([
-              anOrder(
-                id: 'o-1',
-                items: [
-                  anOrderItem(productId: 'p-1', quantity: 1),
-                  anOrderItem(productId: 'p-2', quantity: 1),
-                ],
-                total: aMoney(amount: 4242),
-              ),
-            ]);
+          anOrder(
+            id: 'o-1',
+            items: [
+              anOrderItem(productId: 'p-1', quantity: 1),
+              anOrderItem(productId: 'p-2', quantity: 1),
+            ],
+            total: aMoney(amount: 4242),
+          ),
+        ]);
         catalog.onGetProductById = (id) => Right(
-              aProduct(
-                id: id,
-                price: aMoney(
-                  amount: 500,
-                  currency: id == 'p-1' ? 'ARS' : 'USD',
-                ),
-              ),
-            );
+          aProduct(
+            id: id,
+            price: aMoney(amount: 500, currency: id == 'p-1' ? 'ARS' : 'USD'),
+          ),
+        );
       },
       build: build,
       wait: const Duration(milliseconds: 10),
       expect: () => [
         isA<OrderListLoading>(),
-        isA<OrderListReady>()
-            .having((s) => s.orders.single.total.amount, 'total', 4242),
+        isA<OrderListReady>().having(
+          (s) => s.orders.single.total.amount,
+          'total',
+          4242,
+        ),
       ],
     );
 
@@ -187,18 +201,18 @@ void main() {
       'reemplaza el placeholder del mapper por el nombre real del catalogo',
       setUp: () {
         repo.onGetOrders = () => Right([
-              anOrder(
-                id: 'o-1',
-                items: [
-                  anOrderItem(
-                    productId: 'p-1',
-                    productName: 'Producto no disponible',
-                  ),
-                ],
+          anOrder(
+            id: 'o-1',
+            items: [
+              anOrderItem(
+                productId: 'p-1',
+                productName: 'Producto no disponible',
               ),
-            ]);
-        catalog.onGetProductById =
-            (id) => Right(aProduct(id: id, name: 'Taladro'));
+            ],
+          ),
+        ]);
+        catalog.onGetProductById = (id) =>
+            Right(aProduct(id: id, name: 'Taladro'));
       },
       build: build,
       wait: const Duration(milliseconds: 10),
@@ -225,11 +239,17 @@ void main() {
       'no re-fetchea un producto que ya esta en el cache',
       setUp: () {
         repo.onGetOrders = () => Right([
-              anOrder(id: 'o-1', items: [anOrderItem(productId: 'p-1')]),
-              anOrder(id: 'o-2', items: [anOrderItem(productId: 'p-1')]),
-            ]);
-        catalog.onGetProductById =
-            (id) => Right(aProduct(id: id, price: aMoney(amount: 500)));
+          anOrder(
+            id: 'o-1',
+            items: [anOrderItem(productId: 'p-1')],
+          ),
+          anOrder(
+            id: 'o-2',
+            items: [anOrderItem(productId: 'p-1')],
+          ),
+        ]);
+        catalog.onGetProductById = (id) =>
+            Right(aProduct(id: id, price: aMoney(amount: 500)));
       },
       build: build,
       wait: const Duration(milliseconds: 10),
@@ -257,11 +277,13 @@ void main() {
       build: build,
       wait: const Duration(milliseconds: 10),
       act: (_) async {
-        repo.statusChangeController.add(const OrderStatusChange(
-          orderId: 'o-1',
-          oldStatus: OrderStatus.pending,
-          newStatus: OrderStatus.inProgress,
-        ));
+        repo.statusChangeController.add(
+          const OrderStatusChange(
+            orderId: 'o-1',
+            oldStatus: OrderStatus.pending,
+            newStatus: OrderStatus.inProgress,
+          ),
+        );
         await Future<void>.delayed(const Duration(milliseconds: 10));
       },
       expect: () => [
@@ -307,11 +329,13 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 10));
 
     await cubit.close();
-    repo.statusChangeController.add(const OrderStatusChange(
-      orderId: 'o-1',
-      oldStatus: OrderStatus.pending,
-      newStatus: OrderStatus.completed,
-    ));
+    repo.statusChangeController.add(
+      const OrderStatusChange(
+        orderId: 'o-1',
+        oldStatus: OrderStatus.pending,
+        newStatus: OrderStatus.completed,
+      ),
+    );
     await Future<void>.delayed(Duration.zero);
 
     expect(cubit.isClosed, isTrue);

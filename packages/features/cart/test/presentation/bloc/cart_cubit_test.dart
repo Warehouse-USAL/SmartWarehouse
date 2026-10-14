@@ -148,23 +148,29 @@ void revalidateTests() {
 
     setUp(() => repo = InMemoryCartRepository());
 
-    test('refresca el stock del producto con la versión del catálogo', () async {
-      repo.add(aProduct(id: 'p-1', stock: aStock(available: 10)), quantity: 4);
-      final fresh = aProduct(id: 'p-1', stock: aStock(available: 2));
-      final cubit = CartCubit(
-        repo,
-        catalogRepository: _FakeCatalogRepository({'p-1': Right(fresh)}),
-      );
+    test(
+      'refresca el stock del producto con la versión del catálogo',
+      () async {
+        repo.add(
+          aProduct(id: 'p-1', stock: aStock(available: 10)),
+          quantity: 4,
+        );
+        final fresh = aProduct(id: 'p-1', stock: aStock(available: 2));
+        final cubit = CartCubit(
+          repo,
+          catalogRepository: _FakeCatalogRepository({'p-1': Right(fresh)}),
+        );
 
-      await cubit.revalidate();
+        await cubit.revalidate();
 
-      // La cantidad pedida NO se ajusta sola: la línea pasa a bloquear.
-      expect(cubit.state.items.single.quantity, 4);
-      expect(cubit.state.items.single.product.stock.available, 2);
-      expect(cubit.state.hasInvalidQuantities, isTrue);
-      expect(cubit.state.invalidItems.single.product.id, 'p-1');
-      await cubit.close();
-    });
+        // La cantidad pedida NO se ajusta sola: la línea pasa a bloquear.
+        expect(cubit.state.items.single.quantity, 4);
+        expect(cubit.state.items.single.product.stock.available, 2);
+        expect(cubit.state.hasInvalidQuantities, isTrue);
+        expect(cubit.state.invalidItems.single.product.id, 'p-1');
+        await cubit.close();
+      },
+    );
 
     test('marca no disponible cuando el catálogo devuelve 404', () async {
       repo.add(aProduct(id: 'p-1'), quantity: 1);
@@ -198,21 +204,24 @@ void revalidateTests() {
       await cubit.close();
     });
 
-    test('una revalidación posterior exitosa limpia el no disponible', () async {
-      repo.add(aProduct(id: 'p-1'), quantity: 1);
-      repo.markUnavailable('p-1');
-      final fresh = aProduct(id: 'p-1', stock: aStock(available: 5));
-      final cubit = CartCubit(
-        repo,
-        catalogRepository: _FakeCatalogRepository({'p-1': Right(fresh)}),
-      );
+    test(
+      'una revalidación posterior exitosa limpia el no disponible',
+      () async {
+        repo.add(aProduct(id: 'p-1'), quantity: 1);
+        repo.markUnavailable('p-1');
+        final fresh = aProduct(id: 'p-1', stock: aStock(available: 5));
+        final cubit = CartCubit(
+          repo,
+          catalogRepository: _FakeCatalogRepository({'p-1': Right(fresh)}),
+        );
 
-      await cubit.revalidate();
+        await cubit.revalidate();
 
-      expect(cubit.state.items.single.unavailable, isFalse);
-      expect(cubit.state.hasInvalidQuantities, isFalse);
-      await cubit.close();
-    });
+        expect(cubit.state.items.single.unavailable, isFalse);
+        expect(cubit.state.hasInvalidQuantities, isFalse);
+        await cubit.close();
+      },
+    );
 
     test('sin catálogo inyectado es un no-op', () async {
       repo.add(aProduct(id: 'p-1'), quantity: 1);
@@ -222,6 +231,49 @@ void revalidateTests() {
 
       expect(cubit.state.itemCount, 1);
       await cubit.close();
+    });
+  });
+
+  group('addAll (pedir de nuevo)', () {
+    test('agrega todas las lineas y emite UNA sola vez', () {
+      final cubit = CartCubit(InMemoryCartRepository());
+      var emissions = 0;
+      cubit.stream.listen((_) => emissions++);
+
+      cubit.addAll([
+        (product: aProduct(id: 'a'), quantity: 2),
+        (product: aProduct(id: 'b'), quantity: 1),
+        (product: aProduct(id: 'c'), quantity: 3),
+      ]);
+
+      expect(cubit.state.items, hasLength(3));
+      expect(cubit.state.quantityOf('a'), 2);
+      expect(cubit.state.quantityOf('c'), 3);
+      return Future<void>.delayed(
+        Duration.zero,
+      ).then((_) => expect(emissions, 1));
+    });
+
+    test('con lista vacia no emite nada', () {
+      final cubit = CartCubit(InMemoryCartRepository());
+      var emissions = 0;
+      cubit.stream.listen((_) => emissions++);
+
+      cubit.addAll(const []);
+
+      expect(cubit.state.isEmpty, isTrue);
+      return Future<void>.delayed(
+        Duration.zero,
+      ).then((_) => expect(emissions, 0));
+    });
+
+    test('suma cantidades si el producto ya estaba en el pedido', () {
+      final cubit = CartCubit(InMemoryCartRepository())
+        ..add(aProduct(id: 'a'), quantity: 1);
+
+      cubit.addAll([(product: aProduct(id: 'a'), quantity: 2)]);
+
+      expect(cubit.state.quantityOf('a'), 3);
     });
   });
 }

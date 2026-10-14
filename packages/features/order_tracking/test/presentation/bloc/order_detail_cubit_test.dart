@@ -12,9 +12,18 @@ import 'package:orders/orders.dart';
 class _FakeRepo implements OrderTrackingRepository {
   final Map<String, StreamController<Order>> controllers = {};
 
+  /// Si es true, [cancelOrder] falla con un mensaje fijo.
+  bool failCancel = false;
+
   @override
   Future<Either<OrderTrackingFailure, List<Order>>> getOrders() async =>
       const Right([]);
+
+  @override
+  Future<Either<OrderTrackingFailure, Order>> cancelOrder(String id) async =>
+      failCancel
+      ? const Left(OrderTrackingFailure('no se pudo'))
+      : Right(_order(id, OrderStatus.cancelled));
 
   @override
   Future<Either<OrderTrackingFailure, Order>> getOrderById(String id) async =>
@@ -36,12 +45,12 @@ class _FakeRepo implements OrderTrackingRepository {
 }
 
 Order _order(String id, OrderStatus status) => Order(
-      id: id,
-      items: [],
-      status: status,
-      createdAt: DateTime.now(),
-      total: const Money(amount: 0, currency: 'ARS'),
-    );
+  id: id,
+  items: [],
+  status: status,
+  createdAt: DateTime.now(),
+  total: const Money(amount: 0, currency: 'ARS'),
+);
 
 void main() {
   late _FakeRepo repo;
@@ -70,7 +79,10 @@ void main() {
     await sub.cancel();
 
     expect(states.last, isA<OrderDetailReady>());
-    expect((states.last as OrderDetailReady).order.status, OrderStatus.inProgress);
+    expect(
+      (states.last as OrderDetailReady).order.status,
+      OrderStatus.inProgress,
+    );
   });
 
   test('emits Ready on each update from stream', () async {
@@ -87,7 +99,10 @@ void main() {
     await sub.cancel();
 
     expect(states.length, 2);
-    expect((states.last as OrderDetailReady).order.status, OrderStatus.completed);
+    expect(
+      (states.last as OrderDetailReady).order.status,
+      OrderStatus.completed,
+    );
   });
 
   test('emits Error when stream emits an error', () async {
@@ -102,6 +117,33 @@ void main() {
     await sub.cancel();
 
     expect(states.last, isA<OrderDetailError>());
+  });
+
+  test(
+    'cancel exitoso re-emite Ready con la orden cancelada y devuelve null',
+    () async {
+      cubit.load('ord-1');
+      await Future<void>.delayed(Duration.zero);
+
+      final error = await cubit.cancel('ord-1');
+
+      expect(error, isNull);
+      final state = cubit.state;
+      expect(state, isA<OrderDetailReady>());
+      expect((state as OrderDetailReady).order.status, OrderStatus.cancelled);
+    },
+  );
+
+  test('cancel fallido devuelve el mensaje y no cambia el estado', () async {
+    cubit.load('ord-1');
+    await Future<void>.delayed(Duration.zero);
+    final before = cubit.state;
+
+    repo.failCancel = true;
+    final error = await cubit.cancel('ord-1');
+
+    expect(error, 'no se pudo');
+    expect(cubit.state, same(before));
   });
 
   test('cancels subscription on close', () async {

@@ -127,6 +127,36 @@ class RemoteOrderTrackingRepository implements OrderTrackingRepository {
   }
 
   @override
+  Future<Either<OrderTrackingFailure, Order>> cancelOrder(String id) async {
+    try {
+      final result = await httpHelper.post(
+        '/orders/$id/cancel',
+        data: {'reason': 'Cancelada por el usuario desde la app'},
+      );
+      return await result.fold(
+        (error) async => Left(
+          OrderTrackingFailure(_mapCancelError(error), error.statusCode == 404),
+        ),
+        // El POST no devuelve la orden: re-fetch para entregarla actualizada.
+        (_) => getOrderById(id),
+      );
+    } catch (e, st) {
+      log('cancelOrder error', error: e, stackTrace: st);
+      return const Left(OrderTrackingFailure('Error de red'));
+    }
+  }
+
+  String _mapCancelError(HttpResponseError error) {
+    // 409: la orden ya avanzó (en preparación/completada) y el backend no
+    // permite cancelarla — el mensaje genérico de red acá confunde.
+    if (error.statusCode == 409) {
+      return 'La orden ya no puede cancelarse: los vehículos ya la están '
+          'preparando.';
+    }
+    return _mapError(error);
+  }
+
+  @override
   Stream<Order> watchOrder(String id) {
     final controller = StreamController<Order>();
     final holder = _ChannelHolder();

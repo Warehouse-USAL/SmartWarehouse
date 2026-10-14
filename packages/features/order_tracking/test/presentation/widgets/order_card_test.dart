@@ -5,11 +5,7 @@ import 'package:order_tracking/src/presentation/widgets/order_card.dart';
 import 'package:orders/orders.dart';
 import 'package:orders_test_builders/orders_test_builders.dart';
 
-Future<void> _pump(
-  WidgetTester tester,
-  Order order, {
-  VoidCallback? onTap,
-}) =>
+Future<void> _pump(WidgetTester tester, Order order, {VoidCallback? onTap}) =>
     tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -80,18 +76,17 @@ void main() {
   });
 
   group('total', () {
-    testWidgets('muestra el total formateado cuando es mayor a cero',
-        (tester) async {
-      await _pump(
-        tester,
-        anOrder(items: [], total: aMoney(amount: 4999900)),
-      );
+    testWidgets('muestra el total formateado cuando es mayor a cero', (
+      tester,
+    ) async {
+      await _pump(tester, anOrder(items: [], total: aMoney(amount: 4999900)));
 
       expect(find.text(r'$49.999'), findsOneWidget);
     });
 
-    testWidgets('muestra un guion cuando el total es cero, no un \$0 falso',
-        (tester) async {
+    testWidgets('muestra un guion cuando el total es cero, no un \$0 falso', (
+      tester,
+    ) async {
       await _pump(tester, anOrder(items: [], total: aMoney(amount: 0)));
 
       expect(find.text('—'), findsOneWidget);
@@ -102,7 +97,12 @@ void main() {
   testWidgets('muestra la cantidad de items', (tester) async {
     await _pump(
       tester,
-      anOrder(items: [anOrderItem(), anOrderItem(productId: 'p-2')]),
+      anOrder(
+        items: [
+          anOrderItem(),
+          anOrderItem(productId: 'p-2'),
+        ],
+      ),
     );
 
     expect(find.textContaining('2 items'), findsOneWidget);

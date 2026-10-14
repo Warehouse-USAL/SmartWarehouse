@@ -29,7 +29,8 @@ void main() {
       ];
       final cart = Cart(
         items: [
-          for (final c in cases) CartItem(product: c.product, quantity: c.quantity),
+          for (final c in cases)
+            CartItem(product: c.product, quantity: c.quantity),
         ],
       );
 
@@ -45,10 +46,12 @@ void main() {
     });
 
     test('preserva el orden de las líneas del carrito', () {
-      final cart = Cart(items: [
-        CartItem(product: _product('z'), quantity: 1),
-        CartItem(product: _product('a'), quantity: 1),
-      ]);
+      final cart = Cart(
+        items: [
+          CartItem(product: _product('z'), quantity: 1),
+          CartItem(product: _product('a'), quantity: 1),
+        ],
+      );
       expect(cart.toOrderItems().map((i) => i.productId), ['z', 'a']);
     });
   });

@@ -22,7 +22,8 @@ abstract final class E2eKeys {
 
   // Carrito
   static Key cartItem(String productId) => Key('e2e_cart_item_$productId');
-  static Key cartItemSubtotal(String productId) => Key('e2e_cart_item_subtotal_$productId');
+  static Key cartItemSubtotal(String productId) =>
+      Key('e2e_cart_item_subtotal_$productId');
   static const cartTotal = Key('e2e_cart_total');
   static const cartCheckoutButton = Key('e2e_cart_checkout');
 
@@ -35,6 +36,9 @@ abstract final class E2eKeys {
   static const orderConfirmDialogTotal = Key('e2e_order_confirm_total');
   static const orderConfirmAccept = Key('e2e_order_confirm_accept');
   static const orderConfirmCancel = Key('e2e_order_confirm_cancel');
+  static const orderCancelButton = Key('e2e_order_cancel_button');
+  static const orderCancelConfirm = Key('e2e_order_cancel_confirm');
+  static const orderReorderButton = Key('e2e_order_reorder_button');
 
   // Órdenes
   static Key orderCard(String id) => Key('e2e_order_card_$id');

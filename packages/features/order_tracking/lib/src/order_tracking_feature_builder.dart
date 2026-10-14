@@ -55,6 +55,10 @@ class OrderTrackingFeatureBuilder {
     await Injector.i.resolve<OrderHistoryStore>().clear();
   }
 
+  /// "Pedir de nuevo" del detalle de orden. La capa de aplicación lo cablea
+  /// al carrito (addAll + navegar): order_tracking no depende de cart.
+  static void Function(List<ReorderEntry> entries)? onReorder;
+
   /// Navegación del botón "Ver" del snackbar. La setea la capa de aplicación
   /// con el router real: el contexto del scaffoldMessengerKey vive FUERA del
   /// árbol de Beamer, así que navegar desde acá con ese contexto no funciona.
@@ -142,12 +146,7 @@ class OrderTrackingFeatureBuilder {
     );
   }
 
-  static String _statusLabel(OrderStatus status) => switch (status) {
-    OrderStatus.pending => 'Pendiente',
-    OrderStatus.inProgress => 'En progreso',
-    OrderStatus.completed => 'Completado',
-    OrderStatus.cancelled => 'Cancelado',
-  };
+  static String _statusLabel(OrderStatus status) => status.label;
 
   static Widget buildOrderListPage() =>
       OrderListPage(cubit: Injector.i.resolve<OrderListCubit>());

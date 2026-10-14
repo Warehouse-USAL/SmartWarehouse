@@ -59,9 +59,9 @@ MockOrderTrackingRepository _injectWithMockSource() {
 }
 
 Widget _appWithMessenger() => MaterialApp(
-      scaffoldMessengerKey: OrderTrackingFeatureBuilder.scaffoldMessengerKey,
-      home: const Scaffold(body: SizedBox()),
-    );
+  scaffoldMessengerKey: OrderTrackingFeatureBuilder.scaffoldMessengerKey,
+  home: const Scaffold(body: SizedBox()),
+);
 
 /// Cierra el cubit global y el repo para no dejar suscripciones ni timers
 /// colgando entre tests.
@@ -161,11 +161,13 @@ void main() {
       registerMock<OrderNotificationCubit>(cubit);
 
       OrderTrackingFeatureBuilder.startNotifications();
-      repo.statusChangeController.add(const OrderStatusChange(
-        orderId: 'o-1',
-        oldStatus: OrderStatus.pending,
-        newStatus: OrderStatus.inProgress,
-      ));
+      repo.statusChangeController.add(
+        const OrderStatusChange(
+          orderId: 'o-1',
+          oldStatus: OrderStatus.pending,
+          newStatus: OrderStatus.inProgress,
+        ),
+      );
       await Future<void>.delayed(Duration.zero);
 
       expect(cubit.state.notifications, hasLength(1));
@@ -186,11 +188,13 @@ void main() {
       );
 
       OrderTrackingFeatureBuilder.startNotifications();
-      repo.emitStatusChange(const OrderStatusChange(
-        orderId: 'WH-49281',
-        oldStatus: OrderStatus.pending,
-        newStatus: OrderStatus.completed,
-      ));
+      repo.emitStatusChange(
+        const OrderStatusChange(
+          orderId: 'WH-49281',
+          oldStatus: OrderStatus.pending,
+          newStatus: OrderStatus.completed,
+        ),
+      );
       await Future<void>.delayed(Duration.zero);
 
       // La notificacion llego al cubit igual: solo se salteo la SnackBar.
@@ -202,18 +206,21 @@ void main() {
       await _tearDownFeature(repo);
     });
 
-    testWidgets('muestra el id y el estado nuevo cuando hay messenger',
-        (tester) async {
+    testWidgets('muestra el id y el estado nuevo cuando hay messenger', (
+      tester,
+    ) async {
       final repo = _injectWithMockSource();
 
       await tester.pumpWidget(_appWithMessenger());
 
       OrderTrackingFeatureBuilder.startNotifications();
-      repo.emitStatusChange(const OrderStatusChange(
-        orderId: 'WH-49281',
-        oldStatus: OrderStatus.pending,
-        newStatus: OrderStatus.completed,
-      ));
+      repo.emitStatusChange(
+        const OrderStatusChange(
+          orderId: 'WH-49281',
+          oldStatus: OrderStatus.pending,
+          newStatus: OrderStatus.completed,
+        ),
+      );
       await tester.pump();
       await tester.pump();
 
@@ -224,8 +231,9 @@ void main() {
       await _tearDownFeature(repo);
     });
 
-    testWidgets('traduce cada estado nuevo a su etiqueta en castellano',
-        (tester) async {
+    testWidgets('traduce cada estado nuevo a su etiqueta en castellano', (
+      tester,
+    ) async {
       final repo = _injectWithMockSource();
 
       await tester.pumpWidget(_appWithMessenger());
@@ -239,11 +247,13 @@ void main() {
       };
 
       for (final entry in labels.entries) {
-        repo.emitStatusChange(OrderStatusChange(
-          orderId: 'WH-1',
-          oldStatus: OrderStatus.pending,
-          newStatus: entry.key,
-        ));
+        repo.emitStatusChange(
+          OrderStatusChange(
+            orderId: 'WH-1',
+            oldStatus: OrderStatus.pending,
+            newStatus: entry.key,
+          ),
+        );
         await tester.pump();
         await tester.pump();
 
@@ -265,19 +275,21 @@ void main() {
       // navegacion para cubrir el flujo completo tap -> callback -> pushNamed.
       final nav = Injector.i.resolve<NavigationHelper>();
       OrderTrackingFeatureBuilder.onOpenOrder = (orderId) => nav.pushNamed(
-            _FakeBuildContext(),
-            routeName: Routes.orderDetail(orderId),
-          );
+        _FakeBuildContext(),
+        routeName: Routes.orderDetail(orderId),
+      );
       addTearDown(() => OrderTrackingFeatureBuilder.onOpenOrder = null);
 
       await tester.pumpWidget(_appWithMessenger());
 
       OrderTrackingFeatureBuilder.startNotifications();
-      repo.emitStatusChange(const OrderStatusChange(
-        orderId: 'WH-49281',
-        oldStatus: OrderStatus.pending,
-        newStatus: OrderStatus.completed,
-      ));
+      repo.emitStatusChange(
+        const OrderStatusChange(
+          orderId: 'WH-49281',
+          oldStatus: OrderStatus.pending,
+          newStatus: OrderStatus.completed,
+        ),
+      );
       await tester.pump();
       await tester.pump();
       // La SnackBar entra con un IgnorePointer mientras dura la animacion de
