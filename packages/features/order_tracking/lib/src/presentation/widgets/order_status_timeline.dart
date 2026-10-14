@@ -10,11 +10,11 @@ class OrderStatusTimeline extends StatelessWidget {
   static const _stepLabels = ['Pendiente', 'En progreso', 'Completado'];
 
   int get _currentStep => switch (status) {
-        OrderStatus.pending => 0,
-        OrderStatus.inProgress => 1,
-        OrderStatus.completed => _stepLabels.length,
-        OrderStatus.cancelled => -1,
-      };
+    OrderStatus.pending => 0,
+    OrderStatus.inProgress => 1,
+    OrderStatus.completed => _stepLabels.length,
+    OrderStatus.cancelled => -1,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -48,8 +48,8 @@ class OrderStatusTimeline extends StatelessWidget {
                 state: i < current
                     ? _NodeState.done
                     : i == current
-                        ? _NodeState.current
-                        : _NodeState.todo,
+                    ? _NodeState.current
+                    : _NodeState.todo,
               ),
             ],
           ],
@@ -62,8 +62,8 @@ class OrderStatusTimeline extends StatelessWidget {
             state: i < current
                 ? _NodeState.done
                 : i == current
-                    ? _NodeState.current
-                    : _NodeState.todo,
+                ? _NodeState.current
+                : _NodeState.todo,
           ),
           if (i < _stepLabels.length - 1) const SizedBox(height: 10),
         ],
@@ -174,7 +174,9 @@ class _StepRow extends StatelessWidget {
             style: SwText.body(
               size: 13,
               color: state == _NodeState.todo ? SwColors.text3 : SwColors.text,
-              weight: state == _NodeState.current ? FontWeight.w600 : FontWeight.w500,
+              weight: state == _NodeState.current
+                  ? FontWeight.w600
+                  : FontWeight.w500,
             ),
           ),
         ),
@@ -188,21 +190,39 @@ class _CancelledBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Rojo suave de marca: antes era gris y el estado destructivo no se
+    // distinguía de cualquier otro.
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: SwColors.surface,
+        color: SwColors.dangerSoft,
         borderRadius: BorderRadius.circular(SwRadii.card),
-        border: Border.all(color: SwColors.border),
+        border: Border.all(color: SwColors.dangerBorder),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.cancel_outlined, size: 20, color: SwColors.text3),
-          const SizedBox(width: 8),
-          Text(
-            'Orden cancelada',
-            style: SwText.body(size: 14, color: SwColors.text3),
+          const Icon(Icons.cancel_outlined, size: 20, color: SwColors.danger),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Orden cancelada',
+                  style: SwText.body(
+                    size: 13.5,
+                    weight: FontWeight.w600,
+                  ).copyWith(color: SwColors.danger),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Podés volver a pedir estos productos cuando quieras.',
+                  style: SwText.body(size: 12, color: SwColors.text2),
+                ),
+              ],
+            ),
           ),
         ],
       ),

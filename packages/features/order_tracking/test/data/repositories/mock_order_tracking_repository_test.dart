@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:order_tracking/src/data/repositories/mock_order_tracking_repository.dart';
+import 'package:order_tracking/src/domain/entities/order_status_change.dart';
 import 'package:orders/orders.dart';
 
 void main() {
@@ -48,9 +49,85 @@ void main() {
       expect(order.id, firstId);
     });
 
+    test(
+      'cancelOrder muta el estado compartido: getOrders la ve cancelada',
+      () async {
+        // El caso que pidió el usuario: cancelás, salís de la pantalla, volvés
+        // — tiene que seguir cancelada, no "aparecer normal".
+        final result = await repo.cancelOrder('WH-49281');
+        result.fold((_) => fail('Expected Right'), (order) {
+          expect(order.id, 'WH-49281');
+          expect(order.status, OrderStatus.cancelled);
+        });
+
+        final after = await repo.getOrders();
+        after.fold((_) => fail('Expected Right'), (orders) {
+          final cancelled = orders.firstWhere((o) => o.id == 'WH-49281');
+          expect(cancelled.status, OrderStatus.cancelled);
+        });
+
+        final byId = await repo.getOrderById('WH-49281');
+        byId.fold(
+          (_) => fail('Expected Right'),
+          (o) => expect(o.status, OrderStatus.cancelled),
+        );
+      },
+    );
+
+    test(
+      'cancelOrder emite por watchOrder y por watchOrderStatusChanges',
+      () async {
+        final updates = <Order>[];
+        final changes = <OrderStatusChange>[];
+        final sub1 = repo.watchOrder('WH-49202').listen(updates.add);
+        final sub2 = repo.watchOrderStatusChanges().listen(changes.add);
+        await Future<void>.delayed(Duration.zero);
+
+        await repo.cancelOrder('WH-49202');
+        await Future<void>.delayed(Duration.zero);
+
+        expect(updates.last.status, OrderStatus.cancelled);
+        expect(changes.single.orderId, 'WH-49202');
+        expect(changes.single.oldStatus, OrderStatus.pending);
+        expect(changes.single.newStatus, OrderStatus.cancelled);
+
+        await sub1.cancel();
+        await sub2.cancel();
+      },
+    );
+
+    test(
+      'cancelar una orden ya cancelada no re-emite cambio de estado',
+      () async {
+        final changes = <OrderStatusChange>[];
+        final sub = repo.watchOrderStatusChanges().listen(changes.add);
+
+        final result = await repo.cancelOrder('WH-49100');
+        await Future<void>.delayed(Duration.zero);
+
+        expect(result.isRight(), isTrue);
+        expect(changes, isEmpty);
+        await sub.cancel();
+      },
+    );
+
+    test(
+      'cancelOrder de un id desconocido devuelve Left con notFound',
+      () async {
+        final result = await repo.cancelOrder('WH-00000');
+        result.fold(
+          (failure) => expect(failure.notFound, isTrue),
+          (_) => fail('Expected Left'),
+        );
+      },
+    );
+
     test('emits update when emitUpdate is called', () async {
       final listResult = await repo.getOrders();
-      final firstOrder = listResult.fold((_) => throw Exception(), (o) => o.first);
+      final firstOrder = listResult.fold(
+        (_) => throw Exception(),
+        (o) => o.first,
+      );
       final updatedOrder = Order(
         id: firstOrder.id,
         items: firstOrder.items,

@@ -16,9 +16,9 @@ class OrderNotification {
   final bool read;
 
   OrderNotification copyWith({bool? read}) => OrderNotification(
-        id: id,
-        change: change,
-        receivedAt: receivedAt,
-        read: read ?? this.read,
-      );
+    id: id,
+    change: change,
+    receivedAt: receivedAt,
+    read: read ?? this.read,
+  );
 }

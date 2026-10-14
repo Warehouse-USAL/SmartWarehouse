@@ -22,10 +22,7 @@ import 'package:orders/src/domain/repositories/order_repository.dart';
 /// }
 /// ```
 class RemoteOrderRepository implements OrderRepository {
-  RemoteOrderRepository({
-    required this.httpHelper,
-    required this.historyStore,
-  });
+  RemoteOrderRepository({required this.httpHelper, required this.historyStore});
 
   final HttpHelper httpHelper;
   final OrderHistoryStore historyStore;
@@ -38,8 +35,12 @@ class RemoteOrderRepository implements OrderRepository {
     try {
       final body = CreateOrderRequestDto(
         items: items
-            .map((i) =>
-                CreateOrderItemDto(productId: i.productId, quantity: i.quantity))
+            .map(
+              (i) => CreateOrderItemDto(
+                productId: i.productId,
+                quantity: i.quantity,
+              ),
+            )
             .toList(growable: false),
         destinationArea: destination.area,
         address: AddressDto(
@@ -67,8 +68,11 @@ class RemoteOrderRepository implements OrderRepository {
           try {
             await historyStore.addOrderId(order.id);
           } catch (e, st) {
-            log('addOrderId FAILED for order ${order.id}',
-                error: e, stackTrace: st);
+            log(
+              'addOrderId FAILED for order ${order.id}',
+              error: e,
+              stackTrace: st,
+            );
           }
           return Right(order);
         },

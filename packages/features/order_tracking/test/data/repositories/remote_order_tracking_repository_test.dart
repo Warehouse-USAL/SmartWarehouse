@@ -26,8 +26,10 @@ class _FakeHttpHelper implements HttpHelper {
     bool noCache = false,
     bool external = false,
     Map<String, dynamic>? headers,
-  }) async =>
-      getHandler(path);
+  }) async => getHandler(path);
+
+  Either<HttpResponseError, HttpResponse> Function(String path, dynamic data)
+  postHandler = (_, __) => throw UnimplementedError();
 
   @override
   Future<Either<HttpResponseError, HttpResponse>> post(
@@ -38,8 +40,7 @@ class _FakeHttpHelper implements HttpHelper {
     bool retryOnTokenExpired = true,
     bool external = false,
     Map<String, dynamic>? headers,
-  }) async =>
-      throw UnimplementedError();
+  }) async => postHandler(path, data);
 
   @override
   Future<Either<HttpResponseError, HttpResponse>> patch(
@@ -48,8 +49,7 @@ class _FakeHttpHelper implements HttpHelper {
     Map<String, dynamic>? queryParameters,
     bool external = false,
     Map<String, dynamic>? headers,
-  }) async =>
-      throw UnimplementedError();
+  }) async => throw UnimplementedError();
 
   @override
   Future<Either<HttpResponseError, HttpResponse>> put(
@@ -58,8 +58,7 @@ class _FakeHttpHelper implements HttpHelper {
     Map<String, dynamic>? queryParameters,
     Map<String, dynamic>? headers,
     bool external = false,
-  }) async =>
-      throw UnimplementedError();
+  }) async => throw UnimplementedError();
 
   @override
   Future<Either<HttpResponseError, HttpResponse>> delete(
@@ -68,8 +67,7 @@ class _FakeHttpHelper implements HttpHelper {
     Map<String, dynamic>? queryParameters,
     bool external = false,
     Map<String, dynamic>? headers,
-  }) async =>
-      throw UnimplementedError();
+  }) async => throw UnimplementedError();
 
   @override
   Future<Either<HttpResponseError, HttpResponse>> postImages(
@@ -78,8 +76,7 @@ class _FakeHttpHelper implements HttpHelper {
     required FilesData filesData,
     bool external = false,
     Map<String, dynamic>? headers,
-  }) async =>
-      throw UnimplementedError();
+  }) async => throw UnimplementedError();
 }
 
 // ── Fake OrderHistoryStore ───────────────────────────────────────────────────
@@ -127,87 +124,126 @@ void main() {
       result.fold((_) {}, (orders) => expect(orders, isEmpty));
     });
 
-    test('hace GET /orders/{id} por cada id del store y arma la lista', () async {
-      store.ids = ['o1', 'o2'];
-      fakeHttp.getHandler = (path) {
-        if (path == '/orders/o1') {
-          return Right(HttpResponse(data: <String, dynamic>{
-            'order': {'id': 'o1', 'status': 'pending', 'items': []},
-          }));
-        }
-        if (path == '/orders/o2') {
-          return Right(HttpResponse(data: <String, dynamic>{
-            'order': {'id': 'o2', 'status': 'in_progress', 'items': []},
-          }));
-        }
-        return Left(HttpResponseError(errorType: 'nf', message: 'Not found', statusCode: 404));
-      };
-      final result = await repo.getOrders();
-      result.fold(
-        (_) => fail('Expected Right'),
-        (orders) {
+    test(
+      'hace GET /orders/{id} por cada id del store y arma la lista',
+      () async {
+        store.ids = ['o1', 'o2'];
+        fakeHttp.getHandler = (path) {
+          if (path == '/orders/o1') {
+            return Right(
+              HttpResponse(
+                data: <String, dynamic>{
+                  'order': {'id': 'o1', 'status': 'pending', 'items': []},
+                },
+              ),
+            );
+          }
+          if (path == '/orders/o2') {
+            return Right(
+              HttpResponse(
+                data: <String, dynamic>{
+                  'order': {'id': 'o2', 'status': 'in_progress', 'items': []},
+                },
+              ),
+            );
+          }
+          return Left(
+            HttpResponseError(
+              errorType: 'nf',
+              message: 'Not found',
+              statusCode: 404,
+            ),
+          );
+        };
+        final result = await repo.getOrders();
+        result.fold((_) => fail('Expected Right'), (orders) {
           expect(orders.length, 2);
           expect(orders.any((o) => o.id == 'o1'), true);
           expect(orders.any((o) => o.status == OrderStatus.inProgress), true);
-        },
-      );
-    });
+        });
+      },
+    );
 
-    test('si todos los GET fallan por red devuelve Left, no lista vacía',
-        () async {
-      // Antes esto devolvía Right([]) y la UI mostraba el empty state
-      // "Sin órdenes" con la red caída, en vez de un error con reintento.
-      store.ids = ['o1', 'o2'];
-      fakeHttp.getHandler = (_) => Left(HttpResponseError(
-          errorType: 'timeout', message: 'timeout', statusCode: 500));
+    test(
+      'si todos los GET fallan por red devuelve Left, no lista vacía',
+      () async {
+        // Antes esto devolvía Right([]) y la UI mostraba el empty state
+        // "Sin órdenes" con la red caída, en vez de un error con reintento.
+        store.ids = ['o1', 'o2'];
+        fakeHttp.getHandler = (_) => Left(
+          HttpResponseError(
+            errorType: 'timeout',
+            message: 'timeout',
+            statusCode: 500,
+          ),
+        );
 
-      final result = await repo.getOrders();
+        final result = await repo.getOrders();
 
-      expect(result.isLeft(), true);
-    });
+        expect(result.isLeft(), true);
+      },
+    );
 
-    test('un 404 puntual poda el id del historial y no rompe el resto',
-        () async {
-      store.ids = ['o1', 'gone'];
-      fakeHttp.getHandler = (path) {
-        if (path == '/orders/o1') {
-          return Right(HttpResponse(data: <String, dynamic>{
-            'order': {'id': 'o1', 'status': 'pending', 'items': []},
-          }));
-        }
-        return Left(HttpResponseError(
-            errorType: 'nf', message: 'Not found', statusCode: 404));
-      };
+    test(
+      'un 404 puntual poda el id del historial y no rompe el resto',
+      () async {
+        store.ids = ['o1', 'gone'];
+        fakeHttp.getHandler = (path) {
+          if (path == '/orders/o1') {
+            return Right(
+              HttpResponse(
+                data: <String, dynamic>{
+                  'order': {'id': 'o1', 'status': 'pending', 'items': []},
+                },
+              ),
+            );
+          }
+          return Left(
+            HttpResponseError(
+              errorType: 'nf',
+              message: 'Not found',
+              statusCode: 404,
+            ),
+          );
+        };
 
-      final result = await repo.getOrders();
+        final result = await repo.getOrders();
 
-      result.fold(
-        (_) => fail('Expected Right'),
-        (orders) => expect(orders.single.id, 'o1'),
-      );
-      // El id inexistente se saca del store para no re-consultarlo siempre.
-      await Future<void>.delayed(Duration.zero);
-      expect(store.ids, ['o1']);
-    });
+        result.fold(
+          (_) => fail('Expected Right'),
+          (orders) => expect(orders.single.id, 'o1'),
+        );
+        // El id inexistente se saca del store para no re-consultarlo siempre.
+        await Future<void>.delayed(Duration.zero);
+        expect(store.ids, ['o1']);
+      },
+    );
 
     test('drops orders cuyo GET /orders/{id} falla', () async {
       store.ids = ['o1', 'gone'];
       fakeHttp.getHandler = (path) {
         if (path == '/orders/o1') {
-          return Right(HttpResponse(data: <String, dynamic>{
-            'order': {'id': 'o1', 'status': 'completed', 'items': []},
-          }));
+          return Right(
+            HttpResponse(
+              data: <String, dynamic>{
+                'order': {'id': 'o1', 'status': 'completed', 'items': []},
+              },
+            ),
+          );
         }
-        return Left(HttpResponseError(errorType: 'nf', message: 'Not found', statusCode: 404));
+        return Left(
+          HttpResponseError(
+            errorType: 'nf',
+            message: 'Not found',
+            statusCode: 404,
+          ),
+        );
       };
       final result = await repo.getOrders();
-      result.fold(
-        (_) => fail('Expected Right'),
-        (orders) {
-          expect(orders.length, 1);
-          expect(orders.single.id, 'o1');
-        },
-      );
+      result.fold((_) => fail('Expected Right'), (orders) {
+        expect(orders.length, 1);
+        expect(orders.single.id, 'o1');
+      });
     });
   });
 
@@ -215,27 +251,95 @@ void main() {
     test('parses single order correctly', () async {
       fakeHttp.getHandler = (path) {
         expect(path, '/orders/ord-1');
-        return Right(HttpResponse(
-          data: <String, dynamic>{
-            'order': {'id': 'ord-1', 'status': 'completed', 'items': []},
-          },
-        ));
+        return Right(
+          HttpResponse(
+            data: <String, dynamic>{
+              'order': {'id': 'ord-1', 'status': 'completed', 'items': []},
+            },
+          ),
+        );
       };
       final result = await repo.getOrderById('ord-1');
-      result.fold(
-        (_) => fail('Expected Right'),
-        (order) {
-          expect(order.id, 'ord-1');
-          expect(order.status, OrderStatus.completed);
-        },
-      );
+      result.fold((_) => fail('Expected Right'), (order) {
+        expect(order.id, 'ord-1');
+        expect(order.status, OrderStatus.completed);
+      });
     });
 
     test('returns failure on HTTP error', () async {
-      fakeHttp.getHandler = (_) => Left(HttpResponseError(
-          errorType: 'not_found', message: 'Not found', statusCode: 404));
+      fakeHttp.getHandler = (_) => Left(
+        HttpResponseError(
+          errorType: 'not_found',
+          message: 'Not found',
+          statusCode: 404,
+        ),
+      );
       final result = await repo.getOrderById('nonexistent');
       expect(result.isLeft(), true);
+    });
+  });
+
+  group('cancelOrder', () {
+    test(
+      'postea a /orders/{id}/cancel y devuelve la orden re-fetcheada',
+      () async {
+        String? postedPath;
+        fakeHttp.postHandler = (path, data) {
+          postedPath = path;
+          expect((data as Map)['reason'], isNotEmpty);
+          return Right(HttpResponse(data: <String, dynamic>{}));
+        };
+        fakeHttp.getHandler = (path) => Right(
+          HttpResponse(
+            data: <String, dynamic>{
+              'order': {'id': 'ord-9', 'status': 'cancelled', 'items': []},
+            },
+          ),
+        );
+
+        final result = await repo.cancelOrder('ord-9');
+
+        expect(postedPath, '/orders/ord-9/cancel');
+        result.fold(
+          (_) => fail('Expected Right'),
+          (order) => expect(order.status, OrderStatus.cancelled),
+        );
+      },
+    );
+
+    test('409 (la orden ya avanzó) devuelve mensaje específico', () async {
+      fakeHttp.postHandler = (_, __) => Left(
+        HttpResponseError(
+          errorType: 'conflict',
+          message: 'conflict',
+          statusCode: 409,
+        ),
+      );
+
+      final result = await repo.cancelOrder('ord-9');
+
+      result.fold(
+        (failure) =>
+            expect(failure.message, contains('ya no puede cancelarse')),
+        (_) => fail('Expected Left'),
+      );
+    });
+
+    test('404 marca notFound', () async {
+      fakeHttp.postHandler = (_, __) => Left(
+        HttpResponseError(
+          errorType: 'nf',
+          message: 'Not found',
+          statusCode: 404,
+        ),
+      );
+
+      final result = await repo.cancelOrder('gone');
+
+      result.fold(
+        (failure) => expect(failure.notFound, isTrue),
+        (_) => fail('Expected Left'),
+      );
     });
   });
 
@@ -243,11 +347,13 @@ void main() {
     test('emits order from REST fetch immediately on subscribe', () async {
       fakeHttp.getHandler = (path) {
         if (path == '/orders/ord-1') {
-          return Right(HttpResponse(
-            data: <String, dynamic>{
-              'order': {'id': 'ord-1', 'status': 'pending', 'items': []},
-            },
-          ));
+          return Right(
+            HttpResponse(
+              data: <String, dynamic>{
+                'order': {'id': 'ord-1', 'status': 'pending', 'items': []},
+              },
+            ),
+          );
         }
         return Right(HttpResponse(data: <String, dynamic>{'orders': []}));
       };

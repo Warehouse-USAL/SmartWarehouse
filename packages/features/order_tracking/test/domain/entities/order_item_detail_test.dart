@@ -17,7 +17,9 @@ void main() {
     });
 
     test('cae al nombre del item cuando no hay producto', () {
-      final detail = OrderItemDetail(item: anOrderItem(productName: 'del back'));
+      final detail = OrderItemDetail(
+        item: anOrderItem(productName: 'del back'),
+      );
 
       expect(detail.name, 'del back');
     });

@@ -3,6 +3,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:order_tracking/src/domain/entities/order_item_detail.dart';
+import 'package:order_tracking/src/presentation/widgets/order_status_chip.dart';
 import 'package:order_tracking/src/presentation/widgets/order_status_timeline.dart';
 
 class OrderDetailPage extends StatelessWidget {
@@ -55,7 +56,7 @@ class OrderDetailPage extends StatelessWidget {
             OrderDetailReady(:final order, :final items) => RefreshIndicator(
               color: SwColors.yellow,
               onRefresh: () async => cubit.load(orderId),
-              child: _DetailContent(order: order, items: items),
+              child: _DetailContent(order: order, items: items, cubit: cubit),
             ),
           },
         );
@@ -65,10 +66,71 @@ class OrderDetailPage extends StatelessWidget {
 }
 
 class _DetailContent extends StatelessWidget {
-  const _DetailContent({required this.order, required this.items});
+  const _DetailContent({
+    required this.order,
+    required this.items,
+    required this.cubit,
+  });
 
   final Order order;
   final List<OrderItemDetail> items;
+  final OrderDetailCubit cubit;
+
+  Future<void> _onCancelPressed(BuildContext context) async {
+    final confirmed = await SwDialog.show(
+      context,
+      title: '¿Cancelar la orden?',
+      message:
+          'La orden ${order.id} se va a cancelar y los vehículos van a '
+          'devolver los productos. Esta acción no se puede deshacer.',
+      confirmLabel: 'Sí, cancelar orden',
+      cancelLabel: 'Volver',
+      destructive: true,
+      confirmKey: E2eKeys.orderCancelConfirm,
+    );
+    if (!confirmed || !context.mounted) return;
+    final error = await cubit.cancel(order.id);
+    if (!context.mounted) return;
+    if (error == null) {
+      SwSnackBar.show(
+        context,
+        message: 'Orden ${order.id} cancelada',
+        icon: Icons.check_circle_outline,
+      );
+    } else {
+      SwSnackBar.showError(context, message: error);
+    }
+  }
+
+  void _onReorderPressed(BuildContext context) {
+    final plan = buildReorderPlan(items);
+    if (plan.isEmpty) {
+      SwSnackBar.showError(
+        context,
+        message: 'Ninguno de los productos está disponible hoy',
+        detail: 'Revisá el catálogo para alternativas',
+      );
+      return;
+    }
+    // El agregado al carrito y la navegación los cablea la capa de
+    // aplicación (order_tracking no depende de cart) — mismo patrón que
+    // onOpenOrder del snackbar de notificaciones.
+    OrderTrackingFeatureBuilder.onReorder?.call(plan.entries);
+    final omittedDetail = plan.omitted.isNotEmpty
+        ? '${plan.omitted.join(', ')} sin stock — quedó afuera'
+        : plan.adjusted > 0
+        ? 'Algunas cantidades se ajustaron al stock actual'
+        : null;
+    SwSnackBar.show(
+      context,
+      message:
+          '${plan.entries.length} '
+          '${plan.entries.length == 1 ? 'producto agregado' : 'productos agregados'} '
+          'al pedido',
+      detail: omittedDetail,
+      icon: Icons.shopping_cart_outlined,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +140,13 @@ class _DetailContent extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 8, bottom: 10),
-          child: Text('Estado', style: SwText.display(size: 18)),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Estado', style: SwText.display(size: 18)),
+              OrderStatusChip(status: order.status),
+            ],
+          ),
         ),
         SwCard(
           padding: const EdgeInsets.fromLTRB(14, 16, 14, 18),
@@ -109,6 +177,24 @@ class _DetailContent extends StatelessWidget {
                   ],
                 ),
         ),
+        const SizedBox(height: 18),
+        if (order.status.canReorder && items.isNotEmpty)
+          SwButton(
+            key: E2eKeys.orderReorderButton,
+            label: 'Pedir de nuevo',
+            icon: Icons.replay_rounded,
+            onPressed: () => _onReorderPressed(context),
+          ),
+        if (order.status.isCancellable) ...[
+          if (order.status.canReorder && items.isNotEmpty)
+            const SizedBox(height: 8),
+          SwButton(
+            key: E2eKeys.orderCancelButton,
+            label: 'Cancelar orden',
+            variant: SwButtonVariant.dangerGhost,
+            onPressed: () => _onCancelPressed(context),
+          ),
+        ],
         const SizedBox(height: 8),
       ],
     );

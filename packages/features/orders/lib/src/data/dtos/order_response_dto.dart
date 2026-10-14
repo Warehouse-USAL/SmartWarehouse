@@ -6,9 +6,7 @@ part 'order_response_dto.g.dart';
 
 @freezed
 sealed class OrderResponseDto with _$OrderResponseDto {
-  const factory OrderResponseDto({
-    required OrderDto order,
-  }) = _OrderResponseDto;
+  const factory OrderResponseDto({required OrderDto order}) = _OrderResponseDto;
 
   factory OrderResponseDto.fromJson(Map<String, dynamic> json) =>
       _$OrderResponseDtoFromJson(json);

@@ -31,14 +31,43 @@ class MockOrderTrackingRepository implements OrderTrackingRepository {
     ),
     Order(
       id: 'WH-49150',
-      items: [],
+      // Items con productos reales del catálogo mock para poder ejercitar
+      // "pedir de nuevo": p2 pide más que su stock (clamp) y p3 está sin
+      // stock (queda afuera del repedido).
+      items: [
+        const OrderItem(
+          productId: 'p1',
+          productName: 'Auriculares Inalámbricos',
+          quantity: 2,
+          unitPrice: Money(amount: 0, currency: 'ARS'),
+        ),
+        const OrderItem(
+          productId: 'p2',
+          productName: 'Smartwatch Pro',
+          quantity: 8,
+          unitPrice: Money(amount: 0, currency: 'ARS'),
+        ),
+      ],
       status: OrderStatus.completed,
       createdAt: DateTime.now().subtract(const Duration(days: 3)),
       total: const Money(amount: 0, currency: 'ARS'),
     ),
     Order(
       id: 'WH-49100',
-      items: [],
+      items: [
+        const OrderItem(
+          productId: 'p1',
+          productName: 'Auriculares Inalámbricos',
+          quantity: 1,
+          unitPrice: Money(amount: 0, currency: 'ARS'),
+        ),
+        const OrderItem(
+          productId: 'p3',
+          productName: 'Teclado Mecánico RGB',
+          quantity: 2,
+          unitPrice: Money(amount: 0, currency: 'ARS'),
+        ),
+      ],
       status: OrderStatus.cancelled,
       createdAt: DateTime.now().subtract(const Duration(days: 5)),
       total: const Money(amount: 0, currency: 'ARS'),
@@ -64,6 +93,31 @@ class MockOrderTrackingRepository implements OrderTrackingRepository {
     } catch (_) {
       return Left(OrderTrackingFailure('Orden $id no encontrada'));
     }
+  }
+
+  @override
+  Future<Either<OrderTrackingFailure, Order>> cancelOrder(String id) async {
+    final index = _orders.indexWhere((o) => o.id == id);
+    if (index == -1) {
+      return Left(OrderTrackingFailure('Orden $id no encontrada', true));
+    }
+    // Mutar la lista compartida es el punto: el detalle, la lista y el
+    // historial leen de acá, así que salir de la pantalla y volver sigue
+    // mostrando la orden cancelada (no "vuelve a la normalidad").
+    final previous = _orders[index];
+    final updated = previous.copyWith(status: OrderStatus.cancelled);
+    _orders[index] = updated;
+    emitUpdate(id, updated);
+    if (previous.status != OrderStatus.cancelled) {
+      emitStatusChange(
+        OrderStatusChange(
+          orderId: id,
+          oldStatus: previous.status,
+          newStatus: OrderStatus.cancelled,
+        ),
+      );
+    }
+    return Right(updated);
   }
 
   @override

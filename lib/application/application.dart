@@ -30,6 +30,20 @@ class _SmartWarehouseAppState extends State<SmartWarehouseApp> {
     super.initState();
     // El "Ver" del snackbar de órdenes navega con el router real de la app;
     // el contexto del scaffoldMessenger queda fuera del árbol de Beamer.
+    // "Pedir de nuevo": order_tracking arma el plan (productos frescos y
+    // cantidades ya ajustadas al stock) y acá se vuelca al carrito y se
+    // navega — order_tracking no depende de cart.
+    OrderTrackingFeatureBuilder.onReorder = (entries) {
+      CartFeatureBuilder.addAllToCart([
+        for (final e in entries) (product: e.product, quantity: e.quantity),
+      ]);
+      final context = _routerDelegate.navigatorKey.currentContext;
+      if (context == null) return;
+      Injector.i.resolve<NavigationHelper>().pushNamed(
+        context,
+        routeName: Routes.cart,
+      );
+    };
     OrderTrackingFeatureBuilder.onOpenOrder = (orderId) {
       final ctx = _navigatorContext;
       if (ctx == null) return;

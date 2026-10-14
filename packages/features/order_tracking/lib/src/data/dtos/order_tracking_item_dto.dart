@@ -11,6 +11,7 @@ sealed class OrderTrackingItemDto with _$OrderTrackingItemDto {
     required String id,
     required String status,
     @Default([]) List<OrderTrackingLineItemDto> items,
+
     /// Algunas respuestas legacy lo mandan en root, hoy va dentro de
     /// `timestamps.createdAt`. Lo dejamos como fallback.
     String? createdAt,

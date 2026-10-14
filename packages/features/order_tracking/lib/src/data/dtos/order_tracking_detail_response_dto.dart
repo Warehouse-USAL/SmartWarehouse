@@ -5,7 +5,8 @@ part 'order_tracking_detail_response_dto.freezed.dart';
 part 'order_tracking_detail_response_dto.g.dart';
 
 @freezed
-sealed class OrderTrackingDetailResponseDto with _$OrderTrackingDetailResponseDto {
+sealed class OrderTrackingDetailResponseDto
+    with _$OrderTrackingDetailResponseDto {
   const factory OrderTrackingDetailResponseDto({
     required OrderTrackingItemDto order,
   }) = _OrderTrackingDetailResponseDto;

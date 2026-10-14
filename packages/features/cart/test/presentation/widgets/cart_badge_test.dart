@@ -11,21 +11,27 @@ void main() {
     final cubit = CartCubit(InMemoryCartRepository());
     addTearDown(cubit.close);
 
-    await tester.pumpWidget(MaterialApp(
-      home: CartBadge(cubit: cubit, child: const Icon(Icons.shopping_cart)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CartBadge(cubit: cubit, child: const Icon(Icons.shopping_cart)),
+      ),
+    );
 
     expect(find.byIcon(Icons.shopping_cart), findsOneWidget);
     expect(find.text('0'), findsNothing);
   });
 
-  testWidgets('shows the item count as a badge once the cart has items', (tester) async {
+  testWidgets('shows the item count as a badge once the cart has items', (
+    tester,
+  ) async {
     final cubit = CartCubit(InMemoryCartRepository());
     addTearDown(cubit.close);
 
-    await tester.pumpWidget(MaterialApp(
-      home: CartBadge(cubit: cubit, child: const Icon(Icons.shopping_cart)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CartBadge(cubit: cubit, child: const Icon(Icons.shopping_cart)),
+      ),
+    );
 
     cubit.add(aProduct(id: 'p-1'), quantity: 3);
     await tester.pump();
@@ -37,9 +43,11 @@ void main() {
     final cubit = CartCubit(InMemoryCartRepository());
     addTearDown(cubit.close);
 
-    await tester.pumpWidget(MaterialApp(
-      home: CartBadge(cubit: cubit, child: const Icon(Icons.shopping_cart)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CartBadge(cubit: cubit, child: const Icon(Icons.shopping_cart)),
+      ),
+    );
 
     // Stock y máximo por orden altos para que el clamp no achique la cantidad.
     cubit.add(

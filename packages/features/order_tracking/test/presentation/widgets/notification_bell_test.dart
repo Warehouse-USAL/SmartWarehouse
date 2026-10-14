@@ -13,10 +13,10 @@ import '../../support/fake_order_tracking_repository.dart';
 class _FakeBuildContext extends Fake implements BuildContext {}
 
 OrderStatusChange _change(String orderId) => OrderStatusChange(
-      orderId: orderId,
-      oldStatus: OrderStatus.pending,
-      newStatus: OrderStatus.inProgress,
-    );
+  orderId: orderId,
+  oldStatus: OrderStatus.pending,
+  newStatus: OrderStatus.inProgress,
+);
 
 void main() {
   late FakeOrderTrackingRepository repo;
@@ -40,12 +40,16 @@ void main() {
     repo = FakeOrderTrackingRepository();
     cubit = OrderNotificationCubit(repo)..start();
     registerMock<OrderNotificationCubit>(cubit);
-    nav = registerMock<NavigationHelper>(MockNavigationHelper()) as MockNavigationHelper;
-    when(() => nav.pushNamed(
-          any(),
-          routeName: any(named: 'routeName'),
-          disableAnimation: any(named: 'disableAnimation'),
-        )).thenReturn(null);
+    nav =
+        registerMock<NavigationHelper>(MockNavigationHelper())
+            as MockNavigationHelper;
+    when(
+      () => nav.pushNamed(
+        any(),
+        routeName: any(named: 'routeName'),
+        disableAnimation: any(named: 'disableAnimation'),
+      ),
+    ).thenReturn(null);
   });
 
   tearDown(() async {
@@ -54,8 +58,8 @@ void main() {
   });
 
   Future<void> pump(WidgetTester tester) => tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: NotificationBell())),
-      );
+    const MaterialApp(home: Scaffold(body: NotificationBell())),
+  );
 
   /// Empuja [count] cambios de estado por el stream fake del repositorio.
   ///
@@ -86,8 +90,9 @@ void main() {
     expect(find.text('1'), findsOneWidget);
   });
 
-  testWidgets('con nueve no-leidas todavia muestra el numero exacto',
-      (tester) async {
+  testWidgets('con nueve no-leidas todavia muestra el numero exacto', (
+    tester,
+  ) async {
     await pump(tester);
     await push(tester, 9);
 
@@ -125,10 +130,12 @@ void main() {
     await tester.tap(find.byType(SwIconButton));
     await tester.pump();
 
-    verify(() => nav.pushNamed(
-          any(),
-          routeName: Routes.notifications,
-          disableAnimation: false,
-        )).called(1);
+    verify(
+      () => nav.pushNamed(
+        any(),
+        routeName: Routes.notifications,
+        disableAnimation: false,
+      ),
+    ).called(1);
   });
 }

@@ -13,13 +13,13 @@ export 'order_list_state.dart';
 
 class OrderListCubit extends Cubit<OrderListState> {
   OrderListCubit(this._repository, this._catalogRepository)
-      : super(const OrderListLoading()) {
+    : super(const OrderListLoading()) {
     scheduleMicrotask(load);
     _wsSubscription = _repository.watchOrderStatusChanges().listen(
-          (_) => _silentRefresh(),
-          onError: (Object e, StackTrace st) =>
-              log('OrderListCubit WS error', error: e, stackTrace: st),
-        );
+      (_) => _silentRefresh(),
+      onError: (Object e, StackTrace st) =>
+          log('OrderListCubit WS error', error: e, stackTrace: st),
+    );
   }
 
   final OrderTrackingRepository _repository;
@@ -56,15 +56,12 @@ class OrderListCubit extends Cubit<OrderListState> {
     if (isClosed) return;
     final result = await _repository.getOrders();
     if (isClosed) return;
-    await result.fold(
-      (_) async {},
-      (orders) async {
-        final hydrated = await _hydrate(orders);
-        if (!isClosed && state is OrderListReady) {
-          emit(OrderListReady(orders: hydrated));
-        }
-      },
-    );
+    await result.fold((_) async {}, (orders) async {
+      final hydrated = await _hydrate(orders);
+      if (!isClosed && state is OrderListReady) {
+        emit(OrderListReady(orders: hydrated));
+      }
+    });
   }
 
   /// El back NO devuelve precios en `OrderResponse` — los items vienen con
@@ -97,25 +94,29 @@ class OrderListCubit extends Cubit<OrderListState> {
     // y comparten moneda; si no, lo dejamos en cero (la card muestra "—") en
     // vez de mostrar un total parcial o con moneda equivocada.
     var complete = true;
-    final newItems = order.items.map((item) {
-      final product = _productCache[item.productId];
-      if (product == null) {
-        complete = false;
-        return item;
-      }
-      if (currency != null && product.price.currency != currency!.currency) {
-        complete = false;
-      }
-      currency = product.price;
-      totalCents += (product.price.amount * item.quantity).toInt();
-      return item.copyWith(
-        unitPrice: product.price,
-        productName: item.productName.isEmpty ||
-                item.productName == 'Producto no disponible'
-            ? product.name
-            : item.productName,
-      );
-    }).toList(growable: false);
+    final newItems = order.items
+        .map((item) {
+          final product = _productCache[item.productId];
+          if (product == null) {
+            complete = false;
+            return item;
+          }
+          if (currency != null &&
+              product.price.currency != currency!.currency) {
+            complete = false;
+          }
+          currency = product.price;
+          totalCents += (product.price.amount * item.quantity).toInt();
+          return item.copyWith(
+            unitPrice: product.price,
+            productName:
+                item.productName.isEmpty ||
+                    item.productName == 'Producto no disponible'
+                ? product.name
+                : item.productName,
+          );
+        })
+        .toList(growable: false);
     if (currency == null || !complete) return order.copyWith(items: newItems);
     return order.copyWith(
       items: newItems,
