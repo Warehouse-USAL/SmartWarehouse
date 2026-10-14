@@ -42,14 +42,19 @@ class QtyStepper extends StatelessWidget {
             child: Text(
               '$value',
               textAlign: TextAlign.center,
-              style: SwText.body(size: large ? 16 : 15, weight: FontWeight.w600),
+              style: SwText.body(
+                size: large ? 16 : 15,
+                weight: FontWeight.w600,
+              ),
             ),
           ),
           _Btn(
             key: E2eKeys.productDetailQtyIncrement,
             size: size,
             icon: Icons.add,
-            onTap: max == null || value < max! ? () => onChanged(value + 1) : null,
+            onTap: max == null || value < max!
+                ? () => onChanged(value + 1)
+                : null,
           ),
         ],
       ),
@@ -58,7 +63,12 @@ class QtyStepper extends StatelessWidget {
 }
 
 class _Btn extends StatelessWidget {
-  const _Btn({required this.size, required this.icon, required this.onTap, super.key});
+  const _Btn({
+    required this.size,
+    required this.icon,
+    required this.onTap,
+    super.key,
+  });
   final double size;
   final IconData icon;
   final VoidCallback? onTap;
@@ -70,7 +80,11 @@ class _Btn extends StatelessWidget {
       child: SizedBox(
         width: size,
         height: size,
-        child: Icon(icon, size: 18, color: onTap == null ? SwColors.text3 : SwColors.text),
+        child: Icon(
+          icon,
+          size: 18,
+          color: onTap == null ? SwColors.text3 : SwColors.text,
+        ),
       ),
     );
   }

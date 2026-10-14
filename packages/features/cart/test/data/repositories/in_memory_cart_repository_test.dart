@@ -78,14 +78,17 @@ void main() {
       expect(repo.current.quantityOf('p-1'), 3);
     });
 
-    test('clamps the quantity to maxOrderableQuantity (stock/max por orden)', () {
-      // El builder usa maxQuantityPerOrder: 5, así que pedir 7 clampea a 5.
-      repo.add(aProduct(id: 'p-1'), quantity: 1);
+    test(
+      'clamps the quantity to maxOrderableQuantity (stock/max por orden)',
+      () {
+        // El builder usa maxQuantityPerOrder: 5, así que pedir 7 clampea a 5.
+        repo.add(aProduct(id: 'p-1'), quantity: 1);
 
-      repo.updateQuantity('p-1', 7);
+        repo.updateQuantity('p-1', 7);
 
-      expect(repo.current.quantityOf('p-1'), 5);
-    });
+        expect(repo.current.quantityOf('p-1'), 5);
+      },
+    );
 
     test('removes the line when the quantity drops to zero', () {
       repo.add(aProduct(id: 'p-1'), quantity: 2);
@@ -131,15 +134,16 @@ void main() {
   });
 
   group('current', () {
-    test('returns an unmodifiable view, so callers cannot mutate the store', () {
-      repo.add(aProduct(id: 'p-1'));
+    test(
+      'returns an unmodifiable view, so callers cannot mutate the store',
+      () {
+        repo.add(aProduct(id: 'p-1'));
 
-      expect(
-        () => repo.current.items.add(
-          repo.current.items.first,
-        ),
-        throwsUnsupportedError,
-      );
-    });
+        expect(
+          () => repo.current.items.add(repo.current.items.first),
+          throwsUnsupportedError,
+        );
+      },
+    );
   });
 }

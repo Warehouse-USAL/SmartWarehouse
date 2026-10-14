@@ -20,10 +20,12 @@ class NotificationsPage extends StatelessWidget {
         title: Text('Notificaciones', style: SwText.display(size: 22)),
         // Beamer no respeta Navigator.pop por default — usamos el
         // NavigationHelper que llama Beamer.beamBack() internamente.
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: SwColors.text),
-          onPressed: () =>
-              Injector.i.resolve<NavigationHelper>().pop(context),
+        leading: Center(
+          child: SwIconButton(
+            icon: Icons.arrow_back,
+            onPressed: () =>
+                Injector.i.resolve<NavigationHelper>().pop(context),
+          ),
         ),
       ),
       body: BlocBuilder<OrderNotificationCubit, OrderNotificationState>(
@@ -39,16 +41,17 @@ class NotificationsPage extends StatelessWidget {
           return ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             itemCount: state.notifications.length,
-            separatorBuilder: (_, __) => const Divider(height: 1, color: SwColors.border),
+            separatorBuilder: (_, __) =>
+                const Divider(height: 1, color: SwColors.border),
             itemBuilder: (context, index) {
               final n = state.notifications[index];
               return _NotificationTile(
                 notification: n,
                 onTap: () {
                   Injector.i.resolve<NavigationHelper>().pushNamed(
-                        context,
-                        routeName: Routes.orderDetail(n.change.orderId),
-                      );
+                    context,
+                    routeName: Routes.orderDetail(n.change.orderId),
+                  );
                 },
               );
             },
@@ -118,11 +121,11 @@ class _NotificationTile extends StatelessWidget {
   }
 
   String _statusLabel(OrderStatus status) => switch (status) {
-        OrderStatus.pending => 'Pendiente',
-        OrderStatus.inProgress => 'En progreso',
-        OrderStatus.completed => 'Completado',
-        OrderStatus.cancelled => 'Cancelado',
-      };
+    OrderStatus.pending => 'Pendiente',
+    OrderStatus.inProgress => 'En progreso',
+    OrderStatus.completed => 'Completado',
+    OrderStatus.cancelled => 'Cancelado',
+  };
 
   String _relativeTime(DateTime at) {
     final diff = DateTime.now().difference(at);

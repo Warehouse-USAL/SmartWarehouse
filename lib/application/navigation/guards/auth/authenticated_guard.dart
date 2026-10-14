@@ -5,13 +5,20 @@ import 'package:smart_warehouse/application/navigation/guards/custom_beamer_guar
 class AuthenticatedGuard implements CustomBeamerGuard {
   @override
   BeamGuard get guard => BeamGuard(
-        pathPatterns: [Routes.login],
-        check: (context, __) {
-          final authCubit = Injector.i.resolve<AuthCubit>();
-          return authCubit.state.maybeWhen(orElse: () => true, data: (_, __) => false);
-        },
-        onCheckFailed: (context, __) {
-          Injector.i.resolve<NavigationHelper>().pushNamed(context, routeName: Routes.catalog, replace: true);
-        },
+    pathPatterns: [Routes.login],
+    check: (context, __) {
+      final authCubit = Injector.i.resolve<AuthCubit>();
+      return authCubit.state.maybeWhen(
+        orElse: () => true,
+        data: (_, __) => false,
       );
+    },
+    onCheckFailed: (context, __) {
+      Injector.i.resolve<NavigationHelper>().pushNamed(
+        context,
+        routeName: Routes.catalog,
+        replace: true,
+      );
+    },
+  );
 }

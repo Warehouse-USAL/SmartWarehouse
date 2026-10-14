@@ -1,6 +1,7 @@
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:order_tracking/src/data/repositories/co_purchase_recommendations_repository.dart';
 import 'package:order_tracking/src/data/repositories/mock_order_tracking_repository.dart';
 import 'package:order_tracking/src/data/repositories/remote_order_tracking_repository.dart';
 import 'package:order_tracking/src/presentation/pages/notifications_page.dart';
@@ -34,6 +35,13 @@ class OrderTrackingFeatureBuilder {
           Injector.i.resolve<CatalogRepository>(),
         ),
       )
+      ..registerLazySingleton<RecommendationsRepository>(
+        () => CoPurchaseRecommendationsRepository(
+          orderTrackingRepository: Injector.i
+              .resolve<OrderTrackingRepository>(),
+          catalogRepository: Injector.i.resolve<CatalogRepository>(),
+        ),
+      )
       ..registerSingleton<OrderNotificationCubit>(
         OrderNotificationCubit(
           Injector.i.resolve<OrderTrackingRepository>(),
@@ -54,6 +62,10 @@ class OrderTrackingFeatureBuilder {
     Injector.i.resolve<OrderNotificationCubit>().stop();
     await Injector.i.resolve<OrderHistoryStore>().clear();
   }
+
+  /// "Pedir de nuevo" del detalle de orden. La capa de aplicación lo cablea
+  /// al carrito (addAll + navegar): order_tracking no depende de cart.
+  static void Function(List<ReorderEntry> entries)? onReorder;
 
   /// Navegación del botón "Ver" del snackbar. La setea la capa de aplicación
   /// con el router real: el contexto del scaffoldMessengerKey vive FUERA del
@@ -142,12 +154,7 @@ class OrderTrackingFeatureBuilder {
     );
   }
 
-  static String _statusLabel(OrderStatus status) => switch (status) {
-    OrderStatus.pending => 'Pendiente',
-    OrderStatus.inProgress => 'En progreso',
-    OrderStatus.completed => 'Completado',
-    OrderStatus.cancelled => 'Cancelado',
-  };
+  static String _statusLabel(OrderStatus status) => status.label;
 
   static Widget buildOrderListPage() =>
       OrderListPage(cubit: Injector.i.resolve<OrderListCubit>());

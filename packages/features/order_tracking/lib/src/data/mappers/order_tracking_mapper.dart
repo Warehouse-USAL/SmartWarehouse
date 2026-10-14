@@ -17,7 +17,7 @@ extension OrderTrackingItemDtoMapper on OrderTrackingItemDto {
       // listado (ordenado por fecha) en vez de arriba como si fuera nueva.
       createdAt: rawCreatedAt != null
           ? (DateTime.tryParse(rawCreatedAt) ??
-              DateTime.fromMillisecondsSinceEpoch(0))
+                DateTime.fromMillisecondsSinceEpoch(0))
           : DateTime.fromMillisecondsSinceEpoch(0),
       total: Money.zero('ARS'),
     );
@@ -26,13 +26,13 @@ extension OrderTrackingItemDtoMapper on OrderTrackingItemDto {
 
 extension OrderTrackingLineItemDtoMapper on OrderTrackingLineItemDto {
   OrderItem toEntity() => OrderItem(
-        productId: productId,
-        // Sin nombre del back ni hidratación de catálogo, mejor un texto
-        // explícito que el UUID crudo o un string vacío.
-        productName: name ?? 'Producto no disponible',
-        quantity: quantity,
-        unitPrice: Money.zero('ARS'),
-      );
+    productId: productId,
+    // Sin nombre del back ni hidratación de catálogo, mejor un texto
+    // explícito que el UUID crudo o un string vacío.
+    productName: name ?? 'Producto no disponible',
+    quantity: quantity,
+    unitPrice: Money.zero('ARS'),
+  );
 }
 
 OrderStatus parseOrderStatus(String raw) {

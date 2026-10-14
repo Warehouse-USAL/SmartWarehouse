@@ -53,10 +53,10 @@ void main() {
     repo.statusChangeController.add(_otherChange);
     await Future<void>.delayed(Duration.zero);
 
-    expect(
-      cubit.state.notifications.map((n) => n.change.orderId),
-      ['o-2', 'o-1'],
-    );
+    expect(cubit.state.notifications.map((n) => n.change.orderId), [
+      'o-2',
+      'o-1',
+    ]);
 
     await cubit.close();
   });
@@ -106,17 +106,20 @@ void main() {
     await cubit.close();
   });
 
-  test('markAllAsRead limpia lastReceived para no re-disparar la SnackBar', () async {
-    final cubit = OrderNotificationCubit(repo)..start();
-    repo.statusChangeController.add(_change);
-    await Future<void>.delayed(Duration.zero);
+  test(
+    'markAllAsRead limpia lastReceived para no re-disparar la SnackBar',
+    () async {
+      final cubit = OrderNotificationCubit(repo)..start();
+      repo.statusChangeController.add(_change);
+      await Future<void>.delayed(Duration.zero);
 
-    cubit.markAllAsRead();
+      cubit.markAllAsRead();
 
-    expect(cubit.state.lastReceived, isNull);
+      expect(cubit.state.lastReceived, isNull);
 
-    await cubit.close();
-  });
+      await cubit.close();
+    },
+  );
 
   test('un error del WS no rompe el cubit', () async {
     final cubit = OrderNotificationCubit(repo)..start();

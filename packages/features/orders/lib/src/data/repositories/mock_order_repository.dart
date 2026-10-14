@@ -24,7 +24,9 @@ class MockOrderRepository implements OrderRepository {
     await Future<void>.delayed(const Duration(milliseconds: 600));
 
     if (forceFailure) {
-      return const Left(OrderFailure('No se pudo crear la orden. Intentá de nuevo.'));
+      return const Left(
+        OrderFailure('No se pudo crear la orden. Intentá de nuevo.'),
+      );
     }
 
     final id = 'ORD-${_random.nextInt(9000) + 1000}';
@@ -33,13 +35,15 @@ class MockOrderRepository implements OrderRepository {
     for (final item in items) {
       total = total + item.subtotal;
     }
-    return Right(Order(
-      id: id,
-      items: List.unmodifiable(items),
-      total: total,
-      status: OrderStatus.pending,
-      createdAt: DateTime.now(),
-    ));
+    return Right(
+      Order(
+        id: id,
+        items: List.unmodifiable(items),
+        total: total,
+        status: OrderStatus.pending,
+        createdAt: DateTime.now(),
+      ),
+    );
   }
 
   @override

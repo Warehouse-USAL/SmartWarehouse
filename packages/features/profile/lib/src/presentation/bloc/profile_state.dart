@@ -15,20 +15,11 @@ class ProfileError extends ProfileState {
 }
 
 class ProfileReady extends ProfileState {
-  const ProfileReady({
-    required this.user,
-    required this.orders,
-  });
+  const ProfileReady({required this.user, required this.orders});
 
   final ProfileUser user;
   final List<OrderSummary> orders;
 
-  ProfileReady copyWith({
-    ProfileUser? user,
-    List<OrderSummary>? orders,
-  }) =>
-      ProfileReady(
-        user: user ?? this.user,
-        orders: orders ?? this.orders,
-      );
+  ProfileReady copyWith({ProfileUser? user, List<OrderSummary>? orders}) =>
+      ProfileReady(user: user ?? this.user, orders: orders ?? this.orders);
 }

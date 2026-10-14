@@ -29,6 +29,11 @@ class CartFeatureBuilder {
     Injector.i.resolve<CartCubit>().add(product, quantity: quantity);
   }
 
+  /// Vuelca varias líneas al pedido de una sola vez ("pedir de nuevo").
+  static void addAllToCart(List<({Product product, int quantity})> entries) {
+    Injector.i.resolve<CartCubit>().addAll(entries);
+  }
+
   static CartCubit cartCubit() => Injector.i.resolve<CartCubit>();
 
   /// Limpieza de sesión en logout: el carrito es estado del usuario — si

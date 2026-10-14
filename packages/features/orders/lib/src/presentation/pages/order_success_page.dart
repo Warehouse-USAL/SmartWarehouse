@@ -25,11 +25,17 @@ class OrderSuccessPage extends StatelessWidget {
                     color: SwColors.yellowSoft,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Icon(Icons.check, color: SwColors.yellowDark, size: 44),
+                  child: const Icon(
+                    Icons.check,
+                    color: SwColors.yellowDark,
+                    size: 44,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
-              Center(child: Text('¡Pedido creado!', style: SwText.display(size: 26))),
+              Center(
+                child: Text('¡Pedido creado!', style: SwText.display(size: 26)),
+              ),
               const SizedBox(height: 8),
               Center(
                 child: Text(
@@ -56,16 +62,30 @@ class OrderSuccessPage extends StatelessWidget {
                         color: SwColors.yellow,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.receipt_long_outlined, color: SwColors.text, size: 20),
+                      child: const Icon(
+                        Icons.receipt_long_outlined,
+                        color: SwColors.text,
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('N° de pedido', style: SwText.body(size: 12, color: SwColors.text3)),
+                          Text(
+                            'N° de pedido',
+                            style: SwText.body(size: 12, color: SwColors.text3),
+                          ),
                           const SizedBox(height: 2),
-                          Text(orderId, style: SwText.mono(size: 16, color: SwColors.text, letterSpacing: 0.08)),
+                          Text(
+                            orderId,
+                            style: SwText.mono(
+                              size: 16,
+                              color: SwColors.text,
+                              letterSpacing: 0.08,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -75,7 +95,8 @@ class OrderSuccessPage extends StatelessWidget {
               const Spacer(),
               SwButton(
                 label: 'Volver al catálogo',
-                onPressed: () => Injector.i.resolve<NavigationHelper>().pushNamed(
+                onPressed: () =>
+                    Injector.i.resolve<NavigationHelper>().pushNamed(
                       context,
                       routeName: Routes.catalog,
                       replace: true,
@@ -85,11 +106,12 @@ class OrderSuccessPage extends StatelessWidget {
               SwButton(
                 label: 'Ver mis pedidos',
                 variant: SwButtonVariant.secondary,
-                onPressed: () => Injector.i.resolve<NavigationHelper>().pushNamed(
-                  context,
-                  routeName: Routes.orders,
-                  replace: true,
-                ),
+                onPressed: () =>
+                    Injector.i.resolve<NavigationHelper>().pushNamed(
+                      context,
+                      routeName: Routes.orders,
+                      replace: true,
+                    ),
               ),
               const SizedBox(height: 8),
             ],

@@ -22,20 +22,25 @@ class NotificationBell extends StatelessWidget {
               // disableAnimation: false → evita el NoAnimationTransitionDelegate
               // de Beamer, que tiene un bug interactuando con DialogRoutes
               // (UpgradeAlert) y dispara asserts del navigator.
-              onPressed: () =>
-                  Injector.i.resolve<NavigationHelper>().pushNamed(
-                        context,
-                        routeName: Routes.notifications,
-                        disableAnimation: false,
-                      ),
+              onPressed: () => Injector.i.resolve<NavigationHelper>().pushNamed(
+                context,
+                routeName: Routes.notifications,
+                disableAnimation: false,
+              ),
             ),
             if (unread > 0)
               Positioned(
                 right: 4,
                 top: 4,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                  constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1.5,
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 18,
+                    minHeight: 18,
+                  ),
                   decoration: BoxDecoration(
                     color: SwColors.stockOut,
                     borderRadius: BorderRadius.circular(9),

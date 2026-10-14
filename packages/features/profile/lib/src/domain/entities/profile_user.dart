@@ -47,16 +47,15 @@ class ProfileUser {
     bool clearSpent = false,
     UserAddress? address,
     bool clearAddress = false,
-  }) =>
-      ProfileUser(
-        id: id ?? this.id,
-        name: name ?? this.name,
-        email: email ?? this.email,
-        role: role ?? this.role,
-        openOrdersCount: openOrdersCount ?? this.openOrdersCount,
-        spentThisMonth: clearSpent ? null : (spentThisMonth ?? this.spentThisMonth),
-        address: clearAddress ? null : (address ?? this.address),
-      );
+  }) => ProfileUser(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    email: email ?? this.email,
+    role: role ?? this.role,
+    openOrdersCount: openOrdersCount ?? this.openOrdersCount,
+    spentThisMonth: clearSpent ? null : (spentThisMonth ?? this.spentThisMonth),
+    address: clearAddress ? null : (address ?? this.address),
+  );
 
   @override
   bool operator ==(Object other) =>

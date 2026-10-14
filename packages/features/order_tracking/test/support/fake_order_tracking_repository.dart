@@ -15,8 +15,8 @@ import 'package:orders/orders.dart';
 /// Vive en `test/support/` y no en un package compartido porque lo consume un
 /// solo package (spec 4.3): la regla de >=2 cuenta packages, no archivos.
 class FakeOrderTrackingRepository implements OrderTrackingRepository {
-  Either<OrderTrackingFailure, List<Order>> Function() onGetOrders =
-      () => const Right([]);
+  Either<OrderTrackingFailure, List<Order>> Function() onGetOrders = () =>
+      const Right([]);
 
   Either<OrderTrackingFailure, Order> Function(String id) onGetOrderById =
       (_) => const Left(OrderTrackingFailure('not configured'));
@@ -26,11 +26,23 @@ class FakeOrderTrackingRepository implements OrderTrackingRepository {
   final orderController = StreamController<Order>.broadcast();
 
   /// Alimenta [watchOrderStatusChanges].
-  final statusChangeController = StreamController<OrderStatusChange>.broadcast();
+  final statusChangeController =
+      StreamController<OrderStatusChange>.broadcast();
 
   /// Cuantas veces se llamo a [getOrders]. Sirve para afirmar que un refresh
   /// silencioso efectivamente re-consulto.
   int getOrdersCalls = 0;
+
+  /// Respuesta configurable de [cancelOrder]; registra los ids cancelados.
+  Either<OrderTrackingFailure, Order> Function(String id) onCancelOrder = (_) =>
+      const Left(OrderTrackingFailure('not configured'));
+  final cancelledIds = <String>[];
+
+  @override
+  Future<Either<OrderTrackingFailure, Order>> cancelOrder(String id) async {
+    cancelledIds.add(id);
+    return onCancelOrder(id);
+  }
 
   @override
   Future<Either<OrderTrackingFailure, List<Order>>> getOrders() async {

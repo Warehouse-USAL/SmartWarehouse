@@ -24,11 +24,16 @@ class IocManager {
       )
       ..registerSingleton<EnvironmentConfig>(config)
       ..registerSingleton<AppDataSource>(config.dataSource)
-      ..registerSingleton<PersistenceHelper>(HivePersistenceHelper('smart-warehouse'))
+      ..registerSingleton<PersistenceHelper>(
+        HivePersistenceHelper('smart-warehouse'),
+      )
       ..registerLazySingleton<PermissionsHelper>(PermissionsHandlerHelper.new)
       ..registerLazySingleton<BuildDataHelper>(
         () => PackageInfoBuildDataHelper(
-          environmentData: EnvironmentData(key: 'environment', defaultValue: 'dev'),
+          environmentData: EnvironmentData(
+            key: 'environment',
+            defaultValue: 'dev',
+          ),
         ),
       )
       ..registerLazySingleton<HttpHelper>(
@@ -44,13 +49,17 @@ class IocManager {
           receiveTimeout: const Duration(milliseconds: 20000),
           debuggingInterceptors: [LoggingInterceptor()],
           domainInterceptors: [
-            AuthInterceptor(requestInterceptionData: OnInterceptHttpRequestUseCase.call),
+            AuthInterceptor(
+              requestInterceptionData: OnInterceptHttpRequestUseCase.call,
+            ),
           ],
         )..init(),
       )
       ..registerSingleton<ImagePickerHelper>(ImagePickerHelperImplementation())
       ..registerSingleton<NavigationHelper>(BeamerNavigationHelper())
-      ..registerSingleton<NavigationConfigHelper<BeamerDelegate>>(BeamerConfigHelper())
+      ..registerSingleton<NavigationConfigHelper<BeamerDelegate>>(
+        BeamerConfigHelper(),
+      )
       ..registerSingleton<TokenRepository>(
         LocalTokenRepository(onGetTokenUseCase: OnGetTokenUseCase.call),
       );

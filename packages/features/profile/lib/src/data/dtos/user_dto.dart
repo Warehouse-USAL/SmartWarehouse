@@ -28,7 +28,8 @@ sealed class UserDto with _$UserDto {
     AddressDto? address,
   }) = _UserDto;
 
-  factory UserDto.fromJson(Map<String, dynamic> json) => _$UserDtoFromJson(json);
+  factory UserDto.fromJson(Map<String, dynamic> json) =>
+      _$UserDtoFromJson(json);
 }
 
 @freezed

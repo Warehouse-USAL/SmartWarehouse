@@ -13,7 +13,9 @@ class CatalogFeatureBuilder {
       ..registerLazySingleton<CatalogRepository>(
         () => Injector.i.resolve<AppDataSource>().isMock
             ? MockCatalogRepository()
-            : RemoteCatalogRepository(httpHelper: Injector.i.resolve<HttpHelper>()),
+            : RemoteCatalogRepository(
+                httpHelper: Injector.i.resolve<HttpHelper>(),
+              ),
       )
       ..registerLazySingleton<CatalogCubit>(
         () => CatalogCubit(Injector.i.resolve<CatalogRepository>()),
@@ -27,6 +29,7 @@ class CatalogFeatureBuilder {
   static Widget buildProductDetailPage(
     String productId, {
     required void Function(Product product) onAddToCart,
+    Future<List<Product>> Function(Product product)? recommendationsLoader,
   }) {
     return ProductDetailPage(
       cubit: ProductDetailCubit(
@@ -34,6 +37,7 @@ class CatalogFeatureBuilder {
         productId: productId,
       ),
       onAddToCart: onAddToCart,
+      recommendationsLoader: recommendationsLoader,
     );
   }
 }

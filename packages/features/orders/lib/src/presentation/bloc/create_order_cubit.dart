@@ -17,10 +17,14 @@ class CreateOrderCubit extends Cubit<CreateOrderState> {
   }) async {
     if (state is CreateOrderSubmitting) return;
     emit(const CreateOrderSubmitting());
-    final result = await _repository.create(items: items, destination: destination);
+    final result = await _repository.create(
+      items: items,
+      destination: destination,
+    );
     if (isClosed) return;
     result.fold(
-      (failure) => emit(CreateOrderFailure(failure.message ?? 'Error desconocido')),
+      (failure) =>
+          emit(CreateOrderFailure(failure.message ?? 'Error desconocido')),
       (order) => emit(CreateOrderSuccess(order)),
     );
   }

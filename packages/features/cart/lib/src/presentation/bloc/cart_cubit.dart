@@ -39,6 +39,16 @@ class CartCubit extends Cubit<Cart> {
     emit(_repository.current);
   }
 
+  /// Agrega varias líneas de una (p. ej. "pedir de nuevo" desde una orden)
+  /// emitiendo UNA sola vez — N llamadas a [add] serían N rebuilds.
+  void addAll(List<({Product product, int quantity})> entries) {
+    if (entries.isEmpty) return;
+    for (final e in entries) {
+      _repository.add(e.product, quantity: e.quantity);
+    }
+    emit(_repository.current);
+  }
+
   void remove(String productId) {
     _repository.remove(productId);
     emit(_repository.current);

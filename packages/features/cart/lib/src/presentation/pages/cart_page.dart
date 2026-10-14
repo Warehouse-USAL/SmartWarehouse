@@ -97,25 +97,19 @@ class _CartPageState extends State<CartPage> {
 
   Future<void> _confirmFlow(BuildContext context, Cart cart) async {
     if (cart.hasMixedCurrencies) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Hay productos con monedas distintas en el pedido. '
-            'Quitá los que no correspondan para continuar.',
-          ),
-        ),
+      SwSnackBar.showError(
+        context,
+        message: 'Hay productos con monedas distintas en el pedido',
+        detail: 'Quitá los que no correspondan para continuar',
       );
       return;
     }
     if (cart.hasInvalidQuantities) {
       final names = cart.invalidItems.map((i) => i.product.name).join(', ');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Sin stock suficiente de: $names. '
-            'Quitá esos productos o bajá la cantidad para continuar.',
-          ),
-        ),
+      SwSnackBar.showError(
+        context,
+        message: 'Sin stock suficiente de: $names',
+        detail: 'Quitá esos productos o bajá la cantidad para continuar',
       );
       return;
     }
@@ -161,14 +155,11 @@ class _CartPageState extends State<CartPage> {
         // La causa típica es stock que cambió entre agregar y confirmar:
         // revalidamos para que el carrito muestre qué línea quedó inválida.
         cartCubit.revalidate();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            action: SnackBarAction(
-              label: 'Reintentar',
-              onPressed: () => _onCreateOrderPressed(context, cartCubit.state),
-            ),
-          ),
+        SwSnackBar.showError(
+          context,
+          message: message,
+          actionLabel: 'Reintentar',
+          onAction: () => _onCreateOrderPressed(context, cartCubit.state),
         );
       case CreateOrderIdle():
       case CreateOrderSubmitting():

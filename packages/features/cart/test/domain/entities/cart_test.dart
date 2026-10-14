@@ -57,10 +57,12 @@ void main() {
 
   group('Cart.itemCount', () {
     test('sums quantities rather than counting lines', () {
-      final cart = Cart(items: [
-        CartItem(product: aProduct(id: 'a'), quantity: 2),
-        CartItem(product: aProduct(id: 'b'), quantity: 3),
-      ]);
+      final cart = Cart(
+        items: [
+          CartItem(product: aProduct(id: 'a'), quantity: 2),
+          CartItem(product: aProduct(id: 'b'), quantity: 3),
+        ],
+      );
 
       expect(cart.itemCount, 5);
     });
@@ -68,36 +70,54 @@ void main() {
 
   group('Cart.total', () {
     test('sums the subtotals of every line', () {
-      final cart = Cart(items: [
-        CartItem(product: aProduct(id: 'a', price: aMoney(amount: 1000)), quantity: 2),
-        CartItem(product: aProduct(id: 'b', price: aMoney(amount: 500)), quantity: 1),
-      ]);
+      final cart = Cart(
+        items: [
+          CartItem(
+            product: aProduct(id: 'a', price: aMoney(amount: 1000)),
+            quantity: 2,
+          ),
+          CartItem(
+            product: aProduct(id: 'b', price: aMoney(amount: 500)),
+            quantity: 1,
+          ),
+        ],
+      );
 
       expect(cart.total, aMoney(amount: 2500));
     });
 
     test('keeps the currency of the first item', () {
-      final cart = Cart(items: [
-        CartItem(
-          product: aProduct(price: aMoney(amount: 100, currency: 'USD')),
-          quantity: 1,
-        ),
-      ]);
+      final cart = Cart(
+        items: [
+          CartItem(
+            product: aProduct(price: aMoney(amount: 100, currency: 'USD')),
+            quantity: 1,
+          ),
+        ],
+      );
 
       expect(cart.total?.currency, 'USD');
     });
 
     test('mixed currencies: total is null and the flag is set', () {
-      final cart = Cart(items: [
-        CartItem(
-          product: aProduct(id: 'a', price: aMoney(amount: 100, currency: 'ARS')),
-          quantity: 1,
-        ),
-        CartItem(
-          product: aProduct(id: 'b', price: aMoney(amount: 100, currency: 'USD')),
-          quantity: 1,
-        ),
-      ]);
+      final cart = Cart(
+        items: [
+          CartItem(
+            product: aProduct(
+              id: 'a',
+              price: aMoney(amount: 100, currency: 'ARS'),
+            ),
+            quantity: 1,
+          ),
+          CartItem(
+            product: aProduct(
+              id: 'b',
+              price: aMoney(amount: 100, currency: 'USD'),
+            ),
+            quantity: 1,
+          ),
+        ],
+      );
 
       expect(cart.hasMixedCurrencies, isTrue);
       expect(cart.total, isNull);
@@ -106,17 +126,17 @@ void main() {
 
   group('Cart.quantityOf', () {
     test('returns the quantity of a product in the cart', () {
-      final cart = Cart(items: [
-        CartItem(product: aProduct(id: 'p-7'), quantity: 3),
-      ]);
+      final cart = Cart(
+        items: [CartItem(product: aProduct(id: 'p-7'), quantity: 3)],
+      );
 
       expect(cart.quantityOf('p-7'), 3);
     });
 
     test('returns zero for a product that is not in the cart', () {
-      final cart = Cart(items: [
-        CartItem(product: aProduct(id: 'p-7'), quantity: 3),
-      ]);
+      final cart = Cart(
+        items: [CartItem(product: aProduct(id: 'p-7'), quantity: 3)],
+      );
 
       expect(cart.quantityOf('p-otro'), 0);
     });
