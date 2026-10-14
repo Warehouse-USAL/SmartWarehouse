@@ -15,9 +15,17 @@ void main() {
         'description': 'Casco industrial.',
         'category': 'TECNOLOGIA',
         'images': [
-          {'url': 'https://example.com/a.jpg', 'alt': 'Casco', 'is_primary': true},
+          {
+            'url': 'https://example.com/a.jpg',
+            'alt': 'Casco',
+            'is_primary': true,
+          },
         ],
-        'price': {'amount_cents': 1250000, 'currency': 'ARS', 'tax_included': true},
+        'price': {
+          'amount_cents': 1250000,
+          'currency': 'ARS',
+          'tax_included': true,
+        },
         'specs': [
           {'label': 'Material', 'value': 'HDPE'},
         ],
@@ -64,8 +72,10 @@ void main() {
       });
       final product = dto.toEntity();
       expect(product.stock, Stock.empty);
-      expect(product.orderConstraints.maxQuantityPerOrder,
-          OrderConstraints.defaults.maxQuantityPerOrder);
+      expect(
+        product.orderConstraints.maxQuantityPerOrder,
+        OrderConstraints.defaults.maxQuantityPerOrder,
+      );
       expect(product.imageUrl, isNull);
       expect(product.images, isNull);
       expect(product.specs, isNull);

@@ -39,6 +39,7 @@ abstract final class E2eKeys {
   static const orderCancelButton = Key('e2e_order_cancel_button');
   static const orderCancelConfirm = Key('e2e_order_cancel_confirm');
   static const orderReorderButton = Key('e2e_order_reorder_button');
+  static const recommendationsCarousel = Key('e2e_recommendations_carousel');
 
   // Órdenes
   static Key orderCard(String id) => Key('e2e_order_card_$id');

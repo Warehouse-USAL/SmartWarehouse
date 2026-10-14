@@ -6,12 +6,18 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _FakeRepo implements CatalogRepository {
-  final List<({int page, int pageSize, String? search, ProductCategory? category})> calls = [];
+  final List<
+    ({int page, int pageSize, String? search, ProductCategory? category})
+  >
+  calls = [];
   Future<Either<CatalogFailure, ProductsPage>> Function(
-          int page, String? search, ProductCategory? category) handler =
-      (page, _, __) async => Right(_emptyPage(page));
-  Future<Either<CatalogFailure, List<ProductCategory>>> Function() categoriesHandler =
-      () async => Right(ProductCategory.values);
+    int page,
+    String? search,
+    ProductCategory? category,
+  )
+  handler = (page, _, __) async => Right(_emptyPage(page));
+  Future<Either<CatalogFailure, List<ProductCategory>>> Function()
+  categoriesHandler = () async => Right(ProductCategory.values);
 
   @override
   Future<Either<CatalogFailure, ProductsPage>> getProducts({
@@ -20,22 +26,34 @@ class _FakeRepo implements CatalogRepository {
     String? search,
     ProductCategory? category,
   }) async {
-    calls.add((page: page, pageSize: pageSize, search: search, category: category));
+    calls.add((
+      page: page,
+      pageSize: pageSize,
+      search: search,
+      category: category,
+    ));
     return handler(page, search, category);
   }
 
   @override
-  Future<Either<CatalogFailure, List<ProductCategory>>> getCategories() => categoriesHandler();
+  Future<Either<CatalogFailure, List<ProductCategory>>> getCategories() =>
+      categoriesHandler();
 
   @override
   Future<Either<CatalogFailure, Product>> getProductById(String id) =>
       throw UnimplementedError();
 }
 
-ProductsPage _emptyPage(int page) =>
-    ProductsPage(items: const [], page: page, pageSize: 20, total: 0, hasNext: false);
+ProductsPage _emptyPage(int page) => ProductsPage(
+  items: const [],
+  page: page,
+  pageSize: 20,
+  total: 0,
+  hasNext: false,
+);
 
-Product _p(String id, {ProductCategory category = ProductCategory.otros}) => Product(
+Product _p(String id, {ProductCategory category = ProductCategory.otros}) =>
+    Product(
       id: id,
       sku: 'SKU-$id',
       name: 'Name $id',
@@ -45,8 +63,18 @@ Product _p(String id, {ProductCategory category = ProductCategory.otros}) => Pro
       orderConstraints: const OrderConstraints(maxQuantityPerOrder: 5),
     );
 
-ProductsPage _page(int page, List<Product> items, {required int total, required bool hasNext}) =>
-    ProductsPage(items: items, page: page, pageSize: 20, total: total, hasNext: hasNext);
+ProductsPage _page(
+  int page,
+  List<Product> items, {
+  required int total,
+  required bool hasNext,
+}) => ProductsPage(
+  items: items,
+  page: page,
+  pageSize: 20,
+  total: total,
+  hasNext: hasNext,
+);
 
 void main() {
   group('CatalogCubit.load', () {
@@ -72,27 +100,31 @@ void main() {
       expect(ready.isLoadingMore, isFalse);
     });
 
-    test('stale first-page response is dropped when a newer load fires', () async {
-      final firstCompleter = Completer<Either<CatalogFailure, ProductsPage>>();
-      var callCount = 0;
-      final repo = _FakeRepo()
-        ..handler = (page, search, _) async {
-          callCount++;
-          if (callCount == 1) return firstCompleter.future;
-          return Right(_page(1, [_p('new')], total: 1, hasNext: false));
-        };
-      final cubit = CatalogCubit(repo);
+    test(
+      'stale first-page response is dropped when a newer load fires',
+      () async {
+        final firstCompleter =
+            Completer<Either<CatalogFailure, ProductsPage>>();
+        var callCount = 0;
+        final repo = _FakeRepo()
+          ..handler = (page, search, _) async {
+            callCount++;
+            if (callCount == 1) return firstCompleter.future;
+            return Right(_page(1, [_p('new')], total: 1, hasNext: false));
+          };
+        final cubit = CatalogCubit(repo);
 
-      final first = cubit.load();
-      final second = cubit.load();
-      firstCompleter.complete(
-        Right(_page(1, [_p('old')], total: 1, hasNext: false)),
-      );
-      await Future.wait([first, second]);
+        final first = cubit.load();
+        final second = cubit.load();
+        firstCompleter.complete(
+          Right(_page(1, [_p('old')], total: 1, hasNext: false)),
+        );
+        await Future.wait([first, second]);
 
-      final ready = cubit.state as CatalogReady;
-      expect(ready.products.single.id, 'new');
-    });
+        final ready = cubit.state as CatalogReady;
+        expect(ready.products.single.id, 'new');
+      },
+    );
 
     test('emits CatalogError when first-page load fails', () async {
       final repo = _FakeRepo()
@@ -156,41 +188,48 @@ void main() {
 
       final first = cubit.loadMore();
       final second = cubit.loadMore(); // should be ignored
-      pageCompleter.complete(Right(_page(2, [_p('2')], total: 5, hasNext: true)));
+      pageCompleter.complete(
+        Right(_page(2, [_p('2')], total: 5, hasNext: true)),
+      );
       await Future.wait([first, second]);
 
       expect(repo.calls.where((c) => c.page == 2), hasLength(1));
     });
 
-    test('keeps existing items when loadMore fails and surfaces loadMoreError', () async {
-      final repo = _FakeRepo()
-        ..handler = (page, _, __) async {
-          if (page == 1) {
-            return Right(_page(1, [_p('1')], total: 5, hasNext: true));
-          }
-          return const Left(CatalogFailure('net'));
-        };
-      final cubit = CatalogCubit(repo);
-      await cubit.load();
-      await cubit.loadMore();
+    test(
+      'keeps existing items when loadMore fails and surfaces loadMoreError',
+      () async {
+        final repo = _FakeRepo()
+          ..handler = (page, _, __) async {
+            if (page == 1) {
+              return Right(_page(1, [_p('1')], total: 5, hasNext: true));
+            }
+            return const Left(CatalogFailure('net'));
+          };
+        final cubit = CatalogCubit(repo);
+        await cubit.load();
+        await cubit.loadMore();
 
-      final ready = cubit.state as CatalogReady;
-      expect(ready.products, hasLength(1));
-      expect(ready.loadMoreError, 'net');
-      expect(ready.isLoadingMore, isFalse);
-      expect(ready.hasNext, isTrue);
-    });
+        final ready = cubit.state as CatalogReady;
+        expect(ready.products, hasLength(1));
+        expect(ready.loadMoreError, 'net');
+        expect(ready.isLoadingMore, isFalse);
+        expect(ready.hasNext, isTrue);
+      },
+    );
   });
 
   group('CatalogCubit filter changes', () {
     test('selectCategory resets pagination to page 1', () async {
       final repo = _FakeRepo()
-        ..handler = (page, _, category) async => Right(_page(
-              page,
-              [_p('$page', category: category ?? ProductCategory.otros)],
-              total: 5,
-              hasNext: false,
-            ));
+        ..handler = (page, _, category) async => Right(
+          _page(
+            page,
+            [_p('$page', category: category ?? ProductCategory.otros)],
+            total: 5,
+            hasNext: false,
+          ),
+        );
       final cubit = CatalogCubit(repo);
       await cubit.load();
       repo.calls.clear();
