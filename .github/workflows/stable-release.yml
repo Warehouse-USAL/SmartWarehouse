@@ -212,3 +212,6 @@ jobs:
     uses: ./.github/workflows/backport.yml
     with:
       version: ${{ needs.stable-release.outputs.version }}
+    permissions:
+      contents: write
+      pull-requests: write
