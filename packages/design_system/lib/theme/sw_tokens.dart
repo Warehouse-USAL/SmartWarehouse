@@ -28,6 +28,16 @@ class SwColors {
   static const stockIn = Color(0xFF15803D);
   static const stockInDot = Color(0xFF16A34A);
   static const stockOut = Color(0xFFB91C1C);
+
+  /// Rojo destructivo (cancelar orden, borrar). Mismo valor que [stockOut]
+  /// a propósito — un solo rojo de marca — pero con nombre semántico para
+  /// que el código de features no dependa de "stock" en flujos que no lo son.
+  static const danger = Color(0xFFB91C1C);
+  static const dangerSoft = Color(0xFFFAEDED);
+  static const dangerBorder = Color(0xFFEFC9C9);
+
+  /// Verde suave para fondos de estado positivo (chip "Completado").
+  static const okSoft = Color(0xFFEAF5EE);
 }
 
 class SwRadii {
@@ -94,11 +104,7 @@ class SwText {
     Color color = SwColors.text2,
     FontWeight weight = FontWeight.w600,
   }) {
-    return GoogleFonts.inter(
-      fontSize: size,
-      fontWeight: weight,
-      color: color,
-    );
+    return GoogleFonts.inter(fontSize: size, fontWeight: weight, color: color);
   }
 
   static TextStyle mono({
