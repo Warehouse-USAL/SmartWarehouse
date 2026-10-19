@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$OrderTimestampsDto {
 
- String? get createdAt; String? get startedAt; String? get completedAt;
+ String? get createdAt; String? get startedAt; String? get completedAt; String? get cancellationRequestedAt;
 /// Create a copy of OrderTimestampsDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $OrderTimestampsDtoCopyWith<OrderTimestampsDto> get copyWith => _$OrderTimestamp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrderTimestampsDto&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrderTimestampsDto&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt)&&(identical(other.cancellationRequestedAt, cancellationRequestedAt) || other.cancellationRequestedAt == cancellationRequestedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,createdAt,startedAt,completedAt);
+int get hashCode => Object.hash(runtimeType,createdAt,startedAt,completedAt,cancellationRequestedAt);
 
 @override
 String toString() {
-  return 'OrderTimestampsDto(createdAt: $createdAt, startedAt: $startedAt, completedAt: $completedAt)';
+  return 'OrderTimestampsDto(createdAt: $createdAt, startedAt: $startedAt, completedAt: $completedAt, cancellationRequestedAt: $cancellationRequestedAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $OrderTimestampsDtoCopyWith<$Res>  {
   factory $OrderTimestampsDtoCopyWith(OrderTimestampsDto value, $Res Function(OrderTimestampsDto) _then) = _$OrderTimestampsDtoCopyWithImpl;
 @useResult
 $Res call({
- String? createdAt, String? startedAt, String? completedAt
+ String? createdAt, String? startedAt, String? completedAt, String? cancellationRequestedAt
 });
 
 
@@ -65,11 +65,12 @@ class _$OrderTimestampsDtoCopyWithImpl<$Res>
 
 /// Create a copy of OrderTimestampsDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? createdAt = freezed,Object? startedAt = freezed,Object? completedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? createdAt = freezed,Object? startedAt = freezed,Object? completedAt = freezed,Object? cancellationRequestedAt = freezed,}) {
   return _then(_self.copyWith(
 createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String?,startedAt: freezed == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
 as String?,completedAt: freezed == completedAt ? _self.completedAt : completedAt // ignore: cast_nullable_to_non_nullable
+as String?,cancellationRequestedAt: freezed == cancellationRequestedAt ? _self.cancellationRequestedAt : cancellationRequestedAt // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -152,10 +153,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? createdAt,  String? startedAt,  String? completedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? createdAt,  String? startedAt,  String? completedAt,  String? cancellationRequestedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OrderTimestampsDto() when $default != null:
-return $default(_that.createdAt,_that.startedAt,_that.completedAt);case _:
+return $default(_that.createdAt,_that.startedAt,_that.completedAt,_that.cancellationRequestedAt);case _:
   return orElse();
 
 }
@@ -173,10 +174,10 @@ return $default(_that.createdAt,_that.startedAt,_that.completedAt);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? createdAt,  String? startedAt,  String? completedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? createdAt,  String? startedAt,  String? completedAt,  String? cancellationRequestedAt)  $default,) {final _that = this;
 switch (_that) {
 case _OrderTimestampsDto():
-return $default(_that.createdAt,_that.startedAt,_that.completedAt);}
+return $default(_that.createdAt,_that.startedAt,_that.completedAt,_that.cancellationRequestedAt);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -190,10 +191,10 @@ return $default(_that.createdAt,_that.startedAt,_that.completedAt);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? createdAt,  String? startedAt,  String? completedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? createdAt,  String? startedAt,  String? completedAt,  String? cancellationRequestedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _OrderTimestampsDto() when $default != null:
-return $default(_that.createdAt,_that.startedAt,_that.completedAt);case _:
+return $default(_that.createdAt,_that.startedAt,_that.completedAt,_that.cancellationRequestedAt);case _:
   return null;
 
 }
@@ -205,12 +206,13 @@ return $default(_that.createdAt,_that.startedAt,_that.completedAt);case _:
 @JsonSerializable()
 
 class _OrderTimestampsDto implements OrderTimestampsDto {
-  const _OrderTimestampsDto({this.createdAt, this.startedAt, this.completedAt});
+  const _OrderTimestampsDto({this.createdAt, this.startedAt, this.completedAt, this.cancellationRequestedAt});
   factory _OrderTimestampsDto.fromJson(Map<String, dynamic> json) => _$OrderTimestampsDtoFromJson(json);
 
 @override final  String? createdAt;
 @override final  String? startedAt;
 @override final  String? completedAt;
+@override final  String? cancellationRequestedAt;
 
 /// Create a copy of OrderTimestampsDto
 /// with the given fields replaced by the non-null parameter values.
@@ -225,16 +227,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OrderTimestampsDto&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OrderTimestampsDto&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt)&&(identical(other.cancellationRequestedAt, cancellationRequestedAt) || other.cancellationRequestedAt == cancellationRequestedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,createdAt,startedAt,completedAt);
+int get hashCode => Object.hash(runtimeType,createdAt,startedAt,completedAt,cancellationRequestedAt);
 
 @override
 String toString() {
-  return 'OrderTimestampsDto(createdAt: $createdAt, startedAt: $startedAt, completedAt: $completedAt)';
+  return 'OrderTimestampsDto(createdAt: $createdAt, startedAt: $startedAt, completedAt: $completedAt, cancellationRequestedAt: $cancellationRequestedAt)';
 }
 
 
@@ -245,7 +247,7 @@ abstract mixin class _$OrderTimestampsDtoCopyWith<$Res> implements $OrderTimesta
   factory _$OrderTimestampsDtoCopyWith(_OrderTimestampsDto value, $Res Function(_OrderTimestampsDto) _then) = __$OrderTimestampsDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String? createdAt, String? startedAt, String? completedAt
+ String? createdAt, String? startedAt, String? completedAt, String? cancellationRequestedAt
 });
 
 
@@ -262,11 +264,12 @@ class __$OrderTimestampsDtoCopyWithImpl<$Res>
 
 /// Create a copy of OrderTimestampsDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? createdAt = freezed,Object? startedAt = freezed,Object? completedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? createdAt = freezed,Object? startedAt = freezed,Object? completedAt = freezed,Object? cancellationRequestedAt = freezed,}) {
   return _then(_OrderTimestampsDto(
 createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String?,startedAt: freezed == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
 as String?,completedAt: freezed == completedAt ? _self.completedAt : completedAt // ignore: cast_nullable_to_non_nullable
+as String?,cancellationRequestedAt: freezed == cancellationRequestedAt ? _self.cancellationRequestedAt : cancellationRequestedAt // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

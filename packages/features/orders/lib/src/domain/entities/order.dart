@@ -9,6 +9,7 @@ class Order {
     required this.status,
     required this.createdAt,
     required this.total,
+    this.cancellationRequestedAt,
   });
 
   final String id;
@@ -16,6 +17,7 @@ class Order {
   final OrderStatus status;
   final DateTime createdAt;
   final Money total;
+  final DateTime? cancellationRequestedAt;
 
   Order copyWith({
     String? id,
@@ -23,11 +25,14 @@ class Order {
     OrderStatus? status,
     DateTime? createdAt,
     Money? total,
+    DateTime? cancellationRequestedAt,
   }) => Order(
     id: id ?? this.id,
     items: items ?? this.items,
     status: status ?? this.status,
     createdAt: createdAt ?? this.createdAt,
     total: total ?? this.total,
+    cancellationRequestedAt:
+        cancellationRequestedAt ?? this.cancellationRequestedAt,
   );
 }

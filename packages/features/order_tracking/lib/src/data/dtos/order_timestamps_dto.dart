@@ -14,6 +14,7 @@ sealed class OrderTimestampsDto with _$OrderTimestampsDto {
     String? createdAt,
     String? startedAt,
     String? completedAt,
+    String? cancellationRequestedAt,
   }) = _OrderTimestampsDto;
 
   factory OrderTimestampsDto.fromJson(Map<String, dynamic> json) =>

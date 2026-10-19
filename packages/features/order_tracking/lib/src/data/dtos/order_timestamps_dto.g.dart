@@ -11,6 +11,7 @@ _OrderTimestampsDto _$OrderTimestampsDtoFromJson(Map<String, dynamic> json) =>
       createdAt: json['created_at'] as String?,
       startedAt: json['started_at'] as String?,
       completedAt: json['completed_at'] as String?,
+      cancellationRequestedAt: json['cancellation_requested_at'] as String?,
     );
 
 Map<String, dynamic> _$OrderTimestampsDtoToJson(_OrderTimestampsDto instance) =>
@@ -18,4 +19,5 @@ Map<String, dynamic> _$OrderTimestampsDtoToJson(_OrderTimestampsDto instance) =>
       'created_at': instance.createdAt,
       'started_at': instance.startedAt,
       'completed_at': instance.completedAt,
+      'cancellation_requested_at': instance.cancellationRequestedAt,
     };

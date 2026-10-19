@@ -50,17 +50,19 @@ class OrderDetailCubit extends Cubit<OrderDetailState> {
   /// Cancela la orden. Devuelve null si salió bien (y re-emite el detalle
   /// actualizado) o el mensaje de error para que la UI lo muestre.
   ///
-  /// Nota: el watchOrder se corta solo al llegar a cancelled (ver [load]),
-  /// así que el refresco post-cancelación se fuerza acá re-emitiendo con la
-  /// orden que devuelve el repo — no dependemos del WS.
+  /// Si Infra todavía debe devolver los productos, conserva el watchOrder para
+  /// recibir el estado final cuando llegue por WebSocket.
   Future<String?> cancel(String orderId) async {
     final result = await _repository.cancelOrder(orderId);
     if (isClosed) return null;
     return result.fold(
       (failure) => failure.message ?? 'No se pudo cancelar la orden',
       (order) {
-        _subscription?.cancel();
-        _subscription = null;
+        if (order.status == OrderStatus.completed ||
+            order.status == OrderStatus.cancelled) {
+          _subscription?.cancel();
+          _subscription = null;
+        }
         emit(OrderDetailReady(order: order, items: _buildItems(order)));
         return null;
       },

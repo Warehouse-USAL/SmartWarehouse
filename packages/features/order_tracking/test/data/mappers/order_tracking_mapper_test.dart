@@ -43,6 +43,22 @@ void main() {
       expect(dto.toEntity().status, OrderStatus.cancelled);
     });
 
+    test('maps cancellation_requested_at timestamp', () {
+      final dto = OrderTrackingItemDto.fromJson({
+        'id': 'o1',
+        'status': 'in_progress',
+        'timestamps': {
+          'created_at': '2026-10-19T12:00:00Z',
+          'cancellation_requested_at': '2026-10-19T12:05:00Z',
+        },
+      });
+
+      expect(
+        dto.toEntity().cancellationRequestedAt,
+        DateTime.parse('2026-10-19T12:05:00Z'),
+      );
+    });
+
     test('maps unknown status to pending', () {
       final dto = OrderTrackingItemDto(id: 'o1', status: 'foobar');
       expect(dto.toEntity().status, OrderStatus.pending);
