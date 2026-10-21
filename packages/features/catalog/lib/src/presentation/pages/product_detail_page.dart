@@ -257,6 +257,9 @@ class _ImageCarousel extends StatelessWidget {
                     tinted: i == 0,
                     imageUrl: img.url,
                     borderRadius: 18,
+                    // La foto completa, sin recorte: el marco es cuadrado y
+                    // las fotos reales no — cover les comía los bordes.
+                    fit: BoxFit.contain,
                   );
                 },
               ),
