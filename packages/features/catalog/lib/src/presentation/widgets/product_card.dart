@@ -37,6 +37,9 @@ class ProductCard extends StatelessWidget {
                   label: product.category.name,
                   tinted: tinted,
                   imageUrl: product.imageUrl,
+                  // Foto completa también en la card: recortarla (cover)
+                  // comía los bordes de las fotos reales de producto.
+                  fit: BoxFit.contain,
                 ),
               ),
               const SizedBox(height: 8),

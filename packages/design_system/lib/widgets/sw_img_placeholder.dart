@@ -11,6 +11,7 @@ class SwImgPlaceholder extends StatelessWidget {
     this.tinted = false,
     this.imageUrl,
     this.borderRadius = SwRadii.image,
+    this.fit = BoxFit.cover,
     super.key,
   });
 
@@ -18,6 +19,11 @@ class SwImgPlaceholder extends StatelessWidget {
   final bool tinted;
   final String? imageUrl;
   final double borderRadius;
+
+  /// Cómo encaja la foto en el marco. `cover` (default) llena recortando —
+  /// bien para cards chicas; el visor grande del detalle usa `contain` para
+  /// mostrar la imagen completa sin recorte.
+  final BoxFit fit;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +35,7 @@ class SwImgPlaceholder extends StatelessWidget {
             child: imageUrl != null && imageUrl!.isNotEmpty
                 ? Image.network(
                     imageUrl!,
-                    fit: BoxFit.cover,
+                    fit: fit,
                     errorBuilder: (_, __, ___) => _Stripes(tinted: tinted),
                     loadingBuilder: (_, child, progress) =>
                         progress == null ? child : _Stripes(tinted: tinted),
@@ -46,7 +52,10 @@ class SwImgPlaceholder extends StatelessWidget {
                   color: const Color(0xD9FFFFFF),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: Text(label!.toUpperCase(), style: SwText.mono(size: 10, letterSpacing: 0.08)),
+                child: Text(
+                  label!.toUpperCase(),
+                  style: SwText.mono(size: 10, letterSpacing: 0.08),
+                ),
               ),
             ),
         ],
