@@ -45,7 +45,7 @@ class RemoteRecommendationsRepository implements RecommendationsRepository {
       if (products.isNotEmpty) return products;
       // Sin resultados útiles del motor (lista vacía, SKUs inexistentes o
       // todos sin stock): la señal local sigue siendo mejor que nada.
-      return fallback.recommendedFor(product, limit: limit);
+      return await fallback.recommendedFor(product, limit: limit);
     } catch (e, st) {
       log('recommendedFor remote error', error: e, stackTrace: st);
       return fallback.recommendedFor(product, limit: limit);
