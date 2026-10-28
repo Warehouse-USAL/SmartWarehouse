@@ -18,3 +18,25 @@ extension OrderStatusX on OrderStatus {
   bool get canReorder =>
       this == OrderStatus.completed || this == OrderStatus.cancelled;
 }
+
+/// Traduce el `cancel_reason` del back a un texto apto para mostrar.
+///
+/// - Códigos conocidos (UPPER_SNAKE) → copy en castellano.
+/// - Códigos desconocidos o `null` → `null`: preferimos no mostrar nada antes
+///   que exponer un código crudo del backend al usuario.
+/// - Texto libre (p. ej. un motivo ya redactado, como el que setea la app al
+///   cancelar manualmente) → se devuelve tal cual, ya es legible.
+String? humanizeCancelReason(String? reason) {
+  final trimmed = reason?.trim();
+  if (trimmed == null || trimmed.isEmpty) return null;
+
+  const known = <String, String>{
+    'INSUFFICIENT_STOCK': 'Cancelada por falta de stock',
+  };
+  final translated = known[trimmed];
+  if (translated != null) return translated;
+
+  // Con forma de código pero no lo conocemos: mejor sin texto.
+  final looksLikeCode = RegExp(r'^[A-Z0-9_]+$').hasMatch(trimmed);
+  return looksLikeCode ? null : trimmed;
+}

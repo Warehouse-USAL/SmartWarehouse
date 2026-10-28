@@ -3,12 +3,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:order_tracking/src/presentation/widgets/order_status_timeline.dart';
 import 'package:orders/orders.dart';
 
-Future<void> _pump(WidgetTester tester, OrderStatus status) =>
-    tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(body: OrderStatusTimeline(status: status)),
-      ),
-    );
+Future<void> _pump(
+  WidgetTester tester,
+  OrderStatus status, {
+  String? cancelReason,
+}) => tester.pumpWidget(
+  MaterialApp(
+    home: Scaffold(
+      body: OrderStatusTimeline(status: status, cancelReason: cancelReason),
+    ),
+  ),
+);
 
 void main() {
   testWidgets('pending muestra los tres pasos del stepper', (tester) async {
@@ -90,4 +95,51 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  group('banner de cancelada con motivo', () {
+    testWidgets(
+      'muestra el motivo humanizado como linea principal y mantiene la '
+      'invitacion a repedir',
+      (tester) async {
+        await _pump(
+          tester,
+          OrderStatus.cancelled,
+          cancelReason: 'INSUFFICIENT_STOCK',
+        );
+
+        expect(find.text('Orden cancelada'), findsOneWidget);
+        expect(find.text('Cancelada por falta de stock'), findsOneWidget);
+        expect(
+          find.text('Podés volver a pedir estos productos cuando quieras.'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets('sin motivo muestra solo el copy default', (tester) async {
+      await _pump(tester, OrderStatus.cancelled);
+
+      expect(
+        find.text('Podés volver a pedir estos productos cuando quieras.'),
+        findsOneWidget,
+      );
+      expect(find.text('Cancelada por falta de stock'), findsNothing);
+    });
+
+    testWidgets('codigo desconocido no muestra texto crudo del backend', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        OrderStatus.cancelled,
+        cancelReason: 'SOME_FUTURE_CODE',
+      );
+
+      expect(find.text('SOME_FUTURE_CODE'), findsNothing);
+      expect(
+        find.text('Podés volver a pedir estos productos cuando quieras.'),
+        findsOneWidget,
+      );
+    });
+  });
 }
