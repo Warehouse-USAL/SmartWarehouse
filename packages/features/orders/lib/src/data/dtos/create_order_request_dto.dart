@@ -20,6 +20,13 @@ sealed class CreateOrderItemDto with _$CreateOrderItemDto {
   const factory CreateOrderItemDto({
     required String productId,
     required int quantity,
+    // Opcional para el backend; se manda siempre (false por defecto) en vez
+    // de null porque un bool explícito es más barato de leer en métricas que
+    // distinguir "ausente" de "false". El name explícito fija el contrato
+    // aunque cambie el field_rename global.
+    @JsonKey(name: 'from_recommendation')
+    @Default(false)
+    bool fromRecommendation,
   }) = _CreateOrderItemDto;
 
   factory CreateOrderItemDto.fromJson(Map<String, dynamic> json) =>

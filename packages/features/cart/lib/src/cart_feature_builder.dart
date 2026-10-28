@@ -25,12 +25,22 @@ class CartFeatureBuilder {
       );
   }
 
-  static void addToCart(Product product, {int quantity = 1}) {
-    Injector.i.resolve<CartCubit>().add(product, quantity: quantity);
+  static void addToCart(
+    Product product, {
+    int quantity = 1,
+    bool fromRecommendation = false,
+  }) {
+    Injector.i.resolve<CartCubit>().add(
+      product,
+      quantity: quantity,
+      fromRecommendation: fromRecommendation,
+    );
   }
 
   /// Vuelca varias líneas al pedido de una sola vez ("pedir de nuevo").
-  static void addAllToCart(List<({Product product, int quantity})> entries) {
+  static void addAllToCart(
+    List<({Product product, int quantity, bool fromRecommendation})> entries,
+  ) {
     Injector.i.resolve<CartCubit>().addAll(entries);
   }
 

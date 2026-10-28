@@ -49,6 +49,62 @@ void main() {
     });
   });
 
+  group('add con fromRecommendation', () {
+    test('la línea nueva queda marcada como venida del carrusel', () {
+      repo.add(aProduct(id: 'p-1'), fromRecommendation: true);
+
+      expect(repo.current.items.single.fromRecommendation, isTrue);
+    });
+
+    test('por defecto la línea es orgánica (false)', () {
+      repo.add(aProduct(id: 'p-1'));
+
+      expect(repo.current.items.single.fromRecommendation, isFalse);
+    });
+
+    test('merge pegajoso: true + false queda true', () {
+      // La recomendación ya influyó en que la línea exista: agregar más
+      // cantidad por otro camino no borra ese origen.
+      repo.add(aProduct(id: 'p-1'), fromRecommendation: true);
+      repo.add(aProduct(id: 'p-1'), quantity: 2);
+
+      expect(repo.current.items.single.fromRecommendation, isTrue);
+      expect(repo.current.quantityOf('p-1'), 3);
+    });
+
+    test('merge pegajoso: false + true queda true', () {
+      repo.add(aProduct(id: 'p-1'));
+      repo.add(aProduct(id: 'p-1'), fromRecommendation: true);
+
+      expect(repo.current.items.single.fromRecommendation, isTrue);
+    });
+
+    test('false + false sigue false', () {
+      repo.add(aProduct(id: 'p-1'));
+      repo.add(aProduct(id: 'p-1'));
+
+      expect(repo.current.items.single.fromRecommendation, isFalse);
+    });
+
+    test('applyProductUpdate preserva el flag', () {
+      repo.add(aProduct(id: 'p-1'), fromRecommendation: true);
+
+      repo.applyProductUpdate('p-1', aProduct(id: 'p-1'));
+
+      expect(repo.current.items.single.fromRecommendation, isTrue);
+    });
+
+    test('markUnavailable preserva el flag', () {
+      repo.add(aProduct(id: 'p-1'), fromRecommendation: true);
+
+      repo.markUnavailable('p-1');
+
+      final line = repo.current.items.single;
+      expect(line.unavailable, isTrue);
+      expect(line.fromRecommendation, isTrue);
+    });
+  });
+
   group('remove', () {
     test('drops the line for that product', () {
       repo.add(aProduct(id: 'p-1'));
