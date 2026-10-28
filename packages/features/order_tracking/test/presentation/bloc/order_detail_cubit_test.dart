@@ -14,6 +14,7 @@ class _FakeRepo implements OrderTrackingRepository {
 
   /// Si es true, [cancelOrder] falla con un mensaje fijo.
   bool failCancel = false;
+  Order? cancelResult;
 
   @override
   Future<Either<OrderTrackingFailure, List<Order>>> getOrders() async =>
@@ -23,7 +24,7 @@ class _FakeRepo implements OrderTrackingRepository {
   Future<Either<OrderTrackingFailure, Order>> cancelOrder(String id) async =>
       failCancel
       ? const Left(OrderTrackingFailure('no se pudo'))
-      : Right(_order(id, OrderStatus.cancelled));
+      : Right(cancelResult ?? _order(id, OrderStatus.cancelled));
 
   @override
   Future<Either<OrderTrackingFailure, Order>> getOrderById(String id) async =>
@@ -131,6 +132,33 @@ void main() {
       final state = cubit.state;
       expect(state, isA<OrderDetailReady>());
       expect((state as OrderDetailReady).order.status, OrderStatus.cancelled);
+    },
+  );
+
+  test(
+    'cancelación pendiente conserva WS hasta recibir el estado final',
+    () async {
+      cubit.load('ord-1');
+      await Future<void>.delayed(Duration.zero);
+      repo.cancelResult = _order('ord-1', OrderStatus.inProgress).copyWith(
+        cancellationRequestedAt: DateTime.parse('2026-10-19T12:05:00Z'),
+      );
+
+      final error = await cubit.cancel('ord-1');
+
+      expect(error, isNull);
+      expect(repo.controllers['ord-1']?.hasListener, isTrue);
+      final pending = cubit.state as OrderDetailReady;
+      expect(pending.order.cancellationRequestedAt, isNotNull);
+
+      repo.emitOrder('ord-1', _order('ord-1', OrderStatus.cancelled));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(
+        (cubit.state as OrderDetailReady).order.status,
+        OrderStatus.cancelled,
+      );
+      expect(repo.controllers['ord-1']?.hasListener, isFalse);
     },
   );
 

@@ -9,6 +9,7 @@ extension OrderTrackingItemDtoMapper on OrderTrackingItemDto {
     // Preferimos timestamps.createdAt (el back nuevo lo pone ahí). Si no
     // está, caemos al createdAt de root (legacy) y por último a now.
     final rawCreatedAt = timestamps?.createdAt ?? createdAt;
+    final rawCancellationRequestedAt = timestamps?.cancellationRequestedAt;
     return Order(
       id: id,
       status: parseOrderStatus(status),
@@ -19,6 +20,9 @@ extension OrderTrackingItemDtoMapper on OrderTrackingItemDto {
           ? (DateTime.tryParse(rawCreatedAt) ??
                 DateTime.fromMillisecondsSinceEpoch(0))
           : DateTime.fromMillisecondsSinceEpoch(0),
+      cancellationRequestedAt: rawCancellationRequestedAt == null
+          ? null
+          : DateTime.tryParse(rawCancellationRequestedAt),
       total: Money.zero('ARS'),
     );
   }

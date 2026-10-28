@@ -92,9 +92,19 @@ class _DetailContent extends StatelessWidget {
     final error = await cubit.cancel(order.id);
     if (!context.mounted) return;
     if (error == null) {
+      final state = cubit.state;
+      final cancellationPending =
+          state is OrderDetailReady &&
+          state.order.status == OrderStatus.inProgress &&
+          state.order.cancellationRequestedAt != null;
       SwSnackBar.show(
         context,
-        message: 'Orden ${order.id} cancelada',
+        message: cancellationPending
+            ? 'Cancelación de la orden ${order.id} solicitada'
+            : 'Orden ${order.id} cancelada',
+        detail: cancellationPending
+            ? 'Los vehículos actualizarán el estado cuando devuelvan los productos.'
+            : null,
         icon: Icons.check_circle_outline,
       );
     } else {
@@ -148,6 +158,18 @@ class _DetailContent extends StatelessWidget {
             ],
           ),
         ),
+        if (order.status == OrderStatus.inProgress &&
+            order.cancellationRequestedAt != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: SwCard(
+              padding: const EdgeInsets.all(14),
+              child: Text(
+                'Cancelación solicitada. El estado se actualizará cuando los vehículos devuelvan los productos.',
+                style: SwText.body(size: 14, color: SwColors.text3),
+              ),
+            ),
+          ),
         SwCard(
           padding: const EdgeInsets.fromLTRB(14, 16, 14, 18),
           child: OrderStatusTimeline(status: order.status),
@@ -185,7 +207,8 @@ class _DetailContent extends StatelessWidget {
             icon: Icons.replay_rounded,
             onPressed: () => _onReorderPressed(context),
           ),
-        if (order.status.isCancellable) ...[
+        if (order.status.isCancellable &&
+            order.cancellationRequestedAt == null) ...[
           if (order.status.canReorder && items.isNotEmpty)
             const SizedBox(height: 8),
           SwButton(
