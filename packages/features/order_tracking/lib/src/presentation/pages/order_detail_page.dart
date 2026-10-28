@@ -152,6 +152,26 @@ class _DetailContent extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(14, 16, 14, 18),
           child: OrderStatusTimeline(status: order.status),
         ),
+        if (order.status == OrderStatus.cancelled &&
+            order.cancelReasonMessage != null) ...[
+          const SizedBox(height: 10),
+          SwCard(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.info_outline, size: 18, color: SwColors.text3),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    order.cancelReasonMessage!,
+                    style: SwText.body(size: 13, color: SwColors.text2),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         Padding(
           padding: const EdgeInsets.only(top: 18, bottom: 10),
           child: Text('Detalles del pedido', style: SwText.display(size: 18)),

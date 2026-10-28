@@ -118,4 +118,25 @@ void main() {
       expect(dto.payload.status, 'in_progress');
     });
   });
+  group('cancel_reason', () {
+    test('se parsea y mapea al entity', () {
+      final dto = OrderTrackingItemDto.fromJson(<String, dynamic>{
+        'id': 'o1',
+        'status': 'cancelled',
+        'cancel_reason': 'INSUFFICIENT_STOCK: SKU-1',
+      });
+      final order = dto.toEntity();
+      expect(order.cancelReason, 'INSUFFICIENT_STOCK: SKU-1');
+      expect(order.cancelReasonMessage, contains('stock'));
+    });
+
+    test('ausente (backend viejo) queda en null', () {
+      final order = OrderTrackingItemDto.fromJson(<String, dynamic>{
+        'id': 'o1',
+        'status': 'cancelled',
+      }).toEntity();
+      expect(order.cancelReason, isNull);
+      expect(order.cancelReasonMessage, isNull);
+    });
+  });
 }

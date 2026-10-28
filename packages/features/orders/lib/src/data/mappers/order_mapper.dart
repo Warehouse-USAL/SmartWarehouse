@@ -36,6 +36,7 @@ extension OrderDtoMapper on OrderDto {
           _parseDate(timestamps?.createdAt) ??
           DateTime.fromMillisecondsSinceEpoch(0),
       total: total,
+      cancelReason: cancelReason,
     );
   }
 }

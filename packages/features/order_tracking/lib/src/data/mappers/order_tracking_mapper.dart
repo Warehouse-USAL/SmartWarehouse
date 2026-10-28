@@ -20,6 +20,7 @@ extension OrderTrackingItemDtoMapper on OrderTrackingItemDto {
                 DateTime.fromMillisecondsSinceEpoch(0))
           : DateTime.fromMillisecondsSinceEpoch(0),
       total: Money.zero('ARS'),
+      cancelReason: cancelReason,
     );
   }
 }

@@ -107,6 +107,19 @@ class RemoteOrderRepository implements OrderRepository {
     if (error.statusCode == 401 || error.statusCode == 403) {
       return 'No tenés permisos para crear órdenes';
     }
+    // Errores de la creación de órdenes agregados al backend (aditivos: un
+    // backend viejo no los manda y cae en los mensajes genéricos de abajo).
+    // Los tres son transitorios: el SnackBar del carrito ofrece "Reintentar".
+    if (error.reason == 'STOCK_CHANGE_CONFLICT') {
+      return 'Otros cambios de stock están en curso, reintentá';
+    }
+    if (error.reason == 'IDEMPOTENCY_REQUEST_IN_PROGRESS') {
+      return 'Tu pedido ya se está procesando, esperá unos segundos y '
+          'reintentá';
+    }
+    if (error.reason == 'DATABASE_UNAVAILABLE' || error.statusCode == 503) {
+      return 'El servicio no está disponible, intentá de nuevo';
+    }
     if (error.statusCode == 400) {
       return error.message ?? 'Datos inválidos en la orden';
     }

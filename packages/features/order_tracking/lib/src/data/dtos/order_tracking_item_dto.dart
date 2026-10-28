@@ -16,6 +16,10 @@ sealed class OrderTrackingItemDto with _$OrderTrackingItemDto {
     /// `timestamps.createdAt`. Lo dejamos como fallback.
     String? createdAt,
     OrderTimestampsDto? timestamps,
+
+    /// Motivo de cancelación (`cancel_reason`), p. ej. `INSUFFICIENT_STOCK:`
+    /// cuando el back cancela por reducción de stock. Ausente en back viejo.
+    String? cancelReason,
   }) = _OrderTrackingItemDto;
 
   factory OrderTrackingItemDto.fromJson(Map<String, dynamic> json) =>
