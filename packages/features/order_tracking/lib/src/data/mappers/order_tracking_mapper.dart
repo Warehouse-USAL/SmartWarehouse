@@ -20,6 +20,9 @@ extension OrderTrackingItemDtoMapper on OrderTrackingItemDto {
                 DateTime.fromMillisecondsSinceEpoch(0))
           : DateTime.fromMillisecondsSinceEpoch(0),
       total: Money.zero('ARS'),
+      // Propagamos el motivo de cancelación para que el detalle pueda
+      // explicar el porqué (p. ej. falta de stock) en vez de solo "cancelada".
+      cancelReason: cancelReason,
     );
   }
 }

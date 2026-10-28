@@ -150,7 +150,10 @@ class _DetailContent extends StatelessWidget {
         ),
         SwCard(
           padding: const EdgeInsets.fromLTRB(14, 16, 14, 18),
-          child: OrderStatusTimeline(status: order.status),
+          child: OrderStatusTimeline(
+            status: order.status,
+            cancelReason: order.cancelReason,
+          ),
         ),
         Padding(
           padding: const EdgeInsets.only(top: 18, bottom: 10),

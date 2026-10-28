@@ -3,9 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:orders/orders.dart';
 
 class OrderStatusTimeline extends StatelessWidget {
-  const OrderStatusTimeline({required this.status, super.key});
+  const OrderStatusTimeline({
+    required this.status,
+    this.cancelReason,
+    super.key,
+  });
 
   final OrderStatus status;
+
+  /// Motivo de cancelación crudo (código del back o texto libre). Solo se usa
+  /// cuando `status == cancelled`; el banner lo humaniza antes de mostrarlo.
+  final String? cancelReason;
 
   static const _stepLabels = ['Pendiente', 'En progreso', 'Completado'];
 
@@ -18,7 +26,9 @@ class OrderStatusTimeline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (status == OrderStatus.cancelled) return const _CancelledBanner();
+    if (status == OrderStatus.cancelled) {
+      return _CancelledBanner(reason: humanizeCancelReason(cancelReason));
+    }
 
     final current = _currentStep;
 
@@ -186,7 +196,10 @@ class _StepRow extends StatelessWidget {
 }
 
 class _CancelledBanner extends StatelessWidget {
-  const _CancelledBanner();
+  const _CancelledBanner({this.reason});
+
+  /// Motivo ya humanizado; `null` cuando no hay motivo mostrable.
+  final String? reason;
 
   @override
   Widget build(BuildContext context) {
@@ -217,6 +230,20 @@ class _CancelledBanner extends StatelessWidget {
                   ).copyWith(color: SwColors.danger),
                 ),
                 const SizedBox(height: 2),
+                // Con motivo conocido, el porqué va primero y la invitación a
+                // repedir pasa a segunda línea; sin motivo queda el copy de
+                // siempre, sin inventar una causa que no sabemos.
+                if (reason != null) ...[
+                  Text(
+                    reason!,
+                    style: SwText.body(
+                      size: 12,
+                      weight: FontWeight.w600,
+                      color: SwColors.text,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                ],
                 Text(
                   'Podés volver a pedir estos productos cuando quieras.',
                   style: SwText.body(size: 12, color: SwColors.text2),
