@@ -17,7 +17,7 @@ import 'package:orders/src/domain/repositories/order_repository.dart';
 /// Body shape (snake_case por JacksonConfig):
 /// ```json
 /// {
-///   "items": [{ "product_id": "p1", "quantity": 2 }],
+///   "items": [{ "product_id": "p1", "quantity": 2, "from_recommendation": false }],
 ///   "destination_area": "Bay 14"
 /// }
 /// ```
@@ -39,6 +39,7 @@ class RemoteOrderRepository implements OrderRepository {
               (i) => CreateOrderItemDto(
                 productId: i.productId,
                 quantity: i.quantity,
+                fromRecommendation: i.fromRecommendation,
               ),
             )
             .toList(growable: false),
