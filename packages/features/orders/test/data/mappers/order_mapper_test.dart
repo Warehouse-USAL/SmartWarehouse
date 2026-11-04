@@ -110,5 +110,26 @@ void main() {
       });
       expect(dto.order.toEntity(fallbackItems: []).createdAt, isNotNull);
     });
+
+    test('propaga cancel_reason del DTO al entity', () {
+      final dto = OrderResponseDto.fromJson(<String, dynamic>{
+        'order': {
+          'id': 'ord-1',
+          'status': 'cancelled',
+          'items': [],
+          'cancel_reason': 'INSUFFICIENT_STOCK',
+        },
+      });
+      final entity = dto.order.toEntity(fallbackItems: []);
+      expect(entity.status, OrderStatus.cancelled);
+      expect(entity.cancelReason, 'INSUFFICIENT_STOCK');
+    });
+
+    test('cancel_reason ausente queda null en el entity', () {
+      final dto = OrderResponseDto.fromJson(<String, dynamic>{
+        'order': {'id': 'ord-1', 'status': 'cancelled', 'items': []},
+      });
+      expect(dto.order.toEntity(fallbackItems: []).cancelReason, isNull);
+    });
   });
 }

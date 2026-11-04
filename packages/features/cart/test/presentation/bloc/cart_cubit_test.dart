@@ -241,9 +241,9 @@ void revalidateTests() {
       cubit.stream.listen((_) => emissions++);
 
       cubit.addAll([
-        (product: aProduct(id: 'a'), quantity: 2),
-        (product: aProduct(id: 'b'), quantity: 1),
-        (product: aProduct(id: 'c'), quantity: 3),
+        (product: aProduct(id: 'a'), quantity: 2, fromRecommendation: false),
+        (product: aProduct(id: 'b'), quantity: 1, fromRecommendation: false),
+        (product: aProduct(id: 'c'), quantity: 3, fromRecommendation: false),
       ]);
 
       expect(cubit.state.items, hasLength(3));
@@ -271,9 +271,39 @@ void revalidateTests() {
       final cubit = CartCubit(InMemoryCartRepository())
         ..add(aProduct(id: 'a'), quantity: 1);
 
-      cubit.addAll([(product: aProduct(id: 'a'), quantity: 2)]);
+      cubit.addAll([
+        (product: aProduct(id: 'a'), quantity: 2, fromRecommendation: false),
+      ]);
 
       expect(cubit.state.quantityOf('a'), 3);
+    });
+
+    test('propaga fromRecommendation por entry, no por lote', () {
+      final cubit = CartCubit(InMemoryCartRepository());
+
+      cubit.addAll([
+        (product: aProduct(id: 'a'), quantity: 1, fromRecommendation: true),
+        (product: aProduct(id: 'b'), quantity: 2, fromRecommendation: false),
+      ]);
+
+      final byId = {for (final i in cubit.state.items) i.product.id: i};
+      expect(byId['a']!.fromRecommendation, isTrue);
+      expect(byId['b']!.fromRecommendation, isFalse);
+    });
+  });
+
+  group('add con fromRecommendation', () {
+    test('marca la línea como venida del carrusel', () {
+      final cubit = CartCubit(InMemoryCartRepository())
+        ..add(aProduct(id: 'a'), fromRecommendation: true);
+
+      expect(cubit.state.items.single.fromRecommendation, isTrue);
+    });
+
+    test('sin el flag la línea queda orgánica', () {
+      final cubit = CartCubit(InMemoryCartRepository())..add(aProduct(id: 'a'));
+
+      expect(cubit.state.items.single.fromRecommendation, isFalse);
     });
   });
 }

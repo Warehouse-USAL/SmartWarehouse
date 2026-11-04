@@ -22,6 +22,7 @@ _OrderTrackingItemDto _$OrderTrackingItemDtoFromJson(
   timestamps: json['timestamps'] == null
       ? null
       : OrderTimestampsDto.fromJson(json['timestamps'] as Map<String, dynamic>),
+  cancelReason: json['cancel_reason'] as String?,
 );
 
 Map<String, dynamic> _$OrderTrackingItemDtoToJson(
@@ -32,4 +33,5 @@ Map<String, dynamic> _$OrderTrackingItemDtoToJson(
   'items': instance.items.map((e) => e.toJson()).toList(),
   'created_at': instance.createdAt,
   'timestamps': instance.timestamps?.toJson(),
+  'cancel_reason': instance.cancelReason,
 };

@@ -17,7 +17,9 @@ mixin _$OrderTrackingItemDto {
 
  String get id; String get status; List<OrderTrackingLineItemDto> get items;/// Algunas respuestas legacy lo mandan en root, hoy va dentro de
 /// `timestamps.createdAt`. Lo dejamos como fallback.
- String? get createdAt; OrderTimestampsDto? get timestamps;
+ String? get createdAt; OrderTimestampsDto? get timestamps;/// Motivo de cancelación (`cancel_reason`): el back lo manda cuando
+/// cancela una orden, hoy típicamente `INSUFFICIENT_STOCK`.
+ String? get cancelReason;
 /// Create a copy of OrderTrackingItemDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,16 +32,16 @@ $OrderTrackingItemDtoCopyWith<OrderTrackingItemDto> get copyWith => _$OrderTrack
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrderTrackingItemDto&&(identical(other.id, id) || other.id == id)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.timestamps, timestamps) || other.timestamps == timestamps));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OrderTrackingItemDto&&(identical(other.id, id) || other.id == id)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.timestamps, timestamps) || other.timestamps == timestamps)&&(identical(other.cancelReason, cancelReason) || other.cancelReason == cancelReason));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,status,const DeepCollectionEquality().hash(items),createdAt,timestamps);
+int get hashCode => Object.hash(runtimeType,id,status,const DeepCollectionEquality().hash(items),createdAt,timestamps,cancelReason);
 
 @override
 String toString() {
-  return 'OrderTrackingItemDto(id: $id, status: $status, items: $items, createdAt: $createdAt, timestamps: $timestamps)';
+  return 'OrderTrackingItemDto(id: $id, status: $status, items: $items, createdAt: $createdAt, timestamps: $timestamps, cancelReason: $cancelReason)';
 }
 
 
@@ -50,7 +52,7 @@ abstract mixin class $OrderTrackingItemDtoCopyWith<$Res>  {
   factory $OrderTrackingItemDtoCopyWith(OrderTrackingItemDto value, $Res Function(OrderTrackingItemDto) _then) = _$OrderTrackingItemDtoCopyWithImpl;
 @useResult
 $Res call({
- String id, String status, List<OrderTrackingLineItemDto> items, String? createdAt, OrderTimestampsDto? timestamps
+ String id, String status, List<OrderTrackingLineItemDto> items, String? createdAt, OrderTimestampsDto? timestamps, String? cancelReason
 });
 
 
@@ -67,14 +69,15 @@ class _$OrderTrackingItemDtoCopyWithImpl<$Res>
 
 /// Create a copy of OrderTrackingItemDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? status = null,Object? items = null,Object? createdAt = freezed,Object? timestamps = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? status = null,Object? items = null,Object? createdAt = freezed,Object? timestamps = freezed,Object? cancelReason = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,items: null == items ? _self.items : items // ignore: cast_nullable_to_non_nullable
 as List<OrderTrackingLineItemDto>,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String?,timestamps: freezed == timestamps ? _self.timestamps : timestamps // ignore: cast_nullable_to_non_nullable
-as OrderTimestampsDto?,
+as OrderTimestampsDto?,cancelReason: freezed == cancelReason ? _self.cancelReason : cancelReason // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 /// Create a copy of OrderTrackingItemDto
@@ -168,10 +171,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String status,  List<OrderTrackingLineItemDto> items,  String? createdAt,  OrderTimestampsDto? timestamps)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String status,  List<OrderTrackingLineItemDto> items,  String? createdAt,  OrderTimestampsDto? timestamps,  String? cancelReason)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OrderTrackingItemDto() when $default != null:
-return $default(_that.id,_that.status,_that.items,_that.createdAt,_that.timestamps);case _:
+return $default(_that.id,_that.status,_that.items,_that.createdAt,_that.timestamps,_that.cancelReason);case _:
   return orElse();
 
 }
@@ -189,10 +192,10 @@ return $default(_that.id,_that.status,_that.items,_that.createdAt,_that.timestam
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String status,  List<OrderTrackingLineItemDto> items,  String? createdAt,  OrderTimestampsDto? timestamps)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String status,  List<OrderTrackingLineItemDto> items,  String? createdAt,  OrderTimestampsDto? timestamps,  String? cancelReason)  $default,) {final _that = this;
 switch (_that) {
 case _OrderTrackingItemDto():
-return $default(_that.id,_that.status,_that.items,_that.createdAt,_that.timestamps);}
+return $default(_that.id,_that.status,_that.items,_that.createdAt,_that.timestamps,_that.cancelReason);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -206,10 +209,10 @@ return $default(_that.id,_that.status,_that.items,_that.createdAt,_that.timestam
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String status,  List<OrderTrackingLineItemDto> items,  String? createdAt,  OrderTimestampsDto? timestamps)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String status,  List<OrderTrackingLineItemDto> items,  String? createdAt,  OrderTimestampsDto? timestamps,  String? cancelReason)?  $default,) {final _that = this;
 switch (_that) {
 case _OrderTrackingItemDto() when $default != null:
-return $default(_that.id,_that.status,_that.items,_that.createdAt,_that.timestamps);case _:
+return $default(_that.id,_that.status,_that.items,_that.createdAt,_that.timestamps,_that.cancelReason);case _:
   return null;
 
 }
@@ -221,7 +224,7 @@ return $default(_that.id,_that.status,_that.items,_that.createdAt,_that.timestam
 @JsonSerializable()
 
 class _OrderTrackingItemDto implements OrderTrackingItemDto {
-  const _OrderTrackingItemDto({required this.id, required this.status, final  List<OrderTrackingLineItemDto> items = const [], this.createdAt, this.timestamps}): _items = items;
+  const _OrderTrackingItemDto({required this.id, required this.status, final  List<OrderTrackingLineItemDto> items = const [], this.createdAt, this.timestamps, this.cancelReason}): _items = items;
   factory _OrderTrackingItemDto.fromJson(Map<String, dynamic> json) => _$OrderTrackingItemDtoFromJson(json);
 
 @override final  String id;
@@ -237,6 +240,9 @@ class _OrderTrackingItemDto implements OrderTrackingItemDto {
 /// `timestamps.createdAt`. Lo dejamos como fallback.
 @override final  String? createdAt;
 @override final  OrderTimestampsDto? timestamps;
+/// Motivo de cancelación (`cancel_reason`): el back lo manda cuando
+/// cancela una orden, hoy típicamente `INSUFFICIENT_STOCK`.
+@override final  String? cancelReason;
 
 /// Create a copy of OrderTrackingItemDto
 /// with the given fields replaced by the non-null parameter values.
@@ -251,16 +257,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OrderTrackingItemDto&&(identical(other.id, id) || other.id == id)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.timestamps, timestamps) || other.timestamps == timestamps));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OrderTrackingItemDto&&(identical(other.id, id) || other.id == id)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.timestamps, timestamps) || other.timestamps == timestamps)&&(identical(other.cancelReason, cancelReason) || other.cancelReason == cancelReason));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,status,const DeepCollectionEquality().hash(_items),createdAt,timestamps);
+int get hashCode => Object.hash(runtimeType,id,status,const DeepCollectionEquality().hash(_items),createdAt,timestamps,cancelReason);
 
 @override
 String toString() {
-  return 'OrderTrackingItemDto(id: $id, status: $status, items: $items, createdAt: $createdAt, timestamps: $timestamps)';
+  return 'OrderTrackingItemDto(id: $id, status: $status, items: $items, createdAt: $createdAt, timestamps: $timestamps, cancelReason: $cancelReason)';
 }
 
 
@@ -271,7 +277,7 @@ abstract mixin class _$OrderTrackingItemDtoCopyWith<$Res> implements $OrderTrack
   factory _$OrderTrackingItemDtoCopyWith(_OrderTrackingItemDto value, $Res Function(_OrderTrackingItemDto) _then) = __$OrderTrackingItemDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String status, List<OrderTrackingLineItemDto> items, String? createdAt, OrderTimestampsDto? timestamps
+ String id, String status, List<OrderTrackingLineItemDto> items, String? createdAt, OrderTimestampsDto? timestamps, String? cancelReason
 });
 
 
@@ -288,14 +294,15 @@ class __$OrderTrackingItemDtoCopyWithImpl<$Res>
 
 /// Create a copy of OrderTrackingItemDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? status = null,Object? items = null,Object? createdAt = freezed,Object? timestamps = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? status = null,Object? items = null,Object? createdAt = freezed,Object? timestamps = freezed,Object? cancelReason = freezed,}) {
   return _then(_OrderTrackingItemDto(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,items: null == items ? _self._items : items // ignore: cast_nullable_to_non_nullable
 as List<OrderTrackingLineItemDto>,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String?,timestamps: freezed == timestamps ? _self.timestamps : timestamps // ignore: cast_nullable_to_non_nullable
-as OrderTimestampsDto?,
+as OrderTimestampsDto?,cancelReason: freezed == cancelReason ? _self.cancelReason : cancelReason // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

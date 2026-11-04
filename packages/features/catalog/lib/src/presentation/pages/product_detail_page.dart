@@ -12,16 +12,22 @@ class ProductDetailPage extends StatelessWidget {
     required this.cubit,
     required this.onAddToCart,
     this.recommendationsLoader,
+    this.fromRecommendation = false,
     super.key,
   });
 
   final ProductDetailCubit cubit;
-  final void Function(Product product) onAddToCart;
+  final void Function(Product product, {bool fromRecommendation}) onAddToCart;
 
   /// Trae "suelen llevarse juntos" para el producto. Lo inyecta la capa de
   /// aplicación (el algoritmo vive fuera de catalog); si es null la sección
   /// no existe.
   final Future<List<Product>> Function(Product product)? recommendationsLoader;
+
+  /// True cuando se llegó a este detalle tocando una card del carrusel de
+  /// recomendaciones (`?from=reco`). El "Agregar al pedido" lo propaga en el
+  /// callback para que la línea del carrito quede atribuida al carrusel.
+  final bool fromRecommendation;
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +52,7 @@ class ProductDetailPage extends StatelessWidget {
                 cubit: cubit,
                 onAddToCart: onAddToCart,
                 recommendationsLoader: recommendationsLoader,
+                fromRecommendation: fromRecommendation,
               ),
             };
           },
@@ -60,12 +67,14 @@ class _DetailView extends StatelessWidget {
     required this.state,
     required this.cubit,
     required this.onAddToCart,
+    required this.fromRecommendation,
     this.recommendationsLoader,
   });
 
   final ProductDetailReady state;
   final ProductDetailCubit cubit;
-  final void Function(Product product) onAddToCart;
+  final void Function(Product product, {bool fromRecommendation}) onAddToCart;
+  final bool fromRecommendation;
   final Future<List<Product>> Function(Product product)? recommendationsLoader;
 
   static const _tabs = ['Descripción', 'Especificaciones'];
@@ -179,10 +188,14 @@ class _DetailView extends StatelessWidget {
                       // sección se recrea y carga las del producto nuevo.
                       key: ValueKey('recos-${p.id}'),
                       load: () => recommendationsLoader!(p),
+                      // `from=reco`: el detalle destino sabe que se llegó
+                      // desde el carrusel y atribuye el agregado al pedido.
                       onProductTap: (recommended) =>
                           Injector.i.resolve<NavigationHelper>().pushNamed(
                             context,
-                            routeName: Routes.catalogDetail(recommended.id),
+                            routeName: Routes.catalogDetailFromReco(
+                              recommended.id,
+                            ),
                           ),
                     ),
                 ],
@@ -198,7 +211,7 @@ class _DetailView extends StatelessWidget {
           onQtyChanged: cubit.setQty,
           onAdd: () {
             for (var i = 0; i < state.qty; i++) {
-              onAddToCart(p);
+              onAddToCart(p, fromRecommendation: fromRecommendation);
             }
           },
         ),
@@ -257,6 +270,9 @@ class _ImageCarousel extends StatelessWidget {
                     tinted: i == 0,
                     imageUrl: img.url,
                     borderRadius: 18,
+                    // La foto completa, sin recorte: el marco es cuadrado y
+                    // las fotos reales no — cover les comía los bordes.
+                    fit: BoxFit.contain,
                   );
                 },
               ),

@@ -3,6 +3,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:order_tracking/src/data/repositories/co_purchase_recommendations_repository.dart';
 import 'package:order_tracking/src/data/repositories/mock_order_tracking_repository.dart';
+import 'package:order_tracking/src/data/repositories/remote_recommendations_repository.dart';
 import 'package:order_tracking/src/data/repositories/remote_order_tracking_repository.dart';
 import 'package:order_tracking/src/presentation/pages/notifications_page.dart';
 import 'package:order_tracking/src/presentation/pages/order_detail_page.dart';
@@ -35,13 +36,22 @@ class OrderTrackingFeatureBuilder {
           Injector.i.resolve<CatalogRepository>(),
         ),
       )
-      ..registerLazySingleton<RecommendationsRepository>(
-        () => CoPurchaseRecommendationsRepository(
+      ..registerLazySingleton<RecommendationsRepository>(() {
+        // La co-compra local sirve de implementación en mock Y de fallback
+        // del motor real: si el servicio de sugerencias no responde, la
+        // sección degrada a la señal del dispositivo en vez de romperse.
+        final coPurchase = CoPurchaseRecommendationsRepository(
           orderTrackingRepository: Injector.i
               .resolve<OrderTrackingRepository>(),
           catalogRepository: Injector.i.resolve<CatalogRepository>(),
-        ),
-      )
+        );
+        if (Injector.i.resolve<AppDataSource>().isMock) return coPurchase;
+        return RemoteRecommendationsRepository(
+          httpHelper: Injector.i.resolve<HttpHelper>(),
+          catalogRepository: Injector.i.resolve<CatalogRepository>(),
+          fallback: coPurchase,
+        );
+      })
       ..registerSingleton<OrderNotificationCubit>(
         OrderNotificationCubit(
           Injector.i.resolve<OrderTrackingRepository>(),

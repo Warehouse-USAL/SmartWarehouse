@@ -34,17 +34,33 @@ class CartCubit extends Cubit<Cart> {
     emit(_repository.current);
   }
 
-  void add(Product product, {int quantity = 1}) {
-    _repository.add(product, quantity: quantity);
+  void add(
+    Product product, {
+    int quantity = 1,
+    bool fromRecommendation = false,
+  }) {
+    _repository.add(
+      product,
+      quantity: quantity,
+      fromRecommendation: fromRecommendation,
+    );
     emit(_repository.current);
   }
 
   /// Agrega varias líneas de una (p. ej. "pedir de nuevo" desde una orden)
   /// emitiendo UNA sola vez — N llamadas a [add] serían N rebuilds.
-  void addAll(List<({Product product, int quantity})> entries) {
+  /// Cada entry lleva su propio origen: el repedido manda false, pero la
+  /// firma no lo asume para no perder el dato si mañana hay lotes mixtos.
+  void addAll(
+    List<({Product product, int quantity, bool fromRecommendation})> entries,
+  ) {
     if (entries.isEmpty) return;
     for (final e in entries) {
-      _repository.add(e.product, quantity: e.quantity);
+      _repository.add(
+        e.product,
+        quantity: e.quantity,
+        fromRecommendation: e.fromRecommendation,
+      );
     }
     emit(_repository.current);
   }

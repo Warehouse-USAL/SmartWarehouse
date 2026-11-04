@@ -36,6 +36,9 @@ extension OrderDtoMapper on OrderDto {
           _parseDate(timestamps?.createdAt) ??
           DateTime.fromMillisecondsSinceEpoch(0),
       total: total,
+      // El back empezó a cancelar órdenes por falta de stock: propagamos el
+      // motivo tal cual llega para que la UI pueda humanizarlo.
+      cancelReason: cancelReason,
     );
   }
 }

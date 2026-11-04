@@ -17,7 +17,7 @@ import 'package:orders/src/domain/repositories/order_repository.dart';
 /// Body shape (snake_case por JacksonConfig):
 /// ```json
 /// {
-///   "items": [{ "product_id": "p1", "quantity": 2 }],
+///   "items": [{ "product_id": "p1", "quantity": 2, "from_recommendation": false }],
 ///   "destination_area": "Bay 14"
 /// }
 /// ```
@@ -39,6 +39,7 @@ class RemoteOrderRepository implements OrderRepository {
               (i) => CreateOrderItemDto(
                 productId: i.productId,
                 quantity: i.quantity,
+                fromRecommendation: i.fromRecommendation,
               ),
             )
             .toList(growable: false),
@@ -109,6 +110,24 @@ class RemoteOrderRepository implements OrderRepository {
     }
     if (error.statusCode == 400) {
       return error.message ?? 'Datos inválidos en la orden';
+    }
+    if (error.statusCode == 409) {
+      // El back nuevo responde 409 en dos escenarios reintentables:
+      // IDEMPOTENCY_REQUEST_IN_PROGRESS (la misma orden ya está en vuelo) y
+      // STOCK_CHANGE_CONFLICT (el stock cambió entre el carrito y el POST).
+      // `reason` viene del `error.code` que parsea el DioHttpHelper.
+      if (error.reason == 'IDEMPOTENCY_REQUEST_IN_PROGRESS') {
+        return 'Tu orden se está procesando, esperá unos segundos antes de '
+            'reintentar.';
+      }
+      return 'El stock cambió mientras confirmabas. Revisá el pedido y '
+          'reintentá.';
+    }
+    if (error.statusCode == 503) {
+      // Servicio momentáneamente no disponible: invitar a reintentar en vez
+      // de mostrar un error genérico que suena a falla permanente.
+      return 'El depósito está saturado en este momento. Reintentá en unos '
+          'segundos.';
     }
     return error.message ?? 'No se pudo crear la orden';
   }

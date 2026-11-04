@@ -302,7 +302,11 @@ $AddressDtoCopyWith<$Res> get address {
 /// @nodoc
 mixin _$CreateOrderItemDto {
 
- String get productId; int get quantity;
+ String get productId; int get quantity;// Opcional para el backend; se manda siempre (false por defecto) en vez
+// de null porque un bool explícito es más barato de leer en métricas que
+// distinguir "ausente" de "false". El name explícito fija el contrato
+// aunque cambie el field_rename global.
+@JsonKey(name: 'from_recommendation') bool get fromRecommendation;
 /// Create a copy of CreateOrderItemDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -315,16 +319,16 @@ $CreateOrderItemDtoCopyWith<CreateOrderItemDto> get copyWith => _$CreateOrderIte
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateOrderItemDto&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.quantity, quantity) || other.quantity == quantity));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateOrderItemDto&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.fromRecommendation, fromRecommendation) || other.fromRecommendation == fromRecommendation));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,productId,quantity);
+int get hashCode => Object.hash(runtimeType,productId,quantity,fromRecommendation);
 
 @override
 String toString() {
-  return 'CreateOrderItemDto(productId: $productId, quantity: $quantity)';
+  return 'CreateOrderItemDto(productId: $productId, quantity: $quantity, fromRecommendation: $fromRecommendation)';
 }
 
 
@@ -335,7 +339,7 @@ abstract mixin class $CreateOrderItemDtoCopyWith<$Res>  {
   factory $CreateOrderItemDtoCopyWith(CreateOrderItemDto value, $Res Function(CreateOrderItemDto) _then) = _$CreateOrderItemDtoCopyWithImpl;
 @useResult
 $Res call({
- String productId, int quantity
+ String productId, int quantity,@JsonKey(name: 'from_recommendation') bool fromRecommendation
 });
 
 
@@ -352,11 +356,12 @@ class _$CreateOrderItemDtoCopyWithImpl<$Res>
 
 /// Create a copy of CreateOrderItemDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? productId = null,Object? quantity = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? productId = null,Object? quantity = null,Object? fromRecommendation = null,}) {
   return _then(_self.copyWith(
 productId: null == productId ? _self.productId : productId // ignore: cast_nullable_to_non_nullable
 as String,quantity: null == quantity ? _self.quantity : quantity // ignore: cast_nullable_to_non_nullable
-as int,
+as int,fromRecommendation: null == fromRecommendation ? _self.fromRecommendation : fromRecommendation // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -438,10 +443,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String productId,  int quantity)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String productId,  int quantity, @JsonKey(name: 'from_recommendation')  bool fromRecommendation)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CreateOrderItemDto() when $default != null:
-return $default(_that.productId,_that.quantity);case _:
+return $default(_that.productId,_that.quantity,_that.fromRecommendation);case _:
   return orElse();
 
 }
@@ -459,10 +464,10 @@ return $default(_that.productId,_that.quantity);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String productId,  int quantity)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String productId,  int quantity, @JsonKey(name: 'from_recommendation')  bool fromRecommendation)  $default,) {final _that = this;
 switch (_that) {
 case _CreateOrderItemDto():
-return $default(_that.productId,_that.quantity);}
+return $default(_that.productId,_that.quantity,_that.fromRecommendation);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -476,10 +481,10 @@ return $default(_that.productId,_that.quantity);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String productId,  int quantity)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String productId,  int quantity, @JsonKey(name: 'from_recommendation')  bool fromRecommendation)?  $default,) {final _that = this;
 switch (_that) {
 case _CreateOrderItemDto() when $default != null:
-return $default(_that.productId,_that.quantity);case _:
+return $default(_that.productId,_that.quantity,_that.fromRecommendation);case _:
   return null;
 
 }
@@ -491,11 +496,16 @@ return $default(_that.productId,_that.quantity);case _:
 @JsonSerializable()
 
 class _CreateOrderItemDto implements CreateOrderItemDto {
-  const _CreateOrderItemDto({required this.productId, required this.quantity});
+  const _CreateOrderItemDto({required this.productId, required this.quantity, @JsonKey(name: 'from_recommendation') this.fromRecommendation = false});
   factory _CreateOrderItemDto.fromJson(Map<String, dynamic> json) => _$CreateOrderItemDtoFromJson(json);
 
 @override final  String productId;
 @override final  int quantity;
+// Opcional para el backend; se manda siempre (false por defecto) en vez
+// de null porque un bool explícito es más barato de leer en métricas que
+// distinguir "ausente" de "false". El name explícito fija el contrato
+// aunque cambie el field_rename global.
+@override@JsonKey(name: 'from_recommendation') final  bool fromRecommendation;
 
 /// Create a copy of CreateOrderItemDto
 /// with the given fields replaced by the non-null parameter values.
@@ -510,16 +520,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreateOrderItemDto&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.quantity, quantity) || other.quantity == quantity));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreateOrderItemDto&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.fromRecommendation, fromRecommendation) || other.fromRecommendation == fromRecommendation));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,productId,quantity);
+int get hashCode => Object.hash(runtimeType,productId,quantity,fromRecommendation);
 
 @override
 String toString() {
-  return 'CreateOrderItemDto(productId: $productId, quantity: $quantity)';
+  return 'CreateOrderItemDto(productId: $productId, quantity: $quantity, fromRecommendation: $fromRecommendation)';
 }
 
 
@@ -530,7 +540,7 @@ abstract mixin class _$CreateOrderItemDtoCopyWith<$Res> implements $CreateOrderI
   factory _$CreateOrderItemDtoCopyWith(_CreateOrderItemDto value, $Res Function(_CreateOrderItemDto) _then) = __$CreateOrderItemDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String productId, int quantity
+ String productId, int quantity,@JsonKey(name: 'from_recommendation') bool fromRecommendation
 });
 
 
@@ -547,11 +557,12 @@ class __$CreateOrderItemDtoCopyWithImpl<$Res>
 
 /// Create a copy of CreateOrderItemDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? productId = null,Object? quantity = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? productId = null,Object? quantity = null,Object? fromRecommendation = null,}) {
   return _then(_CreateOrderItemDto(
 productId: null == productId ? _self.productId : productId // ignore: cast_nullable_to_non_nullable
 as String,quantity: null == quantity ? _self.quantity : quantity // ignore: cast_nullable_to_non_nullable
-as int,
+as int,fromRecommendation: null == fromRecommendation ? _self.fromRecommendation : fromRecommendation // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

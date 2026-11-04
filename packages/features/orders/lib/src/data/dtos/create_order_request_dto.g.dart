@@ -28,12 +28,14 @@ _CreateOrderItemDto _$CreateOrderItemDtoFromJson(Map<String, dynamic> json) =>
     _CreateOrderItemDto(
       productId: json['product_id'] as String,
       quantity: (json['quantity'] as num).toInt(),
+      fromRecommendation: json['from_recommendation'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$CreateOrderItemDtoToJson(_CreateOrderItemDto instance) =>
     <String, dynamic>{
       'product_id': instance.productId,
       'quantity': instance.quantity,
+      'from_recommendation': instance.fromRecommendation,
     };
 
 _AddressDto _$AddressDtoFromJson(Map<String, dynamic> json) => _AddressDto(

@@ -57,12 +57,17 @@ class BeamerConfigHelper implements NavigationConfigHelper<BeamerDelegate> {
       ),
       Routes.catalogDetailPattern: (_, state, __) {
         final id = state.pathParameters['id'] ?? '';
+        // `?from=reco` lo arma Routes.catalogDetailFromReco cuando se toca
+        // una card del carrusel: el origen viaja en la URL (sobrevive
+        // deep-links y rebuilds del router) y de acá baja a la página.
+        final fromReco = state.queryParameters['from'] == 'reco';
         return _beamerPage(
           title: 'Producto',
           key: 'catalog-detail-$id',
           child: CatalogFeatureBuilder.buildProductDetailPage(
             id,
             onAddToCart: CartFeatureBuilder.addToCart,
+            fromRecommendation: fromReco,
             // "Suelen llevarse juntos": co-compra sobre las órdenes del
             // device (el algoritmo del equipo reemplaza esta implementación
             // detrás de la misma interfaz, sin tocar la pantalla).

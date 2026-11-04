@@ -10,17 +10,30 @@ class InMemoryCartRepository implements CartRepository {
   Cart get current => Cart(items: List.unmodifiable(_items));
 
   @override
-  void add(Product product, {int quantity = 1}) {
+  void add(
+    Product product, {
+    int quantity = 1,
+    bool fromRecommendation = false,
+  }) {
     if (quantity <= 0) return;
     final index = _items.indexWhere((i) => i.product.id == product.id);
     if (index == -1) {
       _items.add(
-        CartItem(product: product, quantity: _clamp(product, quantity)),
+        CartItem(
+          product: product,
+          quantity: _clamp(product, quantity),
+          fromRecommendation: fromRecommendation,
+        ),
       );
     } else {
       final existing = _items[index];
       _items[index] = existing.copyWith(
         quantity: _clamp(product, existing.quantity + quantity),
+        // Pegajoso (OR): si la línea ya vino de una recomendación, agregar
+        // más cantidad por otro camino no borra ese origen — y al revés,
+        // una línea "orgánica" que crece desde el carrusel pasa a contar
+        // como recomendada.
+        fromRecommendation: existing.fromRecommendation || fromRecommendation,
       );
     }
   }

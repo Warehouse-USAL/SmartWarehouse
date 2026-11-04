@@ -39,6 +39,16 @@ void main() {
       final result = await repo.getOrderById('nonexistent-id');
       expect(result.isLeft(), true);
     });
+
+    test('la cancelada de fábrica trae el código real del back', () async {
+      // WH-49100 modela el caso nuevo: el back cancela por falta de stock y
+      // manda el código para que la UI lo humanice en el banner.
+      final result = await repo.getOrderById('WH-49100');
+      result.fold((_) => fail('Expected Right'), (order) {
+        expect(order.status, OrderStatus.cancelled);
+        expect(order.cancelReason, 'INSUFFICIENT_STOCK');
+      });
+    });
   });
 
   group('watchOrder', () {
@@ -58,6 +68,9 @@ void main() {
         result.fold((_) => fail('Expected Right'), (order) {
           expect(order.id, 'WH-49281');
           expect(order.status, OrderStatus.cancelled);
+          // Cancelación manual: motivo en texto libre, distinto de los
+          // códigos que decide el back.
+          expect(order.cancelReason, 'Cancelada por el usuario desde la app');
         });
 
         final after = await repo.getOrders();

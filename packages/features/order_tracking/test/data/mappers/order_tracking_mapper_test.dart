@@ -48,6 +48,22 @@ void main() {
       expect(dto.toEntity().status, OrderStatus.pending);
     });
 
+    test('propaga cancelReason al entity (json con cancel_reason)', () {
+      final dto = OrderTrackingItemDto.fromJson(<String, dynamic>{
+        'id': 'o1',
+        'status': 'cancelled',
+        'cancel_reason': 'INSUFFICIENT_STOCK',
+      });
+      final entity = dto.toEntity();
+      expect(entity.status, OrderStatus.cancelled);
+      expect(entity.cancelReason, 'INSUFFICIENT_STOCK');
+    });
+
+    test('cancelReason ausente queda null en el entity', () {
+      final dto = OrderTrackingItemDto(id: 'o1', status: 'cancelled');
+      expect(dto.toEntity().cancelReason, isNull);
+    });
+
     test('maps createdAt ISO string to DateTime', () {
       final dto = OrderTrackingItemDto(
         id: 'o1',

@@ -35,7 +35,10 @@ class _SmartWarehouseAppState extends State<SmartWarehouseApp> {
     // navega — order_tracking no depende de cart.
     OrderTrackingFeatureBuilder.onReorder = (entries) {
       CartFeatureBuilder.addAllToCart([
-        for (final e in entries) (product: e.product, quantity: e.quantity),
+        // Repedido: el origen es la orden anterior, no el carrusel de
+        // recomendaciones — el flag viaja en false.
+        for (final e in entries)
+          (product: e.product, quantity: e.quantity, fromRecommendation: false),
       ]);
       final context = _routerDelegate.navigatorKey.currentContext;
       if (context == null) return;

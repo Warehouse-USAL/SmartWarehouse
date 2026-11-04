@@ -71,6 +71,9 @@ class MockOrderTrackingRepository implements OrderTrackingRepository {
       status: OrderStatus.cancelled,
       createdAt: DateTime.now().subtract(const Duration(days: 5)),
       total: const Money(amount: 0, currency: 'ARS'),
+      // Código real que manda el back cuando cancela por stock: permite ver
+      // el motivo humanizado en el banner del detalle en modo mock.
+      cancelReason: 'INSUFFICIENT_STOCK',
     ),
   ];
 
@@ -105,7 +108,12 @@ class MockOrderTrackingRepository implements OrderTrackingRepository {
     // historial leen de acá, así que salir de la pantalla y volver sigue
     // mostrando la orden cancelada (no "vuelve a la normalidad").
     final previous = _orders[index];
-    final updated = previous.copyWith(status: OrderStatus.cancelled);
+    final updated = previous.copyWith(
+      status: OrderStatus.cancelled,
+      // Texto libre (no un código): distingue la cancelación manual de las
+      // que decide el back por stock.
+      cancelReason: 'Cancelada por el usuario desde la app',
+    );
     _orders[index] = updated;
     emitUpdate(id, updated);
     if (previous.status != OrderStatus.cancelled) {

@@ -45,6 +45,24 @@ void main() {
       }
     });
 
+    test('lleva fromRecommendation por ítem', () {
+      final cart = Cart(
+        items: [
+          CartItem(product: _product('a'), quantity: 1),
+          CartItem(
+            product: _product('b'),
+            quantity: 2,
+            fromRecommendation: true,
+          ),
+        ],
+      );
+
+      final items = cart.toOrderItems();
+
+      expect(items[0].fromRecommendation, isFalse);
+      expect(items[1].fromRecommendation, isTrue);
+    });
+
     test('preserva el orden de las líneas del carrito', () {
       final cart = Cart(
         items: [

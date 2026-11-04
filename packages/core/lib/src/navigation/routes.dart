@@ -9,6 +9,13 @@ class Routes {
 
   static String catalogDetail(String productId) => '/catalog/$productId';
 
+  /// Detalle de producto abierto desde el carrusel de recomendaciones.
+  /// El origen viaja como query param (`?from=reco`) porque Beamer rearma la
+  /// página desde la URL: cualquier estado fuera de ella se pierde en un
+  /// deep-link o un rebuild del router.
+  static String catalogDetailFromReco(String productId) =>
+      '/catalog/$productId?from=reco';
+
   static String orderSuccess(String orderId) => '/order/$orderId/success';
 
   static const String orders = '/orders';

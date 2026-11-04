@@ -10,6 +10,7 @@ extension CartOrderMapper on Cart {
           productName: i.product.name,
           unitPrice: i.product.price,
           quantity: i.quantity,
+          fromRecommendation: i.fromRecommendation,
         ),
       )
       .toList();

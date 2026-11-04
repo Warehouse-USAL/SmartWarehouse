@@ -4,7 +4,15 @@ import 'package:catalog/catalog.dart';
 abstract class CartRepository {
   Cart get current;
 
-  void add(Product product, {int quantity = 1});
+  /// Agrega [quantity] unidades de [product]. `fromRecommendation` marca que
+  /// el agregado vino del carrusel de recomendaciones; al mergear con una
+  /// línea existente el flag es pegajoso (OR): si alguna vez fue true, queda
+  /// true aunque después se agregue más cantidad por otro camino.
+  void add(
+    Product product, {
+    int quantity = 1,
+    bool fromRecommendation = false,
+  });
 
   void remove(String productId);
 

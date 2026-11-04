@@ -17,11 +17,7 @@ void main() {
     SizedBox(
       width: 200,
       height: 120,
-      child: SwImgPlaceholder(
-        label: label,
-        imageUrl: imageUrl,
-        tinted: tinted,
-      ),
+      child: SwImgPlaceholder(label: label, imageUrl: imageUrl, tinted: tinted),
     ),
   );
 
@@ -116,5 +112,30 @@ void main() {
       await pumpPlaceholder(tester, tinted: true);
       expect(tester.takeException(), isNull);
     });
+  });
+
+  testWidgets('fit default es cover y contain se respeta', (tester) async {
+    await pumpDs(
+      tester,
+      const SizedBox(
+        width: 200,
+        height: 120,
+        child: SwImgPlaceholder(imageUrl: 'https://example.com/a.png'),
+      ),
+    );
+    expect(tester.widget<Image>(find.byType(Image)).fit, BoxFit.cover);
+
+    await pumpDs(
+      tester,
+      const SizedBox(
+        width: 200,
+        height: 120,
+        child: SwImgPlaceholder(
+          imageUrl: 'https://example.com/a.png',
+          fit: BoxFit.contain,
+        ),
+      ),
+    );
+    expect(tester.widget<Image>(find.byType(Image)).fit, BoxFit.contain);
   });
 }
