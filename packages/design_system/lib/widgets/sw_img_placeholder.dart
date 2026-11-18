@@ -30,6 +30,10 @@ class SwImgPlaceholder extends StatelessWidget {
                 ? Image.network(
                     imageUrl!,
                     fit: BoxFit.cover,
+                    // Web: sin esto, un host sin CORS (p.ej. los redirects
+                    // de commons.wikimedia.org) falla y quedan las rayas. El
+                    // fallback muestra la foto con un <img> nativo.
+                    webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
                     errorBuilder: (_, __, ___) => _Stripes(tinted: tinted),
                     loadingBuilder: (_, child, progress) =>
                         progress == null ? child : _Stripes(tinted: tinted),

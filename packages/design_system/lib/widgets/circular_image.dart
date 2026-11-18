@@ -74,6 +74,8 @@ class NetworkImageSource implements CircularImageSource {
     return Image.network(
       url,
       fit: BoxFit.cover,
+      // Web: fallback a <img> nativo si el host no da CORS.
+      webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
       frameBuilder: (context, child, frame, _) {
         if (frame == null) return const SwLoadingSpinner(size: 20, strokeWidth: 2);
         return child;

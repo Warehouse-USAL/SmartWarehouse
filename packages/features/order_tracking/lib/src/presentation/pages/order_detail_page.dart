@@ -226,6 +226,9 @@ class _ItemRow extends StatelessWidget {
                   : Image.network(
                       imageUrl,
                       fit: BoxFit.cover,
+                      // Web: si el host no da CORS (p.ej. redirects de
+                      // Wikimedia) cae a un <img> en vez del placeholder.
+                      webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
                       errorBuilder: (_, __, ___) => CustomPaint(
                         size: const Size(48, 48),
                         painter: _StripedPlaceholderPainter(),
