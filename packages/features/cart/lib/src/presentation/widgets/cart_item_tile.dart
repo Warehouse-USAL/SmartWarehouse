@@ -29,19 +29,24 @@ class CartItemTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Image en vez de DecorationImage: el fallback a <img> de web
+            // (hosts sin CORS) solo funciona dentro de un widget Image.
             Container(
               width: 64,
               height: 64,
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 color: SwColors.surface,
                 borderRadius: BorderRadius.circular(10),
-                image: (p.imageUrl != null && p.imageUrl!.isNotEmpty)
-                    ? DecorationImage(
-                        image: NetworkImage(p.imageUrl!),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
               ),
+              child: (p.imageUrl != null && p.imageUrl!.isNotEmpty)
+                  ? Image.network(
+                      p.imageUrl!,
+                      fit: BoxFit.cover,
+                      webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                    )
+                  : null,
             ),
             const SizedBox(width: 12),
             Expanded(

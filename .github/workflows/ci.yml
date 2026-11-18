@@ -75,6 +75,7 @@ jobs:
           # del SDK con lints nuevos ponga CI en rojo en PRs que no tocaron nada
           # relacionado. Paso el 2026-08-12 con unawaited_return_in_try_block.
           channel: stable
+          flutter-version: 3.41.9
           cache: true
 
       - name: Activate melos
@@ -102,6 +103,7 @@ jobs:
           # del SDK con lints nuevos ponga CI en rojo en PRs que no tocaron nada
           # relacionado. Paso el 2026-08-12 con unawaited_return_in_try_block.
           channel: stable
+          flutter-version: 3.41.9
           cache: true
 
       - name: Activate melos
@@ -126,6 +128,7 @@ jobs:
           # del SDK con lints nuevos ponga CI en rojo en PRs que no tocaron nada
           # relacionado. Paso el 2026-08-12 con unawaited_return_in_try_block.
           channel: stable
+          flutter-version: 3.41.9
           cache: true
 
       - name: Activate melos
@@ -161,6 +164,7 @@ jobs:
           # del SDK con lints nuevos ponga CI en rojo en PRs que no tocaron nada
           # relacionado. Paso el 2026-08-12 con unawaited_return_in_try_block.
           channel: stable
+          flutter-version: 3.41.9
           cache: true
 
       - name: Activate melos
@@ -185,6 +189,7 @@ jobs:
           # del SDK con lints nuevos ponga CI en rojo en PRs que no tocaron nada
           # relacionado. Paso el 2026-08-12 con unawaited_return_in_try_block.
           channel: stable
+          flutter-version: 3.41.9
           cache: true
 
       - uses: actions/setup-java@v4
