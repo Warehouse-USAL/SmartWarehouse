@@ -52,16 +52,19 @@ ProductsPage _emptyPage(int page) => ProductsPage(
   hasNext: false,
 );
 
-Product _p(String id, {ProductCategory category = ProductCategory.otros}) =>
-    Product(
-      id: id,
-      sku: 'SKU-$id',
-      name: 'Name $id',
-      category: category,
-      price: const Money(amount: 1000, currency: 'ARS'),
-      stock: const Stock(available: 10),
-      orderConstraints: const OrderConstraints(maxQuantityPerOrder: 5),
-    );
+Product _p(
+  String id, {
+  ProductCategory category = ProductCategory.otros,
+  int stock = 10,
+}) => Product(
+  id: id,
+  sku: 'SKU-$id',
+  name: 'Name $id',
+  category: category,
+  price: const Money(amount: 1000, currency: 'ARS'),
+  stock: Stock(available: stock),
+  orderConstraints: const OrderConstraints(maxQuantityPerOrder: 5),
+);
 
 ProductsPage _page(
   int page,
@@ -271,6 +274,154 @@ void main() {
       expect(repo.calls, hasLength(1));
       expect(repo.calls.single.search, 'abc');
       expect(repo.calls.single.page, 1);
+    });
+  });
+
+  group('CatalogCubit sin stock', () {
+    List<Product> outOfStock(int from, int n) => [
+      for (var i = from; i < from + n; i++) _p('x$i', stock: 0),
+    ];
+
+    test('load oculta los productos sin stock', () async {
+      final repo = _FakeRepo()
+        ..handler = (page, _, __) async => Right(
+          _page(
+            1,
+            [_p('1'), _p('2', stock: 0), _p('3')],
+            total: 3,
+            hasNext: false,
+          ),
+        );
+      final cubit = CatalogCubit(repo);
+
+      await cubit.load();
+
+      final s = cubit.state as CatalogReady;
+      expect(s.products.map((p) => p.id), ['1', '3']);
+      expect(s.total, 2);
+      await cubit.close();
+    });
+
+    test('stock negativo también se oculta', () async {
+      final repo = _FakeRepo()
+        ..handler = (page, _, __) async => Right(
+          _page(1, [_p('1', stock: -3), _p('2')], total: 2, hasNext: false),
+        );
+      final cubit = CatalogCubit(repo);
+
+      await cubit.load();
+
+      expect((cubit.state as CatalogReady).products.map((p) => p.id), ['2']);
+      await cubit.close();
+    });
+
+    test(
+      'load sigue pidiendo páginas si el filtro dejó la primera corta',
+      () async {
+        final repo = _FakeRepo()
+          ..handler = (page, _, __) async => Right(
+            page == 1
+                ? _page(1, outOfStock(0, 20), total: 22, hasNext: true)
+                : _page(2, [_p('a'), _p('b')], total: 22, hasNext: false),
+          );
+        final cubit = CatalogCubit(repo);
+
+        await cubit.load();
+
+        final s = cubit.state as CatalogReady;
+        expect(s.products.map((p) => p.id), ['a', 'b']);
+        expect(s.page, 2);
+        expect(s.hasNext, isFalse);
+        expect(s.total, 2);
+        expect(repo.calls.map((c) => c.page), [1, 2]);
+        await cubit.close();
+      },
+    );
+
+    test('load no pide de más si no se ocultó nada', () async {
+      final repo = _FakeRepo()
+        ..handler = (page, _, __) async =>
+            Right(_page(1, [_p('1')], total: 30, hasNext: true));
+      final cubit = CatalogCubit(repo);
+
+      await cubit.load();
+
+      expect(repo.calls, hasLength(1));
+      await cubit.close();
+    });
+
+    test('el relleno automático respeta búsqueda y categoría', () async {
+      final repo = _FakeRepo()
+        ..handler = (page, _, __) async => Right(
+          page == 1
+              ? _page(1, outOfStock(0, 20), total: 21, hasNext: true)
+              : _page(2, [_p('a')], total: 21, hasNext: false),
+        );
+      final cubit = CatalogCubit(repo);
+
+      await cubit.submitSearch('cable');
+      cubit.selectCategory(ProductCategory.values.first);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      final last = repo.calls.last;
+      expect(last.page, 2);
+      expect(last.search, 'cable');
+      expect(last.category, ProductCategory.values.first);
+      expect((cubit.state as CatalogReady).products.single.id, 'a');
+      await cubit.close();
+    });
+
+    test(
+      'loadMore oculta sin stock y salta páginas enteras sin stock',
+      () async {
+        final repo = _FakeRepo()
+          ..handler = (page, _, __) async => Right(switch (page) {
+            1 => _page(
+              1,
+              [for (var i = 0; i < 20; i++) _p('p$i')],
+              total: 50,
+              hasNext: true,
+            ),
+            2 => _page(2, outOfStock(0, 20), total: 50, hasNext: true),
+            _ => _page(
+              3,
+              [_p('z'), _p('y', stock: 0)],
+              total: 50,
+              hasNext: false,
+            ),
+          });
+        final cubit = CatalogCubit(repo);
+        await cubit.load();
+
+        await cubit.loadMore();
+
+        final s = cubit.state as CatalogReady;
+        expect(s.products, hasLength(21));
+        expect(s.products.last.id, 'z');
+        expect(s.products.any((p) => p.stock.isOutOfStock), isFalse);
+        expect(s.page, 3);
+        expect(s.hasNext, isFalse);
+        expect(s.total, 21);
+        expect(s.isLoadingMore, isFalse);
+        await cubit.close();
+      },
+    );
+
+    test('el relleno tiene tope para no saturar el server', () async {
+      final repo = _FakeRepo()
+        ..handler = (page, _, __) async => Right(
+          _page(page, outOfStock(page * 100, 20), total: 10000, hasNext: true),
+        );
+      final cubit = CatalogCubit(repo);
+
+      await cubit.load();
+
+      final s = cubit.state as CatalogReady;
+      expect(s.products, isEmpty);
+      expect(s.hasNext, isTrue);
+      expect(repo.calls.length, lessThanOrEqualTo(5));
+      await cubit.close();
     });
   });
 }
